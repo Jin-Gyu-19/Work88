@@ -108,13 +108,12 @@
     }
     .plus:hover { background: #fbe4ee; border-color: #c2255c; }
 
-    /* ── 가지+새 장면: +버튼 칸(오른쪽 끝)에 앵커 → 위젯 오른쪽 벽 ──
-       다른 테마 장식 스프라이트(돌고래 76px·펭귄 45px·다람쥐 80px)와
-       같은 급이 되도록 전체 폭 68px로 축소. */
+    /* ── 가지+새 장면: 야자수와 동일하게 +버튼 우측 하단 모서리에
+       살짝 걸치는 위치 · 폭 48px로 축소 ── */
     .branch-scene {
         position: absolute;
-        width: 68px; height: 50px;
-        top: -10px; right: -4px;   /* 벽에 붙임 */
+        width: 48px; height: 35px;
+        bottom: -7px; right: -6px;  /* 우측 하단 모서리에 걸침 */
         pointer-events: none;
         z-index: 3;
     }
@@ -128,8 +127,8 @@
     /* 동박새 — 가지 반전에 맞춰 원본 방향(왼쪽 보기), 발이 줄기 위에 오도록 배치 */
     .bird-anchor {
         position: absolute;
-        width: 26px;
-        left: 21px; top: -3px;     /* 줄기 중앙(x≈34px, y≈22px) 지점에 발 */
+        width: 18px;
+        left: 15px; top: -2px;     /* 줄기 중앙(x≈24px, y≈16px) 지점에 발 */
         z-index: 4;
         opacity: 0;
     }
@@ -172,16 +171,16 @@
 
     /* 떨어지는 꽃잎 (가지에서 3장) */
     .petal {
-        position: absolute; top: 22px; left: 22px; font-size: 8px;
+        position: absolute; top: 14px; left: 15px; font-size: 6px;
         pointer-events: none; z-index: 2; opacity: 0;
         animation: petal-fall 5.2s linear infinite;
     }
-    .petal:nth-of-type(2) { animation-delay: 1.8s; font-size: 6px; left: 42px; }
-    .petal:nth-of-type(3) { animation-delay: 3.4s; font-size: 7px; left: 8px; }
+    .petal:nth-of-type(2) { animation-delay: 1.8s; font-size: 5px; left: 30px; }
+    .petal:nth-of-type(3) { animation-delay: 3.4s; font-size: 5px; left: 5px; }
     @keyframes petal-fall {
         0%   { opacity: 0; transform: translate(0, 0) rotate(0); }
         8%   { opacity: .85; }
-        100% { opacity: 0; transform: translate(-30px, 92px) rotate(210deg); }
+        100% { opacity: 0; transform: translate(-20px, 52px) rotate(210deg); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -201,9 +200,9 @@
 </head>
 <body>
 <div class="caption">
-    <b>봄 테마 애니메이션 예시 v3</b> — 가로 1줄 레이아웃<br>
-    ① 가지 <b>굵은 쪽이 오른쪽 벽에</b> 붙음 (좌우 반전) ② 크기는 다른 테마 장식과 같은 급으로 축소<br>
-    ③ 동박새가 가지 위에 <b>스르륵 나타나 앉아 있다가 서서히 사라짐</b> — 몇 초 후 반복
+    <b>봄 테마 애니메이션 예시 v4</b> — 가로 1줄 레이아웃<br>
+    ① 가지가 야자수처럼 <b>+버튼 우측 하단 모서리에 살짝 걸침</b> (굵은 쪽이 벽 방향)<br>
+    ② 동박새가 가지 위에 <b>스르륵 나타나 앉아 있다가 서서히 사라짐</b> — 몇 초 후 반복
 </div>
 
 <div class="widget">
