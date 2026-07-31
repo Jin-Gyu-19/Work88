@@ -7,6 +7,16 @@ if not defined PYTHON (
     pause
     exit /b 1
 )
+"%PYTHON%" -c "import PyQt6.QtWebEngineWidgets" >nul 2>&1
+if errorlevel 1 (
+    echo Installing required packages: PyQt6, PyQt6-WebEngine ...
+    "%PYTHON%" -m pip install PyQt6 PyQt6-WebEngine
+    if errorlevel 1 (
+        echo Package install failed!
+        pause
+        exit /b 1
+    )
+)
 echo Starting SupportDeck...
 "%PYTHON%" main_qtweb.py
 if errorlevel 1 pause
