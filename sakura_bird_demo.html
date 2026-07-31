@@ -109,28 +109,29 @@
     .plus:hover { background: #fbe4ee; border-color: #c2255c; }
 
     /* ── 가지+새 장면: +버튼 칸(오른쪽 끝)에 앵커 → 위젯 오른쪽 벽 ──
-       가지 밑동(이미지 우상단)이 벽에 딱 붙고 왼쪽 아래로 뻗는다. */
+       다른 테마 장식 스프라이트(돌고래 76px·펭귄 45px·다람쥐 80px)와
+       같은 급이 되도록 전체 폭 68px로 축소. */
     .branch-scene {
         position: absolute;
-        width: 90px; height: 66px;
-        top: -12px; right: -5px;   /* 벽에 붙임 · 이전보다 낮게 */
+        width: 68px; height: 50px;
+        top: -10px; right: -4px;   /* 벽에 붙임 */
         pointer-events: none;
         z-index: 3;
     }
     .branch-scene .branch {
         position: absolute; inset: 0;
         width: 100%; height: 100%;
+        transform: scaleX(-1);     /* 좌우 반전 → 굵은 밑동이 오른쪽 벽 쪽 */
         filter: drop-shadow(0 2px 3px rgba(67, 32, 47, .18));
     }
 
-    /* 동박새 — 좌우 반전(오른쪽 보기), 발이 줄기 위(픽셀 분석 좌표)에 오도록 배치 */
+    /* 동박새 — 가지 반전에 맞춰 원본 방향(왼쪽 보기), 발이 줄기 위에 오도록 배치 */
     .bird-anchor {
         position: absolute;
-        width: 34px;
-        left: 28px; top: -3px;     /* 줄기 x≈45px, y≈29px 지점에 발 */
+        width: 26px;
+        left: 21px; top: -3px;     /* 줄기 중앙(x≈34px, y≈22px) 지점에 발 */
         z-index: 4;
         opacity: 0;
-        transform: scaleX(-1);     /* 좌우 반전 */
     }
     .bird-anchor img {
         display: block; width: 100%;
@@ -171,12 +172,12 @@
 
     /* 떨어지는 꽃잎 (가지에서 3장) */
     .petal {
-        position: absolute; top: 30px; left: 30px; font-size: 10px;
+        position: absolute; top: 22px; left: 22px; font-size: 8px;
         pointer-events: none; z-index: 2; opacity: 0;
         animation: petal-fall 5.2s linear infinite;
     }
-    .petal:nth-of-type(2) { animation-delay: 1.8s; font-size: 8px; left: 55px; }
-    .petal:nth-of-type(3) { animation-delay: 3.4s; font-size: 9px; left: 12px; }
+    .petal:nth-of-type(2) { animation-delay: 1.8s; font-size: 6px; left: 42px; }
+    .petal:nth-of-type(3) { animation-delay: 3.4s; font-size: 7px; left: 8px; }
     @keyframes petal-fall {
         0%   { opacity: 0; transform: translate(0, 0) rotate(0); }
         8%   { opacity: .85; }
@@ -200,9 +201,9 @@
 </head>
 <body>
 <div class="caption">
-    <b>봄 테마 애니메이션 예시 v2</b> — 가로 1줄 레이아웃<br>
-    ① 벚꽃 가지가 <b>오른쪽 벽에 붙어</b> 낮게 걸림 ② 동박새(좌우 반전)가 가지 위에<br>
-    <b>스르륵 나타나 앉아 있다가</b> 잠시 후 <b>서서히 사라짐</b> — 몇 초 후 반복
+    <b>봄 테마 애니메이션 예시 v3</b> — 가로 1줄 레이아웃<br>
+    ① 가지 <b>굵은 쪽이 오른쪽 벽에</b> 붙음 (좌우 반전) ② 크기는 다른 테마 장식과 같은 급으로 축소<br>
+    ③ 동박새가 가지 위에 <b>스르륵 나타나 앉아 있다가 서서히 사라짐</b> — 몇 초 후 반복
 </div>
 
 <div class="widget">
