@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>SupportDeck — 디자인 톤 시안 4종</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Pretendard', -apple-system, 'Segoe UI', sans-serif;
+        background: #0a0a0c;
+        color: #e6edf3;
+        min-height: 100vh;
+        padding: 40px 24px 80px;
+    }
+    .page-header {
+        max-width: 1400px;
+        margin: 0 auto 36px;
+        text-align: center;
+    }
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #58a6ff, #a371f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 8px;
+    }
+    .page-header p {
+        color: #8b949e;
+        font-size: 14px;
+    }
+
+    .mockup-grid {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+        gap: 28px;
+    }
+
+    .mockup-card {
+        background: rgba(22, 27, 34, 0.6);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+    .mockup-card .tone-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: -4px;
+    }
+    .mockup-card .tone-desc {
+        font-size: 12px;
+        color: #8b949e;
+        text-align: center;
+        line-height: 1.6;
+        margin-bottom: 8px;
+    }
+    .mockup-card .preview-stage {
+        background:
+            linear-gradient(135deg, rgba(88,166,255,0.04) 0%, rgba(163,113,247,0.04) 100%),
+            repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 8px, transparent 8px 16px);
+        border: 1px dashed rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .palette {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+    }
+    .swatch {
+        width: 22px; height: 22px; border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .features {
+        font-size: 11px;
+        color: #c9d1d9;
+        line-height: 1.7;
+        text-align: left;
+        width: 100%;
+        list-style: none;
+        margin-top: 4px;
+    }
+    .features li::before {
+        content: "▸ ";
+        color: #58a6ff;
+        font-weight: 700;
+    }
+
+    /* ─────────────────────────────────────────────
+       공통 위젯 베이스 (260px 폭, 실제 SupportDeck과 동일)
+       ───────────────────────────────────────────── */
+    .widget {
+        width: 260px;
+        border-radius: 12px;
+        padding: 8px;
+        font-family: 'Pretendard', sans-serif;
+    }
+    .widget .header {
+        display: flex; align-items: center;
+        padding: 4px 4px 6px;
+        gap: 6px;
+    }
+    .widget .title {
+        font-size: 12px;
+        font-weight: 700;
+        flex: 1;
+    }
+    .widget .header-btn {
+        width: 22px; height: 22px;
+        border: none; background: transparent;
+        font-size: 12px; cursor: pointer;
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .widget .sep {
+        height: 1px;
+        margin: 0 0 8px;
+    }
+    .widget .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .widget .btn {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+        position: relative;
+    }
+    .widget .btn:hover { transform: translateY(-1px); }
+    .widget .btn .emoji { font-size: 28px; line-height: 1; }
+    .widget .btn .label { margin-top: 4px; font-weight: 500; }
+    .widget .plus {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 28px;
+        cursor: pointer;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       시안 A — 모던 미니멀 (Notion / Linear)
+       ═══════════════════════════════════════════════════════════ */
+    .widget-A {
+        background: #0a0a0c;
+        border: 1px solid #1f1f23;
+    }
+    .widget-A .title { color: #fafafa; }
+    .widget-A .header-btn { color: #6b6b70; }
+    .widget-A .header-btn:hover { background: #1a1a1f; color: #fafafa; }
+    .widget-A .sep { background: #1a1a1f; }
+    .widget-A .btn {
+        background: #131316;
+        border: 1px solid #1f1f23;
+        color: #e8e8ea;
+    }
+    .widget-A .btn:hover {
+        background: #18181c;
+        border-color: #2f2f36;
+    }
+    .widget-A .btn .emoji { opacity: 0.92; }
+    .widget-A .plus {
+        background: transparent;
+        border: 1px dashed #2a2a30;
+        color: #4a4a52;
+    }
+    .widget-A .plus:hover {
+        border-color: #fafafa;
+        color: #fafafa;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       시안 B — 글라스모피즘 (macOS Big Sur)
+       ═══════════════════════════════════════════════════════════ */
+    .widget-B {
+        background: rgba(28, 28, 38, 0.55);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow:
+            0 8px 32px rgba(0,0,0,0.4),
+            inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .widget-B .title {
+        color: #fff;
+        background: linear-gradient(90deg, #82b1ff, #b388ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .widget-B .header-btn { color: rgba(255,255,255,0.5); }
+    .widget-B .header-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .widget-B .sep { background: rgba(255,255,255,0.1); }
+    .widget-B .btn {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        backdrop-filter: blur(10px);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .widget-B .btn:hover {
+        background: rgba(130,177,255,0.15);
+        border-color: rgba(130,177,255,0.4);
+    }
+    .widget-B .plus {
+        background: rgba(255,255,255,0.02);
+        border: 1px dashed rgba(255,255,255,0.15);
+        color: rgba(255,255,255,0.4);
+    }
+    .widget-B .plus:hover {
+        background: rgba(130,177,255,0.1);
+        color: #82b1ff;
+        border-color: #82b1ff;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       시안 C — 네오모피즘 (소프트 입체)
+       ═══════════════════════════════════════════════════════════ */
+    .widget-C {
+        background: #232633;
+        border: none;
+        box-shadow:
+            12px 12px 24px #14151c,
+            -8px -8px 20px #323748;
+    }
+    .widget-C .title { color: #d4d8e8; }
+    .widget-C .header-btn { color: #8089a8; }
+    .widget-C .header-btn:hover { color: #b8c0d8; }
+    .widget-C .sep { background: #1a1c25; height: 2px; box-shadow: 0 1px 0 #2c303d; }
+    .widget-C .btn {
+        background: #232633;
+        color: #d4d8e8;
+        border: none;
+        box-shadow:
+            6px 6px 12px #14151c,
+            -4px -4px 10px #323748;
+    }
+    .widget-C .btn:hover {
+        box-shadow:
+            inset 4px 4px 8px #14151c,
+            inset -4px -4px 8px #323748;
+        color: #82a4ff;
+    }
+    .widget-C .plus {
+        background: #232633;
+        color: #6a738f;
+        box-shadow:
+            inset 4px 4px 8px #14151c,
+            inset -4px -4px 8px #323748;
+    }
+    .widget-C .plus:hover { color: #82a4ff; }
+
+    /* ═══════════════════════════════════════════════════════════
+       시안 D — 다크 게이밍 (StreamDeck Pro)
+       ═══════════════════════════════════════════════════════════ */
+    .widget-D {
+        background: linear-gradient(180deg, #050505 0%, #0d0d10 100%);
+        border: 1px solid #1a1a1f;
+        box-shadow:
+            0 0 0 1px rgba(88,166,255,0.08),
+            0 8px 32px rgba(0,0,0,0.6),
+            inset 0 0 40px rgba(88,166,255,0.03);
+    }
+    .widget-D .title {
+        font-family: 'Consolas', monospace;
+        color: #58a6ff;
+        text-shadow: 0 0 12px rgba(88,166,255,0.6);
+        letter-spacing: 1px;
+        font-size: 11px;
+    }
+    .widget-D .header-btn { color: #4a5060; }
+    .widget-D .header-btn:hover {
+        background: rgba(88,166,255,0.1);
+        color: #58a6ff;
+        box-shadow: 0 0 8px rgba(88,166,255,0.3);
+    }
+    .widget-D .sep {
+        background: linear-gradient(90deg, transparent, #58a6ff 50%, transparent);
+        height: 1px;
+        opacity: 0.4;
+    }
+    .widget-D .btn {
+        background:
+            linear-gradient(180deg, #1a1d2e 0%, #0f111c 100%);
+        border: 1px solid #2a2f44;
+        color: #c9d1d9;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.06),
+            inset 0 -1px 0 rgba(0,0,0,0.4);
+    }
+    .widget-D .btn:hover {
+        border-color: #58a6ff;
+        box-shadow:
+            0 0 16px rgba(88,166,255,0.4),
+            inset 0 1px 0 rgba(88,166,255,0.2);
+        color: #fff;
+    }
+    .widget-D .plus {
+        background: transparent;
+        border: 1px dashed #2a2f44;
+        color: #4a5060;
+    }
+    .widget-D .plus:hover {
+        border-color: #58a6ff;
+        color: #58a6ff;
+        box-shadow: 0 0 12px rgba(88,166,255,0.3);
+    }
+
+    /* footer */
+    .footer {
+        max-width: 1200px;
+        margin: 60px auto 0;
+        padding: 24px;
+        background: rgba(22,27,34,0.4);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        font-size: 13px;
+        color: #8b949e;
+        line-height: 1.8;
+    }
+    .footer strong { color: #fafafa; }
+    kbd {
+        background: #1a1a1f;
+        border: 1px solid #2a2a30;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: 'Consolas', monospace;
+        font-size: 11px;
+        color: #58a6ff;
+    }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>⚡ SupportDeck — 디자인 톤 4종 시안</h1>
+    <p>실제 위젯 사이즈(260px) 그대로 렌더링한 미리보기 · 마음에 드는 톤을 골라줘</p>
+</div>
+
+<div class="mockup-grid">
+
+    <!-- ── 시안 A: 모던 미니멀 ────────────────────────── -->
+    <div class="mockup-card">
+        <div class="tone-name">A · 모던 미니멀</div>
+        <div class="tone-desc">Notion / Linear 스타일 · 군더더기 없이 라운드만, 절제된 컬러</div>
+
+        <div class="preview-stage">
+            <div class="widget widget-A">
+                <div class="header">
+                    <span class="title">⚡ SupportDeck</span>
+                    <button class="header-btn">⚙</button>
+                    <button class="header-btn">📌</button>
+                    <button class="header-btn">—</button>
+                    <button class="header-btn">✕</button>
+                </div>
+                <div class="sep"></div>
+                <div class="grid">
+                    <div class="btn"><span class="emoji">💻</span><span class="label">CMD</span></div>
+                    <div class="btn"><span class="emoji">📷</span><span class="label">캡처</span></div>
+                    <div class="btn"><span class="emoji">🖥️</span><span class="label">바탕화면</span></div>
+                    <div class="btn"><span class="emoji">📁</span><span class="label">내 문서</span></div>
+                    <div class="btn"><span class="emoji">🌐</span><span class="label">Google</span></div>
+                    <div class="plus">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="palette">
+            <div class="swatch" style="background:#0a0a0c;"></div>
+            <div class="swatch" style="background:#131316;"></div>
+            <div class="swatch" style="background:#1f1f23;"></div>
+            <div class="swatch" style="background:#fafafa;"></div>
+            <div class="swatch" style="background:#6b6b70;"></div>
+        </div>
+
+        <ul class="features">
+            <li>거의 검정에 가까운 ChAr Black 배경</li>
+            <li>1px 미세 보더만, 채움 없음</li>
+            <li>호버 시 살짝 밝아지는 정도</li>
+            <li>액센트 컬러 없이 깔끔한 무채색</li>
+        </ul>
+    </div>
+
+    <!-- ── 시안 B: 글라스모피즘 ────────────────────────── -->
+    <div class="mockup-card">
+        <div class="tone-name">B · 글라스모피즘</div>
+        <div class="tone-desc">macOS Big Sur 스타일 · 반투명 + 블러 + 인너 글로우</div>
+
+        <div class="preview-stage">
+            <div class="widget widget-B">
+                <div class="header">
+                    <span class="title">⚡ SupportDeck</span>
+                    <button class="header-btn">⚙</button>
+                    <button class="header-btn">📌</button>
+                    <button class="header-btn">—</button>
+                    <button class="header-btn">✕</button>
+                </div>
+                <div class="sep"></div>
+                <div class="grid">
+                    <div class="btn"><span class="emoji">💻</span><span class="label">CMD</span></div>
+                    <div class="btn"><span class="emoji">📷</span><span class="label">캡처</span></div>
+                    <div class="btn"><span class="emoji">🖥️</span><span class="label">바탕화면</span></div>
+                    <div class="btn"><span class="emoji">📁</span><span class="label">내 문서</span></div>
+                    <div class="btn"><span class="emoji">🌐</span><span class="label">Google</span></div>
+                    <div class="plus">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="palette">
+            <div class="swatch" style="background:rgba(28,28,38,0.55);"></div>
+            <div class="swatch" style="background:rgba(255,255,255,0.06);"></div>
+            <div class="swatch" style="background:#82b1ff;"></div>
+            <div class="swatch" style="background:#b388ff;"></div>
+            <div class="swatch" style="background:rgba(255,255,255,0.1);"></div>
+        </div>
+
+        <ul class="features">
+            <li>backdrop-blur 24px (뒤 배경 비침)</li>
+            <li>인너 하이라이트 + 부드러운 그림자</li>
+            <li>그라디언트 타이틀 (블루→퍼플)</li>
+            <li>※ PyQt6 글라스 효과는 별도 처리 필요</li>
+        </ul>
+    </div>
+
+    <!-- ── 시안 C: 네오모피즘 ────────────────────────── -->
+    <div class="mockup-card">
+        <div class="tone-name">C · 네오모피즘</div>
+        <div class="tone-desc">소프트 입체 스타일 · 양각/음각 그림자로 떠 있는 느낌</div>
+
+        <div class="preview-stage" style="background: #232633;">
+            <div class="widget widget-C">
+                <div class="header">
+                    <span class="title">⚡ SupportDeck</span>
+                    <button class="header-btn">⚙</button>
+                    <button class="header-btn">📌</button>
+                    <button class="header-btn">—</button>
+                    <button class="header-btn">✕</button>
+                </div>
+                <div class="sep"></div>
+                <div class="grid">
+                    <div class="btn"><span class="emoji">💻</span><span class="label">CMD</span></div>
+                    <div class="btn"><span class="emoji">📷</span><span class="label">캡처</span></div>
+                    <div class="btn"><span class="emoji">🖥️</span><span class="label">바탕화면</span></div>
+                    <div class="btn"><span class="emoji">📁</span><span class="label">내 문서</span></div>
+                    <div class="btn"><span class="emoji">🌐</span><span class="label">Google</span></div>
+                    <div class="plus">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="palette">
+            <div class="swatch" style="background:#232633;"></div>
+            <div class="swatch" style="background:#14151c;"></div>
+            <div class="swatch" style="background:#323748;"></div>
+            <div class="swatch" style="background:#82a4ff;"></div>
+            <div class="swatch" style="background:#d4d8e8;"></div>
+        </div>
+
+        <ul class="features">
+            <li>양각 그림자로 버튼이 떠 있는 느낌</li>
+            <li>호버 시 음각으로 들어가는 인터랙션</li>
+            <li>차분한 보라빛 그레이 톤</li>
+            <li>※ PyQt6에선 그림자 구현이 다소 무겁</li>
+        </ul>
+    </div>
+
+    <!-- ── 시안 D: 다크 게이밍 ────────────────────────── -->
+    <div class="mockup-card">
+        <div class="tone-name">D · 다크 게이밍 (StreamDeck Pro)</div>
+        <div class="tone-desc">진짜 엘가토 StreamDeck처럼 · 네온 글로우 + 깊은 다크</div>
+
+        <div class="preview-stage">
+            <div class="widget widget-D">
+                <div class="header">
+                    <span class="title">⚡ SUPPORTDECK</span>
+                    <button class="header-btn">⚙</button>
+                    <button class="header-btn">📌</button>
+                    <button class="header-btn">—</button>
+                    <button class="header-btn">✕</button>
+                </div>
+                <div class="sep"></div>
+                <div class="grid">
+                    <div class="btn"><span class="emoji">💻</span><span class="label">CMD</span></div>
+                    <div class="btn"><span class="emoji">📷</span><span class="label">캡처</span></div>
+                    <div class="btn"><span class="emoji">🖥️</span><span class="label">바탕화면</span></div>
+                    <div class="btn"><span class="emoji">📁</span><span class="label">내 문서</span></div>
+                    <div class="btn"><span class="emoji">🌐</span><span class="label">Google</span></div>
+                    <div class="plus">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="palette">
+            <div class="swatch" style="background:#050505;"></div>
+            <div class="swatch" style="background:#1a1d2e;"></div>
+            <div class="swatch" style="background:#0f111c;"></div>
+            <div class="swatch" style="background:#58a6ff;"></div>
+            <div class="swatch" style="background:#2a2f44;"></div>
+        </div>
+
+        <ul class="features">
+            <li>버튼 그라디언트 + 인너 보더</li>
+            <li>호버 시 네온 블루 글로우 (#58a6ff)</li>
+            <li>타이틀은 모노스페이스 + 글로우</li>
+            <li>현재 다크 테마의 진화형 — 호환성 최상</li>
+        </ul>
+    </div>
+
+</div>
+
+<div class="footer">
+    <strong>📌 다음 단계:</strong>
+    마음에 드는 시안 번호(A / B / C / D)를 알려주면, <kbd>widget.py</kbd>의 <kbd>_apply_style()</kbd>·<kbd>_build_ui()</kbd>를 실제로 그 톤으로 다시 짜고, <kbd>config.py</kbd>의 <kbd>THEMES</kbd> 딕셔너리에 새 톤을 추가할게.
+    <br><br>
+    <strong>혼합도 OK</strong> — 예: "베이스는 D인데 호버 글로우는 빼고 싶어", "A 톤인데 액센트만 D의 네온 블루로", 이런 식으로 섞을 수도 있어 ㅎㅎ
+</div>
+
+</body>
+</html>

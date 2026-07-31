@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SupportDeck — 빠른 실행 위젯</title>
+<meta name="description" content="자주 쓰는 앱·파일·폴더·URL을 버튼으로 모아두는 가벼운 데스크톱 위젯. Windows용 무료 다운로드.">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="SupportDeck">
+<meta property="og:description" content="데스크톱 어디서나, 자주 쓰는 것들을 한 번에.">
+<meta property="og:image" content="icon.png">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#0b1322; --bg1:#05070d;
+  --panel:rgba(255,255,255,0.03);
+  --text:#e9eef6; --muted:#94a1b6; --faint:#5d6a80;
+  --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.05);
+  --amber:#e8a23a; --blue:#5b93e6; --teal:#3cc0bc; --purple:#9e72e6;
+  --radius:18px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color:var(--text); background:var(--bg1);
+  line-height:1.6; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+.bg{position:fixed; inset:0; z-index:-1;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #1a2742 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 70%);
+}
+.bg::after{content:""; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size:42px 42px; mask-image:linear-gradient(180deg, #000, transparent 70%);}
+.wrap{max-width:1040px; margin:0 auto; padding:0 24px;}
+
+/* nav */
+nav{display:flex; align-items:center; justify-content:space-between; padding:22px 24px; max-width:1040px; margin:0 auto;}
+.brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.2px;}
+.brand img{width:34px; height:34px; border-radius:9px;}
+.brand b{font-size:18px;}
+.nav-right{display:flex; align-items:center; gap:18px;}
+.nav-right a{color:var(--muted); text-decoration:none; font-size:14px; font-weight:500;}
+.nav-right a:hover{color:var(--text);}
+.lang{display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:var(--panel);}
+.lang button{background:none; border:none; color:var(--faint); font:inherit; font-size:12.5px; font-weight:600; padding:6px 12px; cursor:pointer;}
+.lang button.on{background:rgba(255,255,255,0.08); color:var(--text);}
+
+/* hero */
+.hero{text-align:center; padding:70px 0 40px;}
+.hero-icon{width:148px; height:148px; border-radius:34px; filter:drop-shadow(0 24px 60px rgba(0,0,0,.55)); animation:float 6s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)}}
+.hero h1{font-size:clamp(38px,7vw,64px); font-weight:800; letter-spacing:-1.5px; margin:26px 0 6px; background:linear-gradient(180deg,#fff,#bcc8dc); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+.hero .tag{font-size:clamp(16px,2.6vw,21px); color:var(--text); font-weight:500;}
+.hero .sub{color:var(--muted); margin-top:8px; font-size:15.5px;}
+
+/* download */
+.dl{margin:34px 0 14px; display:flex; flex-direction:column; align-items:center; gap:12px;}
+.btn-dl{
+  display:inline-flex; align-items:center; gap:13px;
+  background:linear-gradient(135deg,#ffd486,#e8951a);
+  color:#221603; font-weight:700; font-size:17px;
+  padding:16px 30px; border-radius:14px; text-decoration:none;
+  box-shadow:0 12px 34px rgba(232,162,58,.32), inset 0 1px 0 rgba(255,255,255,.4);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn-dl:hover{transform:translateY(-2px); box-shadow:0 18px 44px rgba(232,162,58,.42), inset 0 1px 0 rgba(255,255,255,.4);}
+.btn-dl.disabled{background:#2a3346; color:var(--faint); box-shadow:none; pointer-events:none;}
+.btn-dl svg{width:20px; height:20px;}
+.meta{display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:center; color:var(--faint); font-size:13px; font-family:'JetBrains Mono',monospace;}
+.meta .dot{width:4px; height:4px; border-radius:50%; background:var(--faint);}
+.badge{display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:12px;}
+
+/* sections */
+section{padding:54px 0;}
+.sec-label{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:3px; color:var(--faint); text-transform:uppercase; margin-bottom:8px;}
+.sec-title{font-size:clamp(24px,4vw,32px); font-weight:700; letter-spacing:-.5px; margin-bottom:30px;}
+
+/* features */
+.features{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:24px; transition:border-color .2s ease, transform .2s ease;}
+.card:hover{border-color:var(--line); transform:translateY(-3px);}
+.tile{width:38px; height:38px; border-radius:11px; margin-bottom:15px; box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
+.tile.amber{background:linear-gradient(160deg,#ffd486,#e89220);}
+.tile.blue{background:linear-gradient(160deg,#8cc0ff,#2c6ad8);}
+.tile.teal{background:linear-gradient(160deg,#93f1e8,#169aa2);}
+.tile.purple{background:linear-gradient(160deg,#cb9dff,#6a36d6);}
+.card h3{font-size:17px; font-weight:650; margin-bottom:6px;}
+.card p{color:var(--muted); font-size:14.5px;}
+
+/* whats new */
+.whatsnew{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:28px 30px;}
+.whatsnew .row{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:18px;}
+.whatsnew .ver{font-size:22px; font-weight:700;}
+.whatsnew .when{font-family:'JetBrains Mono',monospace; color:var(--faint); font-size:13px;}
+.notes{list-style:none; display:flex; flex-direction:column; gap:9px;}
+.notes li{display:flex; gap:11px; color:var(--muted); font-size:14.5px;}
+.notes li::before{content:""; flex:none; width:6px; height:6px; border-radius:50%; margin-top:9px; background:linear-gradient(135deg,#ffd486,#e8951a);}
+
+/* footer */
+footer{border-top:1px solid var(--line2); padding:30px 0 50px; text-align:center; color:var(--faint); font-size:13px;}
+footer .fbrand{color:var(--muted); font-weight:600;}
+
+@media(max-width:680px){
+  .features{grid-template-columns:1fr;}
+  nav{padding:18px 20px;}
+  .nav-right .navlink{display:none;}
+  .hero{padding:48px 0 30px;}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<nav>
+  <div class="brand"><img src="icon.png" alt="SupportDeck"><b>SupportDeck</b></div>
+  <div class="nav-right">
+    <a class="navlink" href="#features" data-i18n="nav_features">기능</a>
+    <a class="navlink" href="#download" data-i18n="nav_download">다운로드</a>
+    <div class="lang">
+      <button id="lang-ko" class="on" onclick="setLang('ko')">KO</button>
+      <button id="lang-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="hero" id="download">
+    <img class="hero-icon" src="icon.png" alt="SupportDeck">
+    <h1>SupportDeck</h1>
+    <p class="tag" data-i18n="tag">데스크톱 어디서나, 자주 쓰는 것들을 한 번에.</p>
+    <p class="sub" data-i18n="sub">빠른 실행 버튼을 모아두는 가벼운 데스크톱 위젯.</p>
+
+    <div class="dl">
+      <a id="dlBtn" class="btn-dl disabled" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M5 21h14"/></svg>
+        <span id="dlText" data-i18n="loading">최신 버전 확인 중…</span>
+      </a>
+      <div class="meta">
+        <span class="badge">⊞ <span data-i18n="os">Windows 10 / 11</span></span>
+        <span id="metaVer"></span>
+        <span class="dot" id="metaSep1" style="display:none"></span>
+        <span id="metaSize"></span>
+        <span class="dot"></span>
+        <span data-i18n="free">무료 · 설치형</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="sec-label" data-i18n="feat_label">FEATURES</div>
+    <h2 class="sec-title" data-i18n="feat_title">필요한 건 한 번의 클릭으로</h2>
+    <div class="features">
+      <div class="card"><div class="tile amber"></div><h3 data-i18n="f1_t">빠른 실행 덱</h3><p data-i18n="f1_d">자주 쓰는 앱·파일·폴더·URL을 버튼으로 모아 한 번에 실행해요.</p></div>
+      <div class="card"><div class="tile blue"></div><h3 data-i18n="f2_t">드래그앤드롭</h3><p data-i18n="f2_d">파일이나 링크를 위젯에 끌어다 놓으면 바로 바로가기가 추가돼요.</p></div>
+      <div class="card"><div class="tile teal"></div><h3 data-i18n="f3_t">가장자리 최소화</h3><p data-i18n="f3_d">화면 가장자리로 살짝 숨겼다가, 마우스를 가져가면 쏙 나타나요.</p></div>
+      <div class="card"><div class="tile purple"></div><h3 data-i18n="f4_t">항상 위 · 테마</h3><p data-i18n="f4_d">항상 위 고정, 투명도, 다양한 테마로 내 스타일대로 꾸며요.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label" data-i18n="new_label">RELEASE</div>
+    <h2 class="sec-title" data-i18n="whatsnew">새로운 버전</h2>
+    <div class="whatsnew">
+      <div class="row">
+        <div class="ver" id="nnVer">—</div>
+        <div class="when" id="nnDate"></div>
+      </div>
+      <ul class="notes" id="nnNotes"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div><span class="fbrand">SupportDeck</span> · <span data-i18n="footer">빠른 실행 데스크톱 위젯</span></div>
+  <div style="margin-top:6px; opacity:.7;">© 2026 · <span data-i18n="footer2">Windows 전용</span></div>
+</footer>
+
+<script>
+// ── 설정: latest.json 위치 (Pages 같은 폴더에 두면 'latest.json',
+//    R2에 두면 전체 URL로 바꾸기) ──────────────────────────
+const CONFIG = {
+  manifestUrl: 'latest.json',
+  fallback: { version: null, url: null }
+};
+
+const I18N = {
+  ko:{
+    nav_features:'기능', nav_download:'다운로드',
+    tag:'데스크톱 어디서나, 자주 쓰는 것들을 한 번에.',
+    sub:'빠른 실행 버튼을 모아두는 가벼운 데스크톱 위젯.',
+    loading:'최신 버전 확인 중…', download:'다운로드', soon:'곧 제공 예정',
+    os:'Windows 10 / 11', free:'무료 · 설치형',
+    feat_label:'FEATURES', feat_title:'필요한 건 한 번의 클릭으로',
+    f1_t:'빠른 실행 덱', f1_d:'자주 쓰는 앱·파일·폴더·URL을 버튼으로 모아 한 번에 실행해요.',
+    f2_t:'드래그앤드롭', f2_d:'파일이나 링크를 위젯에 끌어다 놓으면 바로 바로가기가 추가돼요.',
+    f3_t:'가장자리 최소화', f3_d:'화면 가장자리로 살짝 숨겼다가, 마우스를 가져가면 쏙 나타나요.',
+    f4_t:'항상 위 · 테마', f4_d:'항상 위 고정, 투명도, 다양한 테마로 내 스타일대로 꾸며요.',
+    new_label:'RELEASE', whatsnew:'새로운 버전',
+    footer:'빠른 실행 데스크톱 위젯', footer2:'Windows 전용'
+  },
+  en:{
+    nav_features:'Features', nav_download:'Download',
+    tag:'Everything you reach for, one click away.',
+    sub:'A lightweight desktop widget that gathers your quick-launch buttons.',
+    loading:'Checking latest version…', download:'Download', soon:'Coming soon',
+    os:'Windows 10 / 11', free:'Free · Installer',
+    feat_label:'FEATURES', feat_title:'What you need, one click away',
+    f1_t:'Quick-launch deck', f1_d:'Collect your apps, files, folders and URLs into buttons and launch in one click.',
+    f2_t:'Drag & drop', f2_d:'Drop a file or link onto the widget to instantly add a shortcut.',
+    f3_t:'Edge-minimize', f3_d:'Tuck it to the screen edge — it slides out when your cursor comes near.',
+    f4_t:'Always on top · Themes', f4_d:'Pin on top, adjust opacity, and style it with themes your way.',
+    new_label:'RELEASE', whatsnew:"What's new",
+    footer:'Quick-launch desktop widget', footer2:'Windows only'
+  }
+};
+
+let LANG = 'ko';
+let MANIFEST = null;
+
+function setLang(l){
+  LANG = l;
+  document.documentElement.lang = l;
+  document.getElementById('lang-ko').classList.toggle('on', l==='ko');
+  document.getElementById('lang-en').classList.toggle('on', l==='en');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    if(I18N[l][k]!==undefined) el.textContent = I18N[l][k];
+  });
+  renderManifest();  // 버튼/노트는 언어별로 다시
+}
+
+function renderManifest(){
+  const t = I18N[LANG];
+  const btn = document.getElementById('dlBtn');
+  const txt = document.getElementById('dlText');
+  const nnVer = document.getElementById('nnVer');
+  const nnDate = document.getElementById('nnDate');
+  const nnNotes = document.getElementById('nnNotes');
+  const metaVer = document.getElementById('metaVer');
+  const metaSize = document.getElementById('metaSize');
+  const metaSep1 = document.getElementById('metaSep1');
+
+  if(MANIFEST && MANIFEST.url){
+    btn.classList.remove('disabled');
+    btn.href = MANIFEST.url;
+    txt.textContent = t.download + (MANIFEST.version ? '  v' + MANIFEST.version : '');
+    metaVer.textContent = MANIFEST.version ? 'v' + MANIFEST.version : '';
+    if(MANIFEST.size){ metaSize.textContent = MANIFEST.size; metaSep1.style.display='inline-block'; }
+    nnVer.textContent = MANIFEST.version ? 'v' + MANIFEST.version : '—';
+    nnDate.textContent = MANIFEST.date || '';
+    const notes = (LANG==='en' ? MANIFEST.notes_en : MANIFEST.notes_ko) || MANIFEST.notes_ko || MANIFEST.notes_en || [];
+    nnNotes.innerHTML = '';
+    notes.forEach(n=>{ const li=document.createElement('li'); li.textContent=n; nnNotes.appendChild(li); });
+  } else {
+    btn.classList.add('disabled');
+    btn.href = '#';
+    txt.textContent = t.soon;
+    nnVer.textContent = '—';
+  }
+}
+
+async function loadManifest(){
+  try{
+    const r = await fetch(CONFIG.manifestUrl, {cache:'no-store'});
+    if(!r.ok) throw 0;
+    MANIFEST = await r.json();
+  }catch(e){
+    MANIFEST = CONFIG.fallback;
+  }
+  renderManifest();
+}
+
+// 브라우저 언어 감지 (영어권이면 EN)
+if((navigator.language||'').toLowerCase().indexOf('ko')!==0){ LANG='en'; }
+setLang(LANG);
+loadManifest();
+</script>
+</body>
+</html>

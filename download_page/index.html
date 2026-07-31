@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SupportDeck — 빠른 실행 위젯</title>
+<meta name="description" content="자주 쓰는 앱·파일·폴더·URL을 버튼으로 모아두는 가벼운 데스크톱 위젯. Windows용 무료 다운로드.">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="SupportDeck">
+<meta property="og:description" content="데스크톱 어디서나, 자주 쓰는 것들을 한 번에.">
+<meta property="og:image" content="icon.png">
+<!-- 테마 조기 적용(FOUC 방지): 낮(7~19시)=day, 그 외=night, 저장값 우선 -->
+<script>(function(){try{var s=localStorage.getItem('sd_theme');var h=new Date().getHours();var t=(s==='day'||s==='night')?s:((h>=7&&h<19)?'day':'night');document.documentElement.classList.add(t);}catch(e){document.documentElement.classList.add('night');}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── 공통(레이아웃) ───────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;transition:background .55s ease,color .55s ease;}
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;transition:background .55s ease;}
+.blob{position:absolute;width:48vw;height:48vw;border-radius:50%;filter:blur(90px);opacity:.55;mix-blend-mode:screen;}
+.b1{background:#e8951a;top:-12%;left:-8%;animation:drift1 18s ease-in-out infinite;}
+.b2{background:#2c6ad8;top:-6%;right:-10%;animation:drift2 22s ease-in-out infinite;}
+.b3{background:#169aa2;bottom:-18%;left:18%;animation:drift3 20s ease-in-out infinite;}
+.b4{background:#6a36d6;bottom:-14%;right:-6%;animation:drift1 24s ease-in-out infinite reverse;}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,8%) scale(1.12)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-7%,6%) scale(1.08)}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(5%,-7%) scale(1.15)}}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px;}
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;max-width:1040px;margin:0 auto;}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:18px;letter-spacing:-.3px;}
+.brand img{width:34px;height:34px;border-radius:9px;}
+.nav-right{display:flex;align-items:center;gap:16px;}
+.nav-right a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;}
+.nav-right a:hover{color:var(--text);}
+.ctrls{display:flex;align-items:center;gap:10px;}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
+.lang button{background:none;border:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;padding:6px 12px;cursor:pointer;}
+.themebtn{width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:15px;line-height:1;transition:color .2s,border-color .2s;}
+.themebtn:hover{color:var(--text);}
+.hero{text-align:center;padding:70px 0 40px;}
+.hero-icon{width:150px;height:150px;border-radius:34px;animation:float 6s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.hero h1{font-size:clamp(40px,7.2vw,68px);font-weight:900;letter-spacing:-1.8px;margin:24px 0 8px;}
+.hero .tag{font-size:clamp(17px,2.6vw,22px);font-weight:600;}
+.hero .sub{color:var(--muted);margin-top:8px;}
+.dl{margin:32px 0 12px;display:flex;flex-direction:column;align-items:center;gap:13px;}
+.btn-dl{display:inline-flex;align-items:center;gap:13px;font-weight:800;font-size:17px;padding:16px 30px;border-radius:14px;text-decoration:none;transition:transform .15s,box-shadow .15s,background .4s,color .4s;}
+.btn-dl:hover{transform:translateY(-2px);}
+.btn-dl.disabled{pointer-events:none;}
+.btn-dl svg{width:20px;height:20px;}
+.meta{display:flex;gap:13px;align-items:center;flex-wrap:wrap;justify-content:center;color:var(--faint);font-size:13px;font-family:'JetBrains Mono',monospace;}
+.meta .dot{width:4px;height:4px;border-radius:50%;background:var(--faint);}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px;}
+section{padding:54px 0;}
+.sec-label{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--faint);text-transform:uppercase;margin-bottom:8px;}
+.sec-title{font-size:clamp(24px,4vw,32px);font-weight:800;letter-spacing:-.5px;margin-bottom:30px;}
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.card{border-radius:18px;padding:26px;transition:transform .2s,box-shadow .2s,border-color .2s,background .4s;}
+.card:hover{transform:translateY(-4px);}
+.tile{width:40px;height:40px;border-radius:12px;margin-bottom:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
+.tile.amber{background:linear-gradient(160deg,#ffd486,#e89220);}
+.tile.blue{background:linear-gradient(160deg,#8cc0ff,#2c6ad8);}
+.tile.teal{background:linear-gradient(160deg,#93f1e8,#169aa2);}
+.tile.purple{background:linear-gradient(160deg,#cb9dff,#6a36d6);}
+.card h3{font-size:17px;font-weight:700;margin-bottom:6px;}
+.card p{color:var(--muted);font-size:14.5px;}
+.whatsnew{border-radius:18px;padding:28px 30px;transition:background .4s,border-color .4s;}
+.whatsnew .row{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.whatsnew .ver{font-size:22px;font-weight:800;}
+.whatsnew .when{font-family:'JetBrains Mono',monospace;color:var(--faint);font-size:13px;}
+.notes{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.notes li{display:flex;gap:11px;color:var(--muted);font-size:14.5px;}
+.notes li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;margin-top:9px;}
+footer{border-top:1px solid var(--line);padding:30px 0 50px;text-align:center;color:var(--faint);font-size:13px;}
+footer .fbrand{color:var(--muted);font-weight:700;text-decoration:none;cursor:pointer;transition:color .15s;}
+footer a.fbrand:hover{color:var(--text);}
+@media(max-width:680px){.features{grid-template-columns:1fr;}.nav-right .navlink{display:none;}}
+
+/* ── ☀ DAY (Daylight) ─────────────────────────── */
+.day{--text:#10182a;--muted:#5b6678;--faint:#94a0b3;--line:#e7ebf2;}
+.day body{background:#f7f9fd;}
+.day .bg{background:radial-gradient(900px 520px at 50% -8%,#e9efff 0,transparent 60%),radial-gradient(700px 500px at 90% 10%,#fdf1e2 0,transparent 55%),#f7f9fd;}
+.day .blob{display:none;}
+.day .brand img{box-shadow:0 4px 14px rgba(20,30,60,.18);}
+.day .lang button.on{background:#10182a;color:#fff;}
+.day .hero-icon{box-shadow:0 30px 60px rgba(30,40,80,.22);}
+.day .hero h1{color:#10182a;}
+.day .btn-dl{background:#10182a;color:#fff;box-shadow:0 14px 30px rgba(16,24,42,.25);}
+.day .btn-dl:hover{box-shadow:0 20px 40px rgba(16,24,42,.32);}
+.day .btn-dl.disabled{background:#dce2ec;color:var(--faint);box-shadow:none;}
+.day .badge{background:#fff;}
+.day .card{background:#fff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(30,40,80,.05);}
+.day .card:hover{box-shadow:0 16px 36px rgba(30,40,80,.1);}
+.day .whatsnew{background:#fff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(30,40,80,.05);}
+.day .notes li::before{background:#e8951a;}
+
+/* ── ☾ NIGHT (Prism) ──────────────────────────── */
+.night{--text:#f3f5fb;--muted:#aeb6cc;--faint:#7c85a0;--line:rgba(255,255,255,.12);}
+.night body{background:#070912;}
+.night .bg{background:#070912;}
+.night .bg::after{content:"";position:absolute;inset:0;background:radial-gradient(1100px 700px at 50% 120%,rgba(7,9,18,.85),transparent 70%);}
+.night .brand img{box-shadow:0 6px 20px rgba(0,0,0,.4);}
+.night .lang button.on{background:rgba(255,255,255,.16);color:#fff;}
+.night .hero-icon{filter:drop-shadow(0 0 50px rgba(120,150,255,.4)) drop-shadow(0 20px 40px rgba(0,0,0,.5));}
+.night .hero h1{background:linear-gradient(100deg,#ffd486,#8cc0ff 40%,#93f1e8 65%,#cb9dff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.night .btn-dl{background:linear-gradient(100deg,#ffd486,#a8b8ff 55%,#cb9dff);color:#0f1424;box-shadow:0 0 36px rgba(150,170,255,.45),inset 0 1px 0 rgba(255,255,255,.5);}
+.night .btn-dl:hover{box-shadow:0 0 52px rgba(150,170,255,.6),inset 0 1px 0 rgba(255,255,255,.5);}
+.night .btn-dl.disabled{background:rgba(255,255,255,.1);color:var(--faint);box-shadow:none;}
+.night .card,.night .whatsnew{background:rgba(255,255,255,.055);border:1px solid var(--line);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);}
+.night .card:hover{border-color:rgba(255,255,255,.22);}
+.night .tile{box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 22px rgba(255,255,255,.14);}
+.night .notes li::before{background:linear-gradient(135deg,#8cc0ff,#cb9dff);}
+/* ── 설치 안내 (접이식) ── */
+.helpbox{max-width:520px;margin:20px auto 0;text-align:left;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(240,168,74,.07);transition:border-color .2s,background .4s;}
+.helpbox.open{border-color:#f0a84a;}
+.help-toggle{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:none;cursor:pointer;padding:13px 16px;font:inherit;font-size:14px;font-weight:700;color:var(--text);}
+.help-toggle:hover{background:rgba(240,168,74,.07);}
+.help-ic{font-size:16px;line-height:1;}
+.help-arrow{margin-left:auto;color:var(--faint);font-size:12px;transition:transform .25s;}
+.helpbox.open .help-arrow{transform:rotate(180deg);}
+/* ── 다운로드 안내 팝업 ── */
+.dlmodal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,8,18,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.dlmodal.open{display:flex;animation:dlmFade .18s ease;}
+@keyframes dlmFade{from{opacity:0}to{opacity:1}}
+.dlmodal-card{width:min(480px,100%);max-height:86vh;overflow-y:auto;border-radius:18px;padding:22px 22px 18px;border:1px solid var(--line);text-align:left;animation:dlmPop .22s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes dlmPop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.day .dlmodal-card{background:#fff;box-shadow:0 30px 80px rgba(16,24,42,.35);}
+.night .dlmodal-card{background:#12172a;box-shadow:0 30px 80px rgba(0,0,0,.6);}
+.dlmodal-head{display:flex;gap:12px;align-items:flex-start;}
+.dlmodal-ic{font-size:26px;line-height:1.2;}
+.dlmodal-title{font-size:17px;font-weight:800;}
+.dlmodal-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+.dlmodal-x{margin-left:auto;flex:0 0 auto;background:transparent;border:1px solid var(--line);border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:13px;padding:0;}
+.dlmodal-x:hover{color:var(--text);border-color:var(--faint);}
+.dlmodal-step{display:flex;gap:12px;margin-top:16px;}
+.dlmodal-n{flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#f0a84a;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.dlmodal-step .help-h{font-weight:700;font-size:14px;color:var(--text);}
+.dlmodal-step .help-p{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.55;}
+.dlmodal-body .help-note{margin-top:16px;font-size:12px;color:var(--faint);line-height:1.55;}
+.dlmodal-ok{margin-top:18px;width:100%;padding:11px;border:none;border-radius:12px;cursor:pointer;font:inherit;font-size:14px;font-weight:700;}
+.day .dlmodal-ok{background:#10182a;color:#fff;}
+.night .dlmodal-ok{background:linear-gradient(100deg,#ffd486,#a8b8ff 55%,#cb9dff);color:#0f1424;}
+.dlmodal-ok:hover{filter:brightness(1.08);}
+.help-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.helpbox.open .help-body{max-height:820px;}
+.help-inner{padding:2px 16px 16px;}
+.help-item{margin-top:12px;}
+.help-h{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.help-p{font-size:13px;color:var(--muted);line-height:1.6;}
+.help-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.6;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fd652ab84e094802b1f46aad87b60c1a"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+<nav>
+  <div class="brand"><img src="icon.png" alt=""><span>SupportDeck</span></div>
+  <div class="nav-right">
+    <a class="navlink" href="#features" data-i18n="nav_features">기능</a>
+    <a class="navlink" href="#download" data-i18n="nav_download">다운로드</a>
+    <div class="ctrls">
+      <button class="themebtn" id="themeBtn" onclick="toggleTheme()" title="테마 전환">☾</button>
+      <div class="lang"><button id="lang-ko" class="on" onclick="setLang('ko')">KO</button><button id="lang-en" onclick="setLang('en')">EN</button></div>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <section class="hero" id="download">
+    <img class="hero-icon" src="icon.png" alt="SupportDeck">
+    <h1>SupportDeck</h1>
+    <p class="tag" data-i18n="tag">데스크톱 어디서나, 자주 쓰는 것들을 한 번에.</p>
+    <p class="sub" data-i18n="sub">빠른 실행 버튼을 모아두는 가벼운 데스크톱 위젯.</p>
+    <div class="dl">
+      <a id="dlBtn" class="btn-dl disabled" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M5 21h14"/></svg>
+        <span id="dlText" data-i18n="loading">최신 버전 확인 중…</span>
+      </a>
+      <div class="meta">
+        <span class="badge">⊞ <span data-i18n="os">Windows 10 / 11</span></span>
+        <span id="metaVer"></span><span class="dot" id="metaSep1" style="display:none"></span><span id="metaSize"></span>
+        <span class="dot"></span><span data-i18n="free">무료 · 설치형</span>
+      </div>
+    </div>
+    <div class="helpbox" id="helpBox">
+      <button class="help-toggle" type="button" onclick="toggleHelp()">
+        <span class="help-ic">🛡️</span>
+        <span data-i18n="help_title">다운로드나 설치가 막히나요? 여기를 눌러 주세요</span>
+        <span class="help-arrow">▾</span>
+      </button>
+      <div class="help-body"><div class="help-inner">
+        <div class="help-item">
+          <div class="help-h" data-i18n="help_b_h">브라우저에서 다운로드가 막힐 때</div>
+          <div class="help-p" data-i18n="help_b_p"></div>
+        </div>
+        <div class="help-item">
+          <div class="help-h" data-i18n="help_w_h">Windows 보호 안내 창이 뜰 때</div>
+          <div class="help-p" data-i18n="help_w_p"></div>
+        </div>
+        <div class="help-note" data-i18n="help_note"></div>
+      </div></div>
+    </div>
+  </section>
+  <section id="features">
+    <div class="sec-label" data-i18n="feat_label">FEATURES</div>
+    <h2 class="sec-title" data-i18n="feat_title">필요한 건 한 번의 클릭으로</h2>
+    <div class="features">
+      <div class="card"><div class="tile amber"></div><h3 data-i18n="f1_t"></h3><p data-i18n="f1_d"></p></div>
+      <div class="card"><div class="tile blue"></div><h3 data-i18n="f2_t"></h3><p data-i18n="f2_d"></p></div>
+      <div class="card"><div class="tile teal"></div><h3 data-i18n="f3_t"></h3><p data-i18n="f3_d"></p></div>
+      <div class="card"><div class="tile purple"></div><h3 data-i18n="f4_t"></h3><p data-i18n="f4_d"></p></div>
+    </div>
+  </section>
+  <section>
+    <div class="sec-label" data-i18n="new_label">RELEASE</div>
+    <h2 class="sec-title" data-i18n="whatsnew">새로운 버전</h2>
+    <div class="whatsnew">
+      <div class="row"><div class="ver" id="nnVer">—</div><div class="when" id="nnDate"></div></div>
+      <ul class="notes" id="nnNotes"></ul>
+      <div class="hash" id="nnHash" style="display:none;margin-top:14px;font-size:11px;line-height:1.5;opacity:.55;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"><span data-i18n="sha_label">SHA-256</span> · <span id="nnHashVal"></span></div>
+    </div>
+  </section>
+</main>
+<footer><div><a class="fbrand" href="/stats" title="다운로드 통계">SupportDeck</a> · <span data-i18n="footer">빠른 실행 데스크톱 위젯</span></div></footer>
+<!-- 다운로드 시작 시 안내 팝업 (스마트스크린/브라우저 차단 대처법) -->
+<div class="dlmodal" id="dlModal" role="dialog" aria-modal="true" aria-labelledby="dlmTitle" onclick="if(event.target===this)closeDlModal()">
+  <div class="dlmodal-card">
+    <div class="dlmodal-head">
+      <span class="dlmodal-ic">⬇️</span>
+      <div>
+        <div class="dlmodal-title" id="dlmTitle" data-i18n="dlpop_title">다운로드가 시작됐어요!</div>
+        <div class="dlmodal-sub" data-i18n="dlpop_sub">받는 동안, 차단 안내가 떠도 당황하지 않도록 두 가지만 미리 알려드릴게요.</div>
+      </div>
+      <button class="dlmodal-x" type="button" onclick="closeDlModal()" aria-label="닫기">✕</button>
+    </div>
+    <div class="dlmodal-body">
+      <div class="dlmodal-step">
+        <div class="dlmodal-n">1</div>
+        <div>
+          <div class="help-h" data-i18n="help_b_h">브라우저에서 다운로드가 막힐 때</div>
+          <div class="help-p" data-i18n="help_b_p"></div>
+        </div>
+      </div>
+      <div class="dlmodal-step">
+        <div class="dlmodal-n">2</div>
+        <div>
+          <div class="help-h" data-i18n="help_w_h">Windows 보호 안내 창이 뜰 때</div>
+          <div class="help-p" data-i18n="help_w_p"></div>
+        </div>
+      </div>
+      <div class="help-note" data-i18n="help_note"></div>
+    </div>
+    <button class="dlmodal-ok" type="button" onclick="closeDlModal()" data-i18n="dlpop_ok">확인했어요</button>
+  </div>
+</div>
+<script>
+const CONFIG={manifestUrl:'https://pub-52f656e472a74341bc85f2dae0be8e3f.r2.dev/latest.json',fallback:{version:null,url:null}};
+const I18N={
+ ko:{nav_features:'기능',nav_download:'다운로드',tag:'데스크톱 어디서나, 자주 쓰는 것들을 한 번에.',sub:'빠른 실행 버튼을 모아두는 가벼운 데스크톱 위젯.',loading:'최신 버전 확인 중…',download:'다운로드',soon:'곧 제공 예정',os:'Windows 10 / 11',free:'무료 · 설치형',feat_label:'FEATURES',feat_title:'필요한 건 한 번의 클릭으로',f1_t:'빠른 실행 덱',f1_d:'자주 쓰는 앱·파일·폴더·URL을 버튼으로 모아 한 번에 실행해요.',f2_t:'드래그앤드롭',f2_d:'파일이나 링크를 위젯에 끌어다 놓으면 바로 바로가기가 추가돼요.',f3_t:'가장자리 최소화',f3_d:'화면 가장자리로 살짝 숨겼다가, 마우스를 가져가면 쏙 나타나요.',f4_t:'항상 위 · 테마',f4_d:'항상 위 고정, 투명도, 다양한 테마로 내 스타일대로 꾸며요.',new_label:'RELEASE',whatsnew:'새로운 버전',footer:'빠른 실행 데스크톱 위젯',help_title:'다운로드나 설치가 막히나요? 여기를 눌러 주세요',help_b_h:'브라우저에서 다운로드가 막힐 때',help_b_p:'SupportDeck은 아직 코드 서명이 없어 일부 브라우저가 다운로드를 주의로 표시할 수 있습니다. 다운로드 막대나 다운로드 목록에서 “유지” 또는 “계속”을 눌러 주시면 정상적으로 받아집니다.',help_w_h:'Windows 보호 안내 창이 뜰 때',help_w_p:'설치를 실행할 때 “Windows의 PC 보호” 창이 나타나면, “추가 정보”를 누른 뒤 “실행”을 선택해 주세요. 서명되지 않은 새 프로그램에서 흔히 나타나는 정상적인 안내입니다.',help_note:'이 경고들은 앱에 아직 코드 서명이 없어 표시되는 것으로, 파일 자체는 안전합니다. 원하시면 아래 SHA-256 값으로 받으신 파일이 변조되지 않았는지 직접 확인하실 수 있습니다. 이용해 주셔서 감사합니다.',dlpop_title:'다운로드가 시작됐어요!',dlpop_sub:'받는 동안, 차단 안내가 떠도 당황하지 않도록 두 가지만 미리 알려드릴게요.',dlpop_ok:'확인했어요'},
+ en:{nav_features:'Features',nav_download:'Download',tag:'Everything you reach for, one click away.',sub:'A lightweight desktop widget that gathers your quick-launch buttons.',loading:'Checking latest version…',download:'Download',soon:'Coming soon',os:'Windows 10 / 11',free:'Free · Installer',feat_label:'FEATURES',feat_title:'What you need, one click away',f1_t:'Quick-launch deck',f1_d:'Collect your apps, files, folders and URLs into buttons and launch in one click.',f2_t:'Drag & drop',f2_d:'Drop a file or link onto the widget to instantly add a shortcut.',f3_t:'Edge-minimize',f3_d:'Tuck it to the screen edge — it slides out when your cursor comes near.',f4_t:'Always on top · Themes',f4_d:'Pin on top, adjust opacity, and style it with themes your way.',new_label:'RELEASE',whatsnew:"What's new",footer:'Quick-launch desktop widget',help_title:'Download or install getting blocked? Please tap here',help_b_h:'If your browser blocks the download',help_b_p:'SupportDeck is not code-signed yet, so some browsers may flag the download. In the download bar or downloads list, please click “Keep” or “Continue” to finish downloading.',help_w_h:'If Windows shows a protection screen',help_w_p:'When you run the installer and the “Windows protected your PC” window appears, please click “More info” and then “Run anyway”. This is a normal notice for new, unsigned apps.',help_note:'These warnings appear only because the app is not code-signed yet, and the file itself is safe. If you like, you can verify the downloaded file against the SHA-256 value shown below. Thank you for using SupportDeck.',dlpop_title:'Your download has started!',dlpop_sub:'While it downloads, here are two things to know in case a warning appears.',dlpop_ok:'Got it'}
+};
+let LANG='ko',MANIFEST=null;
+
+function applyThemeIcon(){var night=document.documentElement.classList.contains('night');document.getElementById('themeBtn').textContent=night?'☀':'☾';}
+function setTheme(t){document.documentElement.classList.remove('day','night');document.documentElement.classList.add(t);applyThemeIcon();}
+function toggleTheme(){var cur=document.documentElement.classList.contains('night')?'night':'day';var nx=cur==='day'?'night':'day';try{localStorage.setItem('sd_theme',nx);}catch(e){}setTheme(nx);}
+function toggleHelp(){document.getElementById('helpBox').classList.toggle('open');}
+/* 다운로드 클릭 → 다운로드는 그대로 진행 + 차단 대처 안내 팝업 표시 */
+function openDlModal(){document.getElementById('dlModal').classList.add('open');}
+function closeDlModal(){document.getElementById('dlModal').classList.remove('open');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDlModal();});
+document.getElementById('dlBtn').addEventListener('click',function(e){
+  if(this.classList.contains('disabled')){e.preventDefault();return;}
+  openDlModal();  // preventDefault 안 함 — /dl로 다운로드는 계속 진행
+});
+
+function setLang(l){LANG=l;document.documentElement.lang=l;document.getElementById('lang-ko').classList.toggle('on',l==='ko');document.getElementById('lang-en').classList.toggle('on',l==='en');document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(I18N[l][k]!==undefined)el.textContent=I18N[l][k];});renderManifest();}
+function renderManifest(){const t=I18N[LANG],btn=document.getElementById('dlBtn'),txt=document.getElementById('dlText');
+ const SAFEURL=(MANIFEST&&typeof MANIFEST.url==='string'&&/^https:\/\//i.test(MANIFEST.url))?MANIFEST.url:null;
+ if(SAFEURL){btn.classList.remove('disabled');btn.href='/dl';btn.setAttribute('rel','noopener noreferrer');txt.textContent=t.download+(MANIFEST.version?'  v'+MANIFEST.version:'');document.getElementById('metaVer').textContent=MANIFEST.version?'v'+MANIFEST.version:'';if(MANIFEST.size){document.getElementById('metaSize').textContent=MANIFEST.size;document.getElementById('metaSep1').style.display='inline-block';}document.getElementById('nnVer').textContent=MANIFEST.version?'v'+MANIFEST.version:'—';document.getElementById('nnDate').textContent=MANIFEST.date||'';const notes=(LANG==='en'?MANIFEST.notes_en:MANIFEST.notes_ko)||MANIFEST.notes_ko||MANIFEST.notes_en||[];const ul=document.getElementById('nnNotes');ul.innerHTML='';notes.forEach(n=>{const li=document.createElement('li');li.textContent=n;ul.appendChild(li);});const hv=(MANIFEST.sha256&&/^[A-Fa-f0-9]{64}$/.test(MANIFEST.sha256))?MANIFEST.sha256.toLowerCase():'';const hd=document.getElementById('nnHash');if(hv){document.getElementById('nnHashVal').textContent=hv;hd.style.display='block';}else{hd.style.display='none';}}
+ else{btn.classList.add('disabled');btn.href='#';txt.textContent=t.soon;document.getElementById('nnVer').textContent='—';}}
+async function loadManifest(){try{const r=await fetch(CONFIG.manifestUrl,{cache:'no-store'});if(!r.ok)throw 0;MANIFEST=await r.json();}catch(e){MANIFEST=CONFIG.fallback;}renderManifest();}
+
+applyThemeIcon();
+if((navigator.language||'').toLowerCase().indexOf('ko')!==0){LANG='en';}
+setLang(LANG);
+loadManifest();
+</script>
+</body>
+</html>

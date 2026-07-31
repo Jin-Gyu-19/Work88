@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SupportDeck 사용 설명서</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --warn: #f0883e;
+    --danger: #f85149;
+    --text: #e6edf3;
+    --text-sub: #8b949e;
+    --purple: #a371f7;
+    --teal: #26a69a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; font-size:15px; }
+  .hero { background:#0d1117; border-bottom:1px solid var(--border); padding:60px 40px; text-align:center; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(ellipse at center,#58a6ff0d 0%,transparent 60%); pointer-events:none; }
+  .hero-icon { display:inline-flex; gap:6px; margin-bottom:24px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; }
+  .hero-icon span { width:20px; height:20px; border-radius:4px; display:inline-block; }
+  .hero h1 { font-size:42px; font-weight:700; color:var(--text); letter-spacing:-1px; margin-bottom:12px; }
+  .hero h1 span { color:var(--accent); }
+  .hero p { font-size:16px; color:var(--text-sub); }
+  .version-badge { display:inline-block; background:var(--accent); color:#000; font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px; margin-bottom:16px; font-family:Consolas,monospace; }
+  .container { max-width:860px; margin:0 auto; padding:0 24px; }
+  .toc { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:28px 32px; margin:40px 0; }
+  .toc h2 { font-size:13px; font-weight:700; color:var(--text-sub); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px; }
+  .toc-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .toc a { color:var(--accent); text-decoration:none; font-size:14px; padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:8px; }
+  .toc a:hover { background:var(--surface2); }
+  .toc-num { font-family:Consolas,monospace; font-size:11px; color:var(--text-sub); min-width:20px; }
+  .section { margin:48px 0; scroll-margin-top:24px; }
+  .section-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .section-num { font-family:Consolas,monospace; font-size:12px; color:var(--accent); background:#58a6ff15; border:1px solid #58a6ff33; padding:4px 10px; border-radius:20px; }
+  .section h2 { font-size:22px; font-weight:700; color:var(--text); }
+  .section p { color:var(--text-sub); margin-bottom:16px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 24px; margin-bottom:12px; }
+  .card h3 { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .card p { color:var(--text-sub); font-size:14px; margin:0; }
+  .card-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .btn-type { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px; position:relative; margin-bottom:10px; }
+  .btn-type::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; border-radius:2px 0 0 2px; }
+  .btn-type.blue::before   { background:var(--accent); }
+  .btn-type.green::before  { background:var(--accent2); }
+  .btn-type.orange::before { background:var(--warn); }
+  .btn-type.purple::before { background:var(--purple); }
+  .btn-type h3 { font-size:14px; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .btn-type p { color:var(--text-sub); font-size:13px; margin:0; }
+  .steps { margin:16px 0; }
+  .step { display:flex; gap:16px; margin-bottom:16px; align-items:flex-start; }
+  .step-num { min-width:28px; height:28px; background:var(--accent); color:#000; font-weight:700; font-size:13px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+  .step-content h4 { font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .step-content p { color:var(--text-sub); font-size:13px; margin:0; }
+  kbd { font-family:Consolas,monospace; font-size:12px; background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:2px 8px; color:var(--text); }
+  .tip { background:#58a6ff0d; border:1px solid #58a6ff33; border-radius:8px; padding:14px 18px; margin:16px 0; font-size:14px; color:var(--text-sub); display:flex; gap:10px; align-items:flex-start; }
+  .tip-icon { font-size:16px; margin-top:1px; }
+  .settings-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; }
+  .settings-table th { background:var(--surface2); color:var(--text-sub); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:10px 16px; text-align:left; border-bottom:1px solid var(--border); }
+  .settings-table td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--text-sub); vertical-align:top; }
+  .settings-table td:first-child { color:var(--text); font-weight:500; white-space:nowrap; }
+  .settings-table tr:last-child td { border-bottom:none; }
+  .settings-table tr:hover td { background:#ffffff05; }
+  .faq-item { background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden; }
+  .faq-q { padding:16px 20px; font-weight:700; font-size:14px; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .faq-q::before { content:'Q'; font-family:Consolas,monospace; font-size:12px; font-weight:700; color:#000; background:var(--accent); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .faq-a { padding:0 20px 16px 52px; font-size:13px; color:var(--text-sub); line-height:1.6; }
+  .shortcut-demo { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px 20px; margin:12px 0; font-size:13px; }
+  .shortcut-row { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); }
+  .shortcut-row:last-child { border-bottom:none; }
+  .shortcut-keys { min-width:180px; }
+  .shortcut-desc { color:var(--text-sub); }
+  .icon-row { display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; }
+  .icon-btn { display:inline-flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:13px; color:var(--text); }
+  hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
+  footer { border-top:1px solid var(--border); padding:32px 40px; text-align:center; color:var(--text-sub); font-size:13px; margin-top:60px; }
+  footer strong { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">
+    <span style="background:#f0883e"></span>
+    <span style="background:#a371f7"></span>
+    <span style="background:#3fb950"></span>
+    <span style="background:#26a69a"></span>
+  </div>
+  <div class="version-badge">v1.0.0</div>
+  <h1><span>Support</span>Deck</h1>
+  <p>윈도우용 개인 단축키 대시보드 위젯 사용 설명서</p>
+  <p style="margin-top:8px;font-size:13px;">제작: KTY</p>
+</div>
+
+<div class="container">
+
+  <div class="toc">
+    <h2>목차</h2>
+    <div class="toc-grid">
+      <a href="#intro"><span class="toc-num">01</span>SupportDeck 소개</a>
+      <a href="#install"><span class="toc-num">02</span>설치 방법</a>
+      <a href="#basic"><span class="toc-num">03</span>기본 사용법</a>
+      <a href="#buttons"><span class="toc-num">04</span>버튼 종류 및 액션</a>
+      <a href="#shortcut"><span class="toc-num">05</span>단축키 버튼 설정</a>
+      <a href="#settings"><span class="toc-num">06</span>설정 방법</a>
+      <a href="#layout"><span class="toc-num">07</span>Button Layout 백업</a>
+      <a href="#faq"><span class="toc-num">08</span>자주 묻는 질문</a>
+    </div>
+  </div>
+
+  <div class="section" id="intro">
+    <div class="section-header"><span class="section-num">01</span><h2>SupportDeck 소개</h2></div>
+    <p>SupportDeck은 자주 사용하는 프로그램, 폴더, 웹사이트, 단축키를 버튼 하나로 실행할 수 있는 윈도우용 단축키 대시보드입니다.</p>
+    <div class="card-grid">
+      <div class="card"><h3>🖱️ 원클릭 실행</h3><p>버튼 하나로 앱, 폴더, 웹사이트, 단축키를 즉시 실행합니다.</p></div>
+      <div class="card"><h3>📌 항상 최상단</h3><p>다른 창 위에 항상 떠 있어 언제든 바로 사용 가능합니다.</p></div>
+      <div class="card"><h3>🎨 완전한 커스터마이징</h3><p>버튼 이름, 아이콘, 색상을 자유롭게 변경할 수 있습니다.</p></div>
+      <div class="card"><h3>⊞ 버튼 그룹</h3><p>관련 버튼을 그룹으로 묶어 깔끔하게 정리할 수 있습니다.</p></div>
+    </div>
+  </div>
+
+  <div class="section" id="install">
+    <div class="section-header"><span class="section-num">02</span><h2>설치 방법</h2></div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-content"><h4>설치 파일 실행</h4><p><kbd>SupportDeck_Setup_v1.0.0.exe</kbd> 파일을 더블클릭하여 실행합니다.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content"><h4>설치 옵션 선택</h4><p>바탕화면 바로가기, 시작 메뉴 등록, Windows 시작 시 자동 실행 여부를 선택합니다.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-content"><h4>설치 완료</h4><p>설치가 완료되면 SupportDeck이 자동으로 실행됩니다.</p></div></div>
+    </div>
+    <div class="tip"><span class="tip-icon">💡</span><span>설치 시 백신 프로그램이 검사를 진행할 수 있습니다. 검사 완료 후 이상 없음 판정이 나오면 정상적으로 사용 가능합니다.</span></div>
+  </div>
+
+  <div class="section" id="basic">
+    <div class="section-header"><span class="section-num">03</span><h2>기본 사용법</h2></div>
+    <div class="card" style="margin-bottom:20px;">
+      <h3>🖱️ 위젯 조작</h3>
+      <p style="margin-bottom:12px;">위젯 상단 헤더 영역을 드래그하면 화면 어디든 이동할 수 있습니다.</p>
+      <div class="icon-row">
+        <div class="icon-btn">⚙️ 설정</div>
+        <div class="icon-btn">📌 항상 위 고정</div>
+        <div class="icon-btn">— 트레이로 최소화</div>
+        <div class="icon-btn">✕ 종료</div>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div class="card"><h3>👆 버튼 클릭</h3><p>버튼을 클릭하면 설정된 액션이 실행됩니다.</p></div>
+      <div class="card"><h3>🖱️ 버튼 우클릭</h3><p>우클릭하면 편집/삭제 메뉴가 나타납니다. 편집 중인 버튼은 파란 테두리로 표시됩니다.</p></div>
+      <div class="card"><h3>✋ 버튼 드래그</h3><p>버튼을 드래그하여 원하는 위치로 이동할 수 있습니다.</p></div>
+      <div class="card"><h3>➕ 버튼 추가</h3><p>맨 마지막 <kbd>+</kbd> 버튼을 클릭하여 새 버튼을 추가합니다.</p></div>
+    </div>
+    <div class="tip"><span class="tip-icon">💡</span><span>트레이 아이콘을 더블클릭하면 숨겨진 위젯을 다시 표시할 수 있습니다.</span></div>
+  </div>
+
+  <div class="section" id="buttons">
+    <div class="section-header"><span class="section-num">04</span><h2>버튼 종류 및 액션</h2></div>
+    <p>+ 버튼을 클릭하면 추가할 버튼 종류를 선택할 수 있습니다.</p>
+    <div class="btn-type blue"><h3>🔧 커스터마이징</h3><p>다양한 액션을 설정할 수 있는 기본 버튼입니다. 이미지나 이모지 아이콘, 버튼 색상도 자유롭게 변경 가능합니다.</p></div>
+    <div class="btn-type green"><h3>⊞ 버튼 그룹</h3><p>여러 버튼을 하나의 그룹으로 묶습니다. 클릭하면 그룹 내 버튼들이 표시되며 ◀ 뒤로가기로 메인으로 돌아옵니다.</p></div>
+    <div class="btn-type orange"><h3>⏱️ 타이머</h3><p>카운트다운 타이머입니다. 클릭하면 시작/일시정지됩니다. 위젯당 1개만 추가 가능합니다.</p></div>
+    <div class="btn-type purple"><h3>🔢 카운터</h3><p>클릭할 때마다 숫자가 1씩 증가하는 카운터입니다. 위젯당 1개만 추가 가능합니다.</p></div>
+    <hr>
+    <h3 style="font-size:16px;margin-bottom:16px;">액션 타입 설명</h3>
+    <table class="settings-table">
+      <tr><th>액션 타입</th><th>설명</th><th>입력값 예시</th></tr>
+      <tr><td>🌐 URL 열기</td><td>브라우저로 웹사이트를 엽니다</td><td>https://www.google.com</td></tr>
+      <tr><td>📁 폴더 열기</td><td>탐색기로 폴더를 엽니다</td><td>%USERPROFILE%\Documents</td></tr>
+      <tr><td>⚡ 앱 실행</td><td>실행 파일을 실행합니다</td><td>C:\Program Files\...\app.exe</td></tr>
+      <tr><td>💻 CMD 실행</td><td>명령어를 실행합니다 (관리자 권한 옵션)</td><td>cmd.exe 또는 명령어 입력</td></tr>
+      <tr><td>📋 텍스트 복사</td><td>클립보드에 텍스트를 복사합니다</td><td>복사할 텍스트 입력</td></tr>
+      <tr><td>🖥️ 바탕화면 보기</td><td>Win+D와 동일하게 바탕화면을 표시합니다</td><td>입력값 없음</td></tr>
+      <tr><td>⌨️ 단축키</td><td>키보드 단축키를 실행합니다</td><td>ctrl+c, win+d, ctrl+shift+esc</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="shortcut">
+    <div class="section-header"><span class="section-num">05</span><h2>단축키 버튼 설정</h2></div>
+    <p>자주 쓰는 키보드 단축키를 버튼으로 만들어 클릭 한 번으로 실행할 수 있습니다.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-content"><h4>버튼 편집창 열기</h4><p>버튼 우클릭 → 편집 또는 + → 🔧 커스터마이징으로 새 버튼을 추가합니다.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content"><h4>액션 타입 선택</h4><p>액션 타입 드롭박스에서 <kbd>⌨️ 단축키</kbd>를 선택합니다.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-content"><h4>단축키 녹화</h4><p><kbd>🎯 눌러서 입력</kbd> 버튼을 클릭하면 <kbd>⏺ 키를 눌러주세요...</kbd> 상태로 바뀝니다. 이 상태에서 원하는 단축키를 누르면 자동으로 입력됩니다.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-content"><h4>저장</h4><p>✅ 저장 버튼을 클릭하면 단축키 버튼이 생성됩니다.</p></div></div>
+    </div>
+    <div class="shortcut-demo">
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>ctrl+c</kbd></div><div class="shortcut-desc">복사</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>ctrl+v</kbd></div><div class="shortcut-desc">붙여넣기</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>ctrl+z</kbd></div><div class="shortcut-desc">실행 취소</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>win+d</kbd></div><div class="shortcut-desc">바탕화면 보기</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>ctrl+shift+esc</kbd></div><div class="shortcut-desc">작업 관리자</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>win+e</kbd></div><div class="shortcut-desc">파일 탐색기</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>alt+f4</kbd></div><div class="shortcut-desc">현재 창 닫기</div></div>
+      <div class="shortcut-row"><div class="shortcut-keys"><kbd>f5</kbd></div><div class="shortcut-desc">새로고침</div></div>
+    </div>
+    <div class="tip"><span class="tip-icon">💡</span><span>지원 키: Ctrl, Shift, Alt, Win, A~Z, 0~9, F1~F12, Esc, Tab, Enter, Space, 방향키, Delete, Home, End 등</span></div>
+  </div>
+
+  <div class="section" id="settings">
+    <div class="section-header"><span class="section-num">06</span><h2>설정 방법</h2></div>
+    <p>헤더의 ⚙️ 버튼을 클릭하면 설정 창이 열립니다.</p>
+    <table class="settings-table" style="margin-top:16px;">
+      <tr><th>설정 항목</th><th>설명</th></tr>
+      <tr><td>테마</td><td>Dark, Midnight Blue, Forest Green, Crimson, Slate 중 선택합니다. 테마 변경 시 버튼 색상도 자동으로 맞춰집니다.</td></tr>
+      <tr><td>위젯 배경색</td><td>위젯의 배경색을 변경합니다. 프리셋 또는 🎨 버튼으로 커스텀 색상을 선택할 수 있습니다.</td></tr>
+      <tr><td>투명도</td><td>위젯의 투명도를 40~100% 사이로 조절합니다.</td></tr>
+      <tr><td>항상 위에 고정</td><td>체크하면 다른 창 위에 항상 표시됩니다.</td></tr>
+      <tr><td>작은 버튼 크기</td><td>버튼 크기를 100px에서 70px로 줄입니다. 아이콘과 이름만 표시됩니다.</td></tr>
+      <tr><td>Windows 시작 시 자동 실행</td><td>체크하면 Windows 부팅 시 SupportDeck이 자동으로 실행됩니다.</td></tr>
+      <tr><td>🔄 설정 초기화</td><td>위젯 배경색과 버튼 색상을 현재 테마 기본값으로 초기화합니다.</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="layout">
+    <div class="section-header"><span class="section-num">07</span><h2>Button Layout 백업 / 복원</h2></div>
+    <p>설정한 버튼 구성을 파일로 저장하고 불러올 수 있습니다. 저장 파일은 앱을 삭제해도 유지됩니다.</p>
+    <div class="card-grid">
+      <div class="card"><h3>📤 내보내기</h3><p>현재 버튼 구성을 <kbd>내 문서\SupportDeck\</kbd> 폴더에 JSON 파일로 저장합니다.</p></div>
+      <div class="card"><h3>📥 불러오기</h3><p>저장된 JSON 파일을 선택하여 버튼 구성을 복원합니다. 저장 버튼을 눌러야 적용됩니다.</p></div>
+    </div>
+    <div class="tip"><span class="tip-icon">💡</span><span>저장 경로: <kbd>C:\Users\사용자명\Documents\SupportDeck\layout_날짜시간.json</kbd> — 다른 PC에서도 같은 버튼 구성을 사용하려면 이 파일을 복사하면 됩니다.</span></div>
+  </div>
+
+  <div class="section" id="faq">
+    <div class="section-header"><span class="section-num">08</span><h2>자주 묻는 질문</h2></div>
+    <div class="faq-item"><div class="faq-q">위젯이 화면에서 사라졌어요.</div><div class="faq-a">작업 표시줄 오른쪽 트레이 영역에서 SupportDeck 아이콘을 더블클릭하면 다시 표시됩니다.</div></div>
+    <div class="faq-item"><div class="faq-q">버튼을 실수로 삭제했어요.</div><div class="faq-a">실행 취소 기능은 지원하지 않습니다. Button Layout을 미리 저장해두면 복원할 수 있습니다.</div></div>
+    <div class="faq-item"><div class="faq-q">CMD / PowerShell 관리자 권한 실행이 안 돼요.</div><div class="faq-a">버튼 편집창에서 <kbd>관리자 권한으로 실행</kbd> 체크박스를 활성화하세요.</div></div>
+    <div class="faq-item"><div class="faq-q">단축키 버튼이 작동하지 않아요.</div><div class="faq-a">지원되지 않는 키 조합일 수 있습니다. <kbd>🎯 눌러서 입력</kbd> 버튼으로 다시 녹화해보세요.</div></div>
+    <div class="faq-item"><div class="faq-q">버튼 이름이 한글로 입력이 안 돼요.</div><div class="faq-a">편집창이 열린 상태에서 입력란을 클릭 후 한/영 전환 키를 눌러 한글 입력 모드로 변경하세요.</div></div>
+    <div class="faq-item"><div class="faq-q">SupportDeck을 완전히 종료하려면?</div><div class="faq-a">위젯 상단의 ✕ 버튼을 클릭하거나, 트레이 아이콘 우클릭 → <kbd>종료</kbd>를 선택합니다.</div></div>
+    <div class="faq-item"><div class="faq-q">버튼 그룹 안에 또 버튼 그룹을 만들 수 있나요?</div><div class="faq-a">현재 버전에서는 버튼 그룹은 1단계까지만 지원합니다.</div></div>
+    <div class="faq-item"><div class="faq-q">테마를 바꿨는데 버튼 색이 안 바뀌어요.</div><div class="faq-a">설정 창에서 <kbd>🔄 설정 초기화</kbd> 버튼을 클릭하면 현재 테마에 맞게 버튼 색상이 초기화됩니다.</div></div>
+  </div>
+
+</div>
+
+<footer>
+  <p><strong>SupportDeck</strong> v1.0.0 &nbsp;·&nbsp; 제작: KTY &nbsp;·&nbsp; 2025</p>
+  <p style="margin-top:6px;">문의 사항이 있으시면 담당자에게 연락해주세요.</p>
+</footer>
+
+</body>
+</html>

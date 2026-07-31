@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SupportDeck — 빠른 실행 위젯</title>
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#16130d;--muted:#5f5a50;--faint:#9a9486;--rule:#1613;--paper:#f4f0e7;--card:#fbf9f3;
+  --amber:#c47e10;--blue:#2c6ad8;--teal:#169aa2;--purple:#6a36d6;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+.bg{position:fixed;inset:0;z-index:-1;background:var(--paper);}
+.bg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(20,15,5,.04) 1px,transparent 1px);background-size:24px 24px;opacity:.6;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px;}
+.mono{font-family:'JetBrains Mono',monospace;}
+.serif{font-family:'Fraunces',Georgia,serif;}
+nav{display:flex;align-items:center;justify-content:space-between;padding:24px 32px;max-width:1080px;margin:0 auto;border-bottom:1.5px solid var(--ink);}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:18px;letter-spacing:-.3px;}
+.brand img{width:32px;height:32px;border-radius:8px;}
+.nav-right{display:flex;align-items:center;gap:20px;}
+.nav-right a{color:var(--ink);text-decoration:none;font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.lang{display:inline-flex;border:1.5px solid var(--ink);}
+.lang button{background:none;border:none;color:var(--faint);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer;}
+.lang button.on{background:var(--ink);color:var(--paper);}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center;padding:66px 0 50px;border-bottom:1.5px solid var(--ink);}
+.hero .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:18px;}
+.hero h1{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(54px,9vw,104px);line-height:.92;letter-spacing:-2px;margin-bottom:18px;}
+.hero .tag{font-size:clamp(17px,2.4vw,22px);font-weight:500;max-width:30ch;color:var(--ink);}
+.hero .sub{color:var(--muted);margin-top:8px;font-size:15px;max-width:34ch;}
+.hero-art{display:flex;justify-content:center;}
+.hero-art img{width:200px;height:200px;border-radius:42px;box-shadow:14px 18px 0 rgba(22,19,13,.9);}
+.dl{margin-top:30px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.btn-dl{display:inline-flex;align-items:center;gap:12px;background:var(--ink);color:var(--paper);font-weight:700;font-size:16px;padding:15px 26px;border-radius:2px;text-decoration:none;transition:transform .12s;}
+.btn-dl:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 rgba(22,19,13,.25);}
+.btn-dl.disabled{background:#cfc8b8;color:#fff;pointer-events:none;}
+.btn-dl svg{width:19px;height:19px;}
+.meta{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.meta .dot{width:3px;height:3px;border-radius:50%;background:var(--faint);}
+section{padding:56px 0;border-bottom:1.5px solid var(--ink);}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;}
+.sec-head .no{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
+.sec-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,4vw,40px);letter-spacing:-.5px;margin-bottom:28px;}
+.frow{display:grid;grid-template-columns:48px 44px 1fr;gap:18px;align-items:start;padding:22px 0;border-top:1px solid rgba(22,19,13,.16);}
+.frow:first-child{border-top:none;}
+.frow .fno{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--faint);line-height:1;}
+.tile{width:44px;height:44px;border-radius:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
+.tile.amber{background:linear-gradient(160deg,#ffd486,#e89220);}
+.tile.blue{background:linear-gradient(160deg,#8cc0ff,#2c6ad8);}
+.tile.teal{background:linear-gradient(160deg,#93f1e8,#169aa2);}
+.tile.purple{background:linear-gradient(160deg,#cb9dff,#6a36d6);}
+.frow h3{font-size:18px;font-weight:700;margin-bottom:4px;}
+.frow p{color:var(--muted);font-size:14.5px;max-width:60ch;}
+.whatsnew .row{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.whatsnew .ver{font-family:'Fraunces',serif;font-size:26px;font-weight:600;}
+.whatsnew .when{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:13px;}
+.notes{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.notes li{display:flex;gap:11px;color:var(--muted);font-size:14.5px;}
+.notes li::before{content:"—";color:var(--ink);font-weight:700;}
+footer{padding:28px 0 48px;text-align:left;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+@media(max-width:760px){.hero{grid-template-columns:1fr;text-align:left;}.hero-art{justify-content:flex-start;}.frow{grid-template-columns:38px 40px 1fr;gap:14px;}.nav-right .navlink{display:none;}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<nav>
+  <div class="brand"><img src="icon.png" alt=""><span>SupportDeck</span></div>
+  <div class="nav-right">
+    <a class="navlink" href="#features" data-i18n="nav_features">기능</a>
+    <a class="navlink" href="#download" data-i18n="nav_download">다운로드</a>
+    <div class="lang"><button id="lang-ko" class="on" onclick="setLang('ko')">KO</button><button id="lang-en" onclick="setLang('en')">EN</button></div>
+  </div>
+</nav>
+<main class="wrap">
+  <section class="hero" id="download" style="border-top:none;">
+    <div>
+      <div class="eyebrow mono" data-i18n="os">Windows 10 / 11</div>
+      <h1>Support<br>Deck</h1>
+      <p class="tag" data-i18n="tag">데스크톱 어디서나, 자주 쓰는 것들을 한 번에.</p>
+      <p class="sub" data-i18n="sub">빠른 실행 버튼을 모아두는 가벼운 데스크톱 위젯.</p>
+      <div class="dl">
+        <a id="dlBtn" class="btn-dl disabled" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M5 21h14"/></svg>
+          <span id="dlText" data-i18n="loading">최신 버전 확인 중…</span>
+        </a>
+        <div class="meta">
+          <span id="metaVer"></span><span class="dot" id="metaSep1" style="display:none"></span><span id="metaSize"></span>
+          <span class="dot"></span><span data-i18n="free">무료 · 설치형</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-art"><img src="icon.png" alt="SupportDeck"></div>
+  </section>
+
+  <section id="features">
+    <div class="sec-head"><span class="no mono">§ 01</span></div>
+    <h2 class="sec-title" data-i18n="feat_title">필요한 건 한 번의 클릭으로</h2>
+    <div class="frow"><div class="fno">01</div><div class="tile amber"></div><div><h3 data-i18n="f1_t"></h3><p data-i18n="f1_d"></p></div></div>
+    <div class="frow"><div class="fno">02</div><div class="tile blue"></div><div><h3 data-i18n="f2_t"></h3><p data-i18n="f2_d"></p></div></div>
+    <div class="frow"><div class="fno">03</div><div class="tile teal"></div><div><h3 data-i18n="f3_t"></h3><p data-i18n="f3_d"></p></div></div>
+    <div class="frow"><div class="fno">04</div><div class="tile purple"></div><div><h3 data-i18n="f4_t"></h3><p data-i18n="f4_d"></p></div></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no mono">§ 02</span></div>
+    <h2 class="sec-title" data-i18n="whatsnew">새로운 버전</h2>
+    <div class="whatsnew">
+      <div class="row"><div class="ver" id="nnVer">—</div><div class="when" id="nnDate"></div></div>
+      <ul class="notes" id="nnNotes"></ul>
+    </div>
+  </section>
+</main>
+<footer class="wrap">SUPPORTDECK · <span data-i18n="footer">빠른 실행 데스크톱 위젯</span> · © 2026</footer>
+<script>
+const CONFIG={manifestUrl:'latest.json',fallback:{version:null,url:null}};
+const I18N={
+ ko:{nav_features:'기능',nav_download:'다운로드',tag:'데스크톱 어디서나, 자주 쓰는 것들을 한 번에.',sub:'빠른 실행 버튼을 모아두는 가벼운 데스크톱 위젯.',loading:'최신 버전 확인 중…',download:'다운로드',soon:'곧 제공 예정',os:'Windows 10 / 11',free:'무료 · 설치형',feat_label:'FEATURES',feat_title:'필요한 건 한 번의 클릭으로',f1_t:'빠른 실행 덱',f1_d:'자주 쓰는 앱·파일·폴더·URL을 버튼으로 모아 한 번에 실행해요.',f2_t:'드래그앤드롭',f2_d:'파일이나 링크를 위젯에 끌어다 놓으면 바로 바로가기가 추가돼요.',f3_t:'가장자리 최소화',f3_d:'화면 가장자리로 살짝 숨겼다가, 마우스를 가져가면 쏙 나타나요.',f4_t:'항상 위 · 테마',f4_d:'항상 위 고정, 투명도, 다양한 테마로 내 스타일대로 꾸며요.',new_label:'RELEASE',whatsnew:'새로운 버전',footer:'빠른 실행 데스크톱 위젯'},
+ en:{nav_features:'Features',nav_download:'Download',tag:'Everything you reach for, one click away.',sub:'A lightweight desktop widget that gathers your quick-launch buttons.',loading:'Checking latest version…',download:'Download',soon:'Coming soon',os:'Windows 10 / 11',free:'Free · Installer',feat_label:'FEATURES',feat_title:'What you need, one click away',f1_t:'Quick-launch deck',f1_d:'Collect your apps, files, folders and URLs into buttons and launch in one click.',f2_t:'Drag & drop',f2_d:'Drop a file or link onto the widget to instantly add a shortcut.',f3_t:'Edge-minimize',f3_d:'Tuck it to the screen edge — it slides out when your cursor comes near.',f4_t:'Always on top · Themes',f4_d:'Pin on top, adjust opacity, and style it with themes your way.',new_label:'RELEASE',whatsnew:"What's new",footer:'Quick-launch desktop widget'}
+};
+let LANG='ko',MANIFEST=null;
+function setLang(l){LANG=l;document.documentElement.lang=l;document.getElementById('lang-ko').classList.toggle('on',l==='ko');document.getElementById('lang-en').classList.toggle('on',l==='en');document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(I18N[l][k]!==undefined)el.textContent=I18N[l][k];});renderManifest();}
+function renderManifest(){const t=I18N[LANG],btn=document.getElementById('dlBtn'),txt=document.getElementById('dlText');
+ if(MANIFEST&&MANIFEST.url){btn.classList.remove('disabled');btn.href=MANIFEST.url;txt.textContent=t.download+(MANIFEST.version?'  v'+MANIFEST.version:'');document.getElementById('metaVer').textContent=MANIFEST.version?'v'+MANIFEST.version:'';if(MANIFEST.size){document.getElementById('metaSize').textContent=MANIFEST.size;document.getElementById('metaSep1').style.display='inline-block';}document.getElementById('nnVer').textContent=MANIFEST.version?'v'+MANIFEST.version:'—';document.getElementById('nnDate').textContent=MANIFEST.date||'';const notes=(LANG==='en'?MANIFEST.notes_en:MANIFEST.notes_ko)||MANIFEST.notes_ko||MANIFEST.notes_en||[];const ul=document.getElementById('nnNotes');ul.innerHTML='';notes.forEach(n=>{const li=document.createElement('li');li.textContent=n;ul.appendChild(li);});}
+ else{btn.classList.add('disabled');btn.href='#';txt.textContent=t.soon;document.getElementById('nnVer').textContent='—';}}
+async function loadManifest(){try{const r=await fetch(CONFIG.manifestUrl,{cache:'no-store'});if(!r.ok)throw 0;MANIFEST=await r.json();}catch(e){MANIFEST=CONFIG.fallback;}renderManifest();}
+if((navigator.language||'').toLowerCase().indexOf('ko')!==0){LANG='en';}
+setLang(LANG);loadManifest();
+</script>
+</body>
+</html>
