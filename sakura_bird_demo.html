@@ -124,13 +124,14 @@
         filter: drop-shadow(0 2px 3px rgba(67, 32, 47, .18));
     }
 
-    /* 동박새 — 가지 반전에 맞춰 원본 방향(왼쪽 보기), 발이 줄기 위에 오도록 배치 */
+    /* 동박새 — 좌우 반전(오른쪽 보기), 꽃 없는 맨 줄기 구간(x 12~26px)에 앉힘 */
     .bird-anchor {
         position: absolute;
         width: 18px;
-        left: 15px; top: -2px;     /* 줄기 중앙(x≈24px, y≈16px) 지점에 발 */
+        left: 9px; top: -3px;      /* 빈 줄기(x≈18px, y≈15px) 지점에 발 */
         z-index: 4;
         opacity: 0;
+        transform: scaleX(-1);
     }
     .bird-anchor img {
         display: block; width: 100%;
