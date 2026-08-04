@@ -266,9 +266,9 @@ function showPreview() {
     const attach = q.allowAttach ? `
       <div class="attach-block">
         <div class="attach-buttons">
+          <button type="button" class="small" disabled>📎 파일 업로드</button>
           <button type="button" class="small" disabled>🖥️ 화면 캡쳐</button>
           <button type="button" class="small" disabled>🎥 동영상 촬영</button>
-          <button type="button" class="small" disabled>📎 파일 업로드</button>
         </div>
         <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB</p>
       </div>` : '';

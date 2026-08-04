@@ -133,6 +133,14 @@ tr.clickable:hover { background: #f7f9fd; }
   width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
 }
 .modal-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.modal-x {
+  position: sticky; top: 0; float: right; z-index: 5;
+  width: 36px; height: 36px; padding: 0; border-radius: 50%;
+  background: #fff; border: 1px solid var(--line);
+  box-shadow: 0 2px 10px rgba(15, 22, 40, .18);
+  font-size: 15px; line-height: 1;
+}
+.modal-x:hover { background: #f1f3f8; }
 #rec-preview, #rec-playback { width: 100%; max-height: 360px; background: #000; border-radius: 8px; }
 .rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); animation: blink 1s infinite; margin-right: 4px; }
 @keyframes blink { 50% { opacity: .2; } }
