@@ -10,17 +10,18 @@ let editingCampaign = null; // null이면 새 캠페인
 const TYPE_LABELS = {
   text: '단답형',
   textarea: '장문형',
-  select: '객관식 (하나 선택)',
-  checkbox: '체크박스 (여러 개 선택)',
+  choice: '객관식',
   rating: '별점 (1~5점)',
 };
 let templates = [];
 let statsVisible = false;
+let adminMe = null;
 
 init();
 
 async function init() {
   const me = await fetchMe();
+  adminMe = me;
   $('loading').classList.add('hidden');
   if (!me) {
     $('login-box').classList.remove('hidden');
@@ -142,17 +143,24 @@ async function onCampaignAction(act, ca) {
   if (act === 'mail') {
     closeAllMenus();
     const url = `${location.origin}/c/${ca.slug}`;
-    const subject = `[AI 활용 사례] ${ca.title} 참여 요청`;
+    const subject = ca.title;
+    const sender = adminMe ? `${adminMe.name}${adminMe.department ? ` (${adminMe.department})` : ''}` : '';
     const body = [
       '안녕하세요.',
+      ...(sender ? [`${sender}입니다.`] : []),
       '',
-      `AI 활용 사례 수집 「${ca.title}」에 참여 부탁드립니다.`,
-      '아래 링크를 눌러 사례를 제출해 주세요.',
+      `사내 AI 활용 사례 수집 「${ca.title}」 설문을 안내드립니다.`,
+      ...(ca.description ? ['', ca.description] : []),
       '',
-      url,
-      ...(ca.closes_at ? ['', `※ 마감일: ${ca.closes_at} (당일까지 제출 가능)`] : []),
+      '▶ 참여 방법',
+      '  아래 링크를 클릭한 뒤 회사 계정으로 로그인하면 바로 작성할 수 있습니다.',
+      `  ${url}`,
       '',
-      '감사합니다.',
+      ...(ca.closes_at ? [`▶ 마감일: ${ca.closes_at} (당일까지 제출 가능)`] : []),
+      '▶ 작성 중 임시저장이 가능하며, 화면 캡쳐·동영상·파일 첨부도 지원합니다.',
+      '',
+      '여러분의 사례 하나하나가 회사 전체의 AI 활용 수준을 높이는 데 큰 도움이 됩니다.',
+      '많은 참여 부탁드립니다. 감사합니다.',
     ].join('\n');
     location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     return;
@@ -208,11 +216,11 @@ function bindDeleteModal() {
     setTimeout(() => {
       const zip = $('btn-zip');
       zip.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      zip.classList.remove('pulse');
+      zip.classList.remove('pulse-red');
       void zip.offsetWidth; // 애니메이션 재시작 트릭
-      zip.classList.add('pulse');
-      setTimeout(() => zip.classList.remove('pulse'), 6000);
-      toast('이 버튼을 눌러 설문 내역과 첨부파일을 먼저 받아 두세요 👇');
+      zip.classList.add('pulse-red');
+      setTimeout(() => zip.classList.remove('pulse-red'), 7000);
+      toast('이 버튼을 눌러 설문 내역과 첨부파일을 먼저 받아 두세요 👇', true);
     }, 250);
   };
   $('del-confirm').onclick = async () => {
@@ -233,11 +241,32 @@ function bindDeleteModal() {
 // ---------- 설문지 빌더 ----------
 
 function newQuestion() {
-  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [], allowAttach: false, help: '' };
+  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [], allowAttach: false, help: '', multiple: false, showIf: null };
 }
 
+// 서버 형식(select/checkbox) → 빌더 형식(choice + multiple)
 function cloneQuestions(qs) {
-  return qs.map((q) => ({ ...q, options: q.options ? [...q.options] : [], allowAttach: !!q.allowAttach, help: q.help || '' }));
+  return qs.map((q) => ({
+    ...q,
+    type: (q.type === 'select' || q.type === 'checkbox') ? 'choice' : q.type,
+    multiple: q.type === 'checkbox',
+    options: q.options ? [...q.options] : [],
+    allowAttach: !!q.allowAttach,
+    help: q.help || '',
+    showIf: q.showIf ? { ...q.showIf } : null,
+  }));
+}
+
+// 빌더 형식 → 서버 형식
+function toServerQuestions(qs) {
+  return qs.map((q) => {
+    const { multiple, ...rest } = q;
+    return {
+      ...rest,
+      type: q.type === 'choice' ? (multiple ? 'checkbox' : 'select') : q.type,
+      showIf: (q.showIf && q.showIf.qid && q.showIf.value) ? q.showIf : undefined,
+    };
+  });
 }
 
 function openBuilder(ca) {
@@ -286,9 +315,11 @@ function loadTemplateIntoBuilder() {
 async function saveTemplate() {
   const name = prompt('템플릿 이름을 입력하세요:', $('b-name').value.trim() || '내 설문 템플릿');
   if (!name) return;
-  const cleaned = bQuestions
-    .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
-    .filter((q) => q.label.trim());
+  const cleaned = toServerQuestions(
+    bQuestions
+      .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
+      .filter((q) => q.label.trim()),
+  );
   if (!cleaned.length) { toast('저장할 질문이 없습니다', true); return; }
   try {
     await api('/api/admin/templates', {
@@ -324,7 +355,9 @@ function renderBuilder() {
   bQuestions.forEach((q, i) => {
     const row = document.createElement('div');
     row.className = 'q-row';
-    const isChoice = q.type === 'select' || q.type === 'checkbox';
+    const isChoice = q.type === 'choice';
+    // 이 질문보다 앞에 있는 객관식 질문들 (분기 조건으로 사용 가능)
+    const priorChoices = bQuestions.slice(0, i).filter((p) => p.type === 'choice' && p.label.trim());
     row.innerHTML = `
       <div class="q-head">
         <span class="muted" style="min-width:20px;">${i + 1}.</span>
@@ -342,6 +375,16 @@ function renderBuilder() {
       <div class="q-opts-box ${isChoice ? '' : 'hidden'}">
         <div class="opt-rows"></div>
         <button type="button" class="small opt-add">➕ 선택지 추가</button>
+        <label class="choice" style="margin-top:8px;"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용 (여러 개를 고를 수 있게)</label>
+      </div>
+      <div class="q-branch">
+        <span class="muted">🔀 표시 조건:</span>
+        <select class="q-branch-q" ${priorChoices.length ? '' : 'disabled'} title="${priorChoices.length ? '' : '이 질문보다 앞에 객관식 질문이 있어야 분기를 만들 수 있습니다'}">
+          <option value="">항상 표시</option>
+          ${priorChoices.map((p) => `<option value="${p.id}" ${q.showIf?.qid === p.id ? 'selected' : ''}>"${esc(p.label)}" 질문에서</option>`).join('')}
+        </select>
+        <select class="q-branch-v ${q.showIf?.qid ? '' : 'hidden'}"></select>
+        <span class="q-branch-tail muted ${q.showIf?.qid ? '' : 'hidden'}">답변을 고른 사람에게만 표시</span>
       </div>`;
 
     const renderOpts = (focusLast = false) => {
@@ -366,12 +409,35 @@ function renderBuilder() {
     };
     if (isChoice) renderOpts();
 
+    // 분기 선택지 목록 채우기
+    const renderBranchV = () => {
+      const qid = row.querySelector('.q-branch-q').value;
+      const vSel = row.querySelector('.q-branch-v');
+      const tail = row.querySelector('.q-branch-tail');
+      if (!qid) {
+        q.showIf = null;
+        vSel.classList.add('hidden');
+        tail.classList.add('hidden');
+        return;
+      }
+      const parent = bQuestions.find((p) => p.id === qid);
+      const opts = (parent?.options || []).map((o) => o.trim()).filter(Boolean);
+      vSel.innerHTML = opts.map((o) => `<option value="${esc(o)}" ${q.showIf?.value === o ? 'selected' : ''}>"${esc(o)}"</option>`).join('');
+      vSel.classList.remove('hidden');
+      tail.classList.remove('hidden');
+      q.showIf = { qid, value: vSel.value };
+    };
+    if (q.showIf?.qid) renderBranchV();
+    row.querySelector('.q-branch-q').onchange = renderBranchV;
+    row.querySelector('.q-branch-v').onchange = (e) => { if (q.showIf) q.showIf.value = e.target.value; };
+
     row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
     row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; };
     row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; };
+    row.querySelector('.q-multi').onchange = (e) => { q.multiple = e.target.checked; };
     row.querySelector('.q-type').onchange = (e) => {
       q.type = e.target.value;
-      const choice = q.type === 'select' || q.type === 'checkbox';
+      const choice = q.type === 'choice';
       row.querySelector('.q-opts-box').classList.toggle('hidden', !choice);
       if (choice) renderOpts();
     };
@@ -399,9 +465,11 @@ function renderBuilder() {
 // ---------- 설문 미리보기 ----------
 
 function showPreview() {
-  const qs = bQuestions
-    .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
-    .filter((q) => q.label.trim());
+  const qs = toServerQuestions(
+    bQuestions
+      .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
+      .filter((q) => q.label.trim()),
+  );
   const title = $('b-name').value.trim() || '(캠페인 제목)';
   const desc = $('b-desc').value.trim();
 
@@ -435,7 +503,7 @@ function showPreview() {
         </div>
         <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB</p>
       </div>` : '';
-    return `<div class="q-item">${inner}${attach}</div>`;
+    return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
   }).join('') : '<p class="muted">질문이 없습니다.</p>';
 
   $('pv-body').innerHTML = `
@@ -451,15 +519,49 @@ function showPreview() {
       ${qHtml}
       <button type="button" class="primary" style="width:100%; padding:12px;" disabled>제출하기</button>
     </div>`;
+  applyPreviewBranching(qs);
   $('preview-modal').classList.remove('hidden');
+}
+
+// 미리보기에서도 분기가 실제처럼 동작하도록
+function applyPreviewBranching(qs) {
+  const body = $('pv-body');
+  const update = () => {
+    const raw = {};
+    for (const q of qs) {
+      if (q.type === 'select') {
+        const el = body.querySelector(`input[name="pv_${q.id}"]:checked`);
+        if (el) raw[q.id] = el.value;
+      } else if (q.type === 'checkbox') {
+        const els = [...body.querySelectorAll(`input[name="pv_${q.id}"]:checked`)];
+        if (els.length) raw[q.id] = els.map((e) => e.value);
+      }
+    }
+    const vis = {};
+    for (const q of qs) {
+      if (!q.showIf) {
+        vis[q.id] = true;
+      } else {
+        const pv = raw[q.showIf.qid];
+        const match = Array.isArray(pv) ? pv.includes(q.showIf.value) : pv === q.showIf.value;
+        vis[q.id] = !!(vis[q.showIf.qid] && match);
+      }
+      const el = body.querySelector(`.q-item[data-qid="${q.id}"]`);
+      if (el) el.classList.toggle('hidden', !vis[q.id]);
+    }
+  };
+  body.onchange = update;
+  update();
 }
 
 async function saveBuilder() {
   const title = $('b-name').value.trim();
   if (!title) { toast('캠페인 제목을 입력해 주세요', true); return; }
-  const cleaned = bQuestions
-    .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
-    .filter((q) => q.label.trim());
+  const cleaned = toServerQuestions(
+    bQuestions
+      .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
+      .filter((q) => q.label.trim()),
+  );
   if (!cleaned.length) { toast('질문을 1개 이상 만들어 주세요', true); return; }
   for (const q of cleaned) {
     if ((q.type === 'select' || q.type === 'checkbox') && !q.options.length) {

@@ -38,6 +38,7 @@ function sanitizeForm(input) {
     questions: [],
   };
   const qs = Array.isArray(input.questions) ? input.questions.slice(0, 20) : [];
+  const priorChoice = {}; // 분기 조건에 쓸 수 있는 앞선 객관식 질문들
   for (const q of qs) {
     if (!q || typeof q.label !== 'string' || !q.label.trim()) continue;
     const type = QUESTION_TYPES.includes(q.type) ? q.type : 'text';
@@ -56,7 +57,14 @@ function sanitizeForm(input) {
         .slice(0, 30);
       if (!question.options.length) continue;
     }
+    // 분기(표시 조건): 앞선 객관식 질문의 특정 답변일 때만 표시
+    const si = q.showIf;
+    if (si && typeof si === 'object' && typeof si.qid === 'string' && priorChoice[si.qid]
+      && priorChoice[si.qid].options.includes(String(si.value))) {
+      question.showIf = { qid: si.qid, value: String(si.value) };
+    }
     out.questions.push(question);
+    if (type === 'select' || type === 'checkbox') priorChoice[question.id] = question;
   }
   if (!out.questions.length) out.questions = def.questions;
   // 구버전 호환: 전체 첨부 섹션을 쓰던 양식이면 마지막 질문에 첨부를 붙인다
@@ -101,6 +109,22 @@ async function isAdmin(c, email) {
   if (adminEmails(c.env).includes(email.toLowerCase())) return true;
   const row = await c.env.DB.prepare('SELECT role FROM users WHERE email = ?').bind(email).first();
   return row?.role === 'admin';
+}
+
+// 메인 관리자(환경설정 지정)는 모든 캠페인을 관리할 수 있다
+function isFixedAdmin(env, email) {
+  return adminEmails(env).includes((email || '').toLowerCase());
+}
+
+// 캠페인 조회 + 소유권 확인 (만든 관리자 본인 또는 메인 관리자만)
+async function getManagedCampaign(c, id) {
+  const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(id).first();
+  if (!campaign) return { errorRes: c.json({ error: '존재하지 않는 캠페인입니다' }, 404) };
+  const email = c.get('user').email;
+  if (!isFixedAdmin(c.env, email) && campaign.created_by !== email) {
+    return { errorRes: c.json({ error: '이 캠페인을 관리할 권한이 없습니다 (만든 관리자만 관리할 수 있습니다)' }, 403) };
+  }
+  return { campaign };
 }
 
 const needAuth = (handler) => async (c) => {
@@ -162,27 +186,53 @@ function isOpenNow(campaign) {
   return true;
 }
 
-// 답변 검증 + 요약(title/content) 파생. 오류 시 { error }, 성공 시 { answers, appUrl, title, content }
+// 폼 답변으로 각 질문의 표시 여부(분기) 계산
+function computeVisibility(questions, raw) {
+  const visible = {};
+  for (const q of questions) {
+    if (!q.showIf) {
+      visible[q.id] = true;
+    } else {
+      const pv = raw[q.showIf.qid];
+      const match = Array.isArray(pv) ? pv.includes(q.showIf.value) : pv === q.showIf.value;
+      visible[q.id] = !!(visible[q.showIf.qid] && match);
+    }
+  }
+  return visible;
+}
+
+// 답변 검증 + 요약(title/content) 파생. 오류 시 { error }, 성공 시 { answers, title, content }
 function buildSubmissionData(form, body) {
   const answersIn = body.answers && typeof body.answers === 'object' ? body.answers : {};
-  const answers = {};
+
+  // 1차: 값 정리 (분기 판단용)
+  const raw = {};
   for (const q of form.questions) {
     let v = answersIn[q.id];
     if (q.type === 'checkbox') {
       v = Array.isArray(v) ? v.map((x) => String(x)).filter((x) => q.options.includes(x)) : [];
-      if (q.required && !v.length) return { error: `"${q.label}" 항목을 선택해 주세요` };
-      if (v.length) answers[q.id] = v;
+      if (v.length) raw[q.id] = v;
     } else if (q.type === 'rating') {
       const n = parseInt(v, 10);
-      const s = n >= 1 && n <= 5 ? String(n) : '';
-      if (q.required && !s) return { error: `"${q.label}" 항목을 선택해 주세요` };
-      if (s) answers[q.id] = s;
+      if (n >= 1 && n <= 5) raw[q.id] = String(n);
     } else {
       v = typeof v === 'string' ? v.trim().slice(0, 4000) : '';
       if (q.type === 'select' && v && !q.options.includes(v)) v = '';
-      if (q.required && !v) return { error: `"${q.label}" 항목을 입력해 주세요` };
-      if (v) answers[q.id] = v;
+      if (v) raw[q.id] = v;
     }
+  }
+
+  // 2차: 분기 반영 — 보이는 질문만 필수 검증·저장
+  const visible = computeVisibility(form.questions, raw);
+  const answers = {};
+  for (const q of form.questions) {
+    if (!visible[q.id]) continue;
+    const v = raw[q.id];
+    if (q.required && (v === undefined || (Array.isArray(v) && !v.length))) {
+      const verb = ['select', 'checkbox', 'rating'].includes(q.type) ? '선택' : '입력';
+      return { error: `"${q.label}" 항목을 ${verb}해 주세요` };
+    }
+    if (v !== undefined) answers[q.id] = v;
   }
   let title = '';
   for (const q of form.questions) {
@@ -599,8 +649,13 @@ app.delete('/api/submissions/:id', needAuth(async (c) => {
   const sub = await c.env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(c.req.param('id')).first();
   if (!sub) return c.json({ error: '존재하지 않는 제출입니다' }, 404);
   const u = c.get('user');
-  if (sub.user_email !== u.email && !(await isAdmin(c, u.email))) {
-    return c.json({ error: '권한이 없습니다' }, 403);
+  if (sub.user_email !== u.email) {
+    // 관리자 삭제는 해당 캠페인을 관리하는 관리자만
+    if (!(await isAdmin(c, u.email))) return c.json({ error: '권한이 없습니다' }, 403);
+    const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(sub.campaign_id).first();
+    if (campaign && !isFixedAdmin(c.env, u.email) && campaign.created_by !== u.email) {
+      return c.json({ error: '이 캠페인을 관리할 권한이 없습니다' }, 403);
+    }
   }
   await deleteSubmissionDeep(c.env, sub.id);
   return c.json({ ok: true });
@@ -609,9 +664,15 @@ app.delete('/api/submissions/:id', needAuth(async (c) => {
 // ---------- 관리자 API ----------
 
 app.get('/api/admin/campaigns', needAdmin(async (c) => {
-  const { results } = await c.env.DB.prepare(`
-    SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
-    FROM campaigns ca ORDER BY ca.id DESC`).all();
+  const email = c.get('user').email;
+  const fixed = isFixedAdmin(c.env, email);
+  const { results } = fixed
+    ? await c.env.DB.prepare(`
+        SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
+        FROM campaigns ca ORDER BY ca.id DESC`).all()
+    : await c.env.DB.prepare(`
+        SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
+        FROM campaigns ca WHERE ca.created_by = ? ORDER BY ca.id DESC`).bind(email).all();
   return c.json(results.map((ca) => ({
     ...ca,
     form: parseForm(ca.fields),
@@ -635,6 +696,8 @@ app.post('/api/admin/campaigns', needAdmin(async (c) => {
 }));
 
 app.patch('/api/admin/campaigns/:id', needAdmin(async (c) => {
+  const { errorRes } = await getManagedCampaign(c, c.req.param('id'));
+  if (errorRes) return errorRes;
   const body = await c.req.json();
   const fields = [];
   const vals = [];
@@ -675,6 +738,8 @@ app.delete('/api/admin/templates/:id', needAdmin(async (c) => {
 
 app.delete('/api/admin/campaigns/:id', needAdmin(async (c) => {
   const id = c.req.param('id');
+  const { errorRes } = await getManagedCampaign(c, id);
+  if (errorRes) return errorRes;
   const { results } = await c.env.DB.prepare('SELECT id FROM submissions WHERE campaign_id = ?').bind(id).all();
   for (const s of results) await deleteSubmissionDeep(c.env, s.id);
   await c.env.DB.prepare('DELETE FROM campaigns WHERE id = ?').bind(id).run();
@@ -682,6 +747,8 @@ app.delete('/api/admin/campaigns/:id', needAdmin(async (c) => {
 }));
 
 app.get('/api/admin/campaigns/:id/submissions', needAdmin(async (c) => {
+  const { errorRes } = await getManagedCampaign(c, c.req.param('id'));
+  if (errorRes) return errorRes;
   const { results } = await c.env.DB
     .prepare('SELECT * FROM submissions WHERE campaign_id = ? ORDER BY id DESC')
     .bind(c.req.param('id'))
@@ -700,8 +767,8 @@ function answersOf(sub) {
 
 // 엑셀 다운로드: 첨부는 클릭 가능한 하이퍼링크로 연동
 app.get('/api/admin/campaigns/:id/export.xlsx', needAdmin(async (c) => {
-  const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first();
-  if (!campaign) return c.json({ error: '존재하지 않는 캠페인입니다' }, 404);
+  const { campaign, errorRes } = await getManagedCampaign(c, c.req.param('id'));
+  if (errorRes) return errorRes;
   const form = parseForm(campaign.fields);
   const { results } = await c.env.DB
     .prepare('SELECT * FROM submissions WHERE campaign_id = ? ORDER BY id')
@@ -721,8 +788,8 @@ app.get('/api/admin/campaigns/:id/export.xlsx', needAdmin(async (c) => {
 
 // ZIP 다운로드: 엑셀(상대경로 하이퍼링크) + 첨부파일 전체를 스트리밍으로 압축
 app.get('/api/admin/campaigns/:id/export.zip', needAdmin(async (c) => {
-  const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first();
-  if (!campaign) return c.json({ error: '존재하지 않는 캠페인입니다' }, 404);
+  const { campaign, errorRes } = await getManagedCampaign(c, c.req.param('id'));
+  if (errorRes) return errorRes;
   const form = parseForm(campaign.fields);
   const { results: subs } = await c.env.DB
     .prepare('SELECT * FROM submissions WHERE campaign_id = ? ORDER BY id')

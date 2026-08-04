@@ -99,7 +99,7 @@ function renderQuestions() {
         <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB · 스크린샷 붙여넣기(Ctrl+V) 가능</p>
         <ul class="attach-list" data-attlist="${q.id}"></ul>
       </div>` : '';
-    return `<div class="q-item">${inner}${attach}</div>`;
+    return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
   }).join('');
 
   // 질문별 첨부 버튼 연결
@@ -119,7 +119,11 @@ function renderQuestions() {
       btn.onclick = () => setStars(st, btn.dataset.v);
     });
   });
+  // 답변 변경 시 분기 표시/현재 문항 강조 갱신
+  box.oninput = onFormChanged;
+  box.onchange = onFormChanged;
   renderAttachments();
+  onFormChanged();
 }
 
 function setStars(container, value) {
@@ -129,9 +133,11 @@ function setStars(container, value) {
   });
   const label = container.querySelector('.stars-value');
   if (label) label.textContent = value ? `${value}점` : '';
+  onFormChanged();
 }
 
-function gatherAnswers() {
+// 모든 질문의 현재 입력값 읽기 (분기 판단용, 표시 여부 무관)
+function gatherAnswersRaw() {
   const answers = {};
   for (const q of FORM.questions) {
     if (q.type === 'select') {
@@ -151,9 +157,36 @@ function gatherAnswers() {
   return answers;
 }
 
-function validateAnswers(answers) {
+// 분기(표시 조건) 계산
+function computeVis(raw) {
+  const vis = {};
   for (const q of FORM.questions) {
-    if (!q.required) continue;
+    if (!q.showIf) {
+      vis[q.id] = true;
+    } else {
+      const pv = raw[q.showIf.qid];
+      const match = Array.isArray(pv) ? pv.includes(q.showIf.value) : pv === q.showIf.value;
+      vis[q.id] = !!(vis[q.showIf.qid] && match);
+    }
+  }
+  return vis;
+}
+
+// 화면에 보이는 질문의 답변만 수집
+function gatherAnswers() {
+  const raw = gatherAnswersRaw();
+  const vis = computeVis(raw);
+  const out = {};
+  for (const q of FORM.questions) {
+    if (vis[q.id] && raw[q.id] !== undefined) out[q.id] = raw[q.id];
+  }
+  return out;
+}
+
+function validateAnswers(answers) {
+  const vis = computeVis(gatherAnswersRaw());
+  for (const q of FORM.questions) {
+    if (!vis[q.id] || !q.required) continue;
     const v = answers[q.id];
     if (v === undefined || (Array.isArray(v) && !v.length)) {
       toast(`"${q.label}" 항목을 ${['select', 'checkbox', 'rating'].includes(q.type) ? '선택' : '입력'}해 주세요`, true);
@@ -161,6 +194,25 @@ function validateAnswers(answers) {
     }
   }
   return true;
+}
+
+// 분기 표시/숨김 + 현재 작성할 문항 강조
+function onFormChanged() {
+  if (!FORM) return;
+  const raw = gatherAnswersRaw();
+  const vis = computeVis(raw);
+  let currentId = null;
+  for (const q of FORM.questions) {
+    const el = document.querySelector(`.q-item[data-qid="${q.id}"]`);
+    if (el) el.classList.toggle('hidden', !vis[q.id]);
+    if (!currentId && vis[q.id]) {
+      const v = raw[q.id];
+      if (v === undefined || (Array.isArray(v) && !v.length)) currentId = q.id;
+    }
+  }
+  document.querySelectorAll('.q-item').forEach((el) => {
+    el.classList.toggle('q-current', el.dataset.qid === currentId);
+  });
 }
 
 // ---------- 첨부 공통 ----------
@@ -537,6 +589,7 @@ function restoreAnswers(answers) {
       if (el) el.value = Array.isArray(v) ? v.join(', ') : v;
     }
   }
+  onFormChanged();
 }
 
 function restoreAttachmentList(list) {
