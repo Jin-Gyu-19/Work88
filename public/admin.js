@@ -5,7 +5,7 @@ let currentSubs = [];
 
 // 설문지 빌더 상태
 let bQuestions = []; // { id, label, type, required, options[] }
-let editingCampaign = null; // null이면 새 캠페인
+let editingCampaign = null; // null이면 새 설문
 
 const TYPE_LABELS = {
   text: '단답형',
@@ -80,7 +80,7 @@ async function init() {
   await loadCampaigns();
 }
 
-// ---------- 캠페인 목록 ----------
+// ---------- 설문 목록 ----------
 
 async function loadCampaigns() {
   try {
@@ -91,7 +91,7 @@ async function loadCampaigns() {
   }
   const box = $('campaigns');
   if (!campaigns.length) {
-    box.innerHTML = '<p class="muted">아직 캠페인이 없습니다. "새 캠페인 만들기"로 첫 설문지를 만들어 보세요.</p>';
+    box.innerHTML = '<p class="muted">아직 설문이 없습니다. "새 설문 만들기"로 첫 설문지를 만들어 보세요.</p>';
   } else {
     box.innerHTML = campaigns.map((ca) => `
       <div class="campaign-item">
@@ -120,7 +120,7 @@ async function loadCampaigns() {
     b.onclick = () => onCampaignAction(b.dataset.act, ca);
   });
 
-  // 제출 현황 탭의 캠페인 선택 목록도 갱신
+  // 제출 현황 탭의 설문 선택 목록도 갱신
   const sel = $('sel-campaign');
   const prev = sel.value;
   sel.innerHTML = campaigns.map((ca) => `<option value="${ca.id}">${esc(ca.title)} (${ca.submission_count}건)</option>`).join('');
@@ -149,7 +149,7 @@ async function onCampaignAction(act, ca) {
       '안녕하세요.',
       ...(sender ? [`${sender}입니다.`] : []),
       '',
-      `사내 AI 활용 사례 수집 「${ca.title}」 설문을 안내드립니다.`,
+      `사내 설문 「${ca.title}」 참여를 안내드립니다.`,
       ...(ca.description ? ['', ca.description] : []),
       '',
       '▶ 참여 방법',
@@ -159,7 +159,7 @@ async function onCampaignAction(act, ca) {
       ...(ca.closes_at ? [`▶ 마감일: ${ca.closes_at} (당일까지 제출 가능)`] : []),
       '▶ 작성 중 임시저장이 가능하며, 화면 캡쳐·동영상·파일 첨부도 지원합니다.',
       '',
-      '여러분의 사례 하나하나가 회사 전체의 AI 활용 수준을 높이는 데 큰 도움이 됩니다.',
+      '여러분의 응답 하나하나가 큰 도움이 됩니다.',
       '많은 참여 부탁드립니다. 감사합니다.',
     ].join('\n');
     location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -183,7 +183,7 @@ async function onCampaignAction(act, ca) {
   if (act === 'toggle') {
     try {
       await api(`/api/admin/campaigns/${ca.id}`, { method: 'PATCH', body: JSON.stringify({ is_open: ca.is_open ? 0 : 1 }) });
-      toast(ca.is_open ? '캠페인을 마감했습니다' : '캠페인을 다시 열었습니다');
+      toast(ca.is_open ? '설문을 마감했습니다' : '설문을 다시 열었습니다');
       loadCampaigns();
     } catch (e) {
       toast(e.message, true);
@@ -192,12 +192,12 @@ async function onCampaignAction(act, ca) {
   }
   if (act === 'delete') {
     pendingDelete = ca;
-    $('del-msg').innerHTML = `<strong>"${esc(ca.title)}"</strong> 캠페인을 삭제할까요? (제출 ${ca.submission_count}건)`;
+    $('del-msg').innerHTML = `<strong>"${esc(ca.title)}"</strong> 설문을 삭제할까요? (제출 ${ca.submission_count}건)`;
     $('del-modal').classList.remove('hidden');
   }
 }
 
-// ---------- 캠페인 삭제 확인 모달 ----------
+// ---------- 설문 삭제 확인 모달 ----------
 
 let pendingDelete = null;
 
@@ -271,7 +271,7 @@ function toServerQuestions(qs) {
 
 function openBuilder(ca) {
   editingCampaign = ca;
-  $('b-heading').textContent = ca ? '설문 편집' : '새 캠페인';
+  $('b-heading').textContent = ca ? '설문 편집' : '새 설문';
   $('b-name').value = ca ? ca.title : '';
   $('b-desc').value = ca ? (ca.description || '') : '';
   $('b-close').value = ca ? (ca.closes_at || '') : '';
@@ -470,7 +470,7 @@ function showPreview() {
       .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
       .filter((q) => q.label.trim()),
   );
-  const title = $('b-name').value.trim() || '(캠페인 제목)';
+  const title = $('b-name').value.trim() || '(설문 제목)';
   const desc = $('b-desc').value.trim();
 
   const qHtml = qs.length ? qs.map((q) => {
@@ -556,7 +556,7 @@ function applyPreviewBranching(qs) {
 
 async function saveBuilder() {
   const title = $('b-name').value.trim();
-  if (!title) { toast('캠페인 제목을 입력해 주세요', true); return; }
+  if (!title) { toast('설문 제목을 입력해 주세요', true); return; }
   const cleaned = toServerQuestions(
     bQuestions
       .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
@@ -587,9 +587,9 @@ async function saveBuilder() {
       const url = `${location.origin}/c/${res.slug}`;
       try {
         await navigator.clipboard.writeText(url);
-        toast('캠페인이 생성되고 참여 링크가 복사되었습니다');
+        toast('설문이 생성되고 참여 링크가 복사되었습니다');
       } catch {
-        prompt('캠페인이 생성되었습니다. 참여 링크:', url);
+        prompt('설문이 생성되었습니다. 참여 링크:', url);
       }
     }
     $('builder-modal').classList.add('hidden');
@@ -606,7 +606,7 @@ async function loadSubs() {
   const tbody = $('sub-rows');
   if (!id) {
     tbody.innerHTML = '';
-    $('sub-count').textContent = '캠페인이 없습니다.';
+    $('sub-count').textContent = '설문이 없습니다.';
     return;
   }
   try {
@@ -665,7 +665,7 @@ function barRows(counts, total) {
 function renderStats() {
   const box = $('stats-box');
   const ca = campaigns.find((x) => String(x.id) === $('sel-campaign').value);
-  if (!ca) { box.innerHTML = '<p class="muted">캠페인이 없습니다.</p>'; return; }
+  if (!ca) { box.innerHTML = '<p class="muted">설문이 없습니다.</p>'; return; }
   const subs = currentSubs;
   const answersList = subs.map((s) => {
     try { return s.answers ? JSON.parse(s.answers) : {}; } catch { return {}; }

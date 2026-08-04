@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>관리자 | AI 활용 사례 공유</title>
-  <link rel="stylesheet" href="/styles.css?v=14">
+  <title>관리자 | BDO Survey System</title>
+  <link rel="stylesheet" href="/styles.css?v=15">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/">AI <span>활용 사례</span> 공유 <span class="badge admin">관리자</span></a>
+    <a class="brand" href="/">BDO <span>Survey</span> System <span class="badge admin">관리자</span></a>
     <div class="who" id="who"></div>
   </header>
   <main class="container" style="max-width: 1020px;">
@@ -26,20 +26,20 @@
 
     <section id="admin-box" class="hidden">
       <div class="tabs">
-        <button data-tab="campaigns" class="active">캠페인 관리</button>
+        <button data-tab="campaigns" class="active">설문 관리</button>
         <button data-tab="submissions">제출 현황</button>
         <button data-tab="users">관리자 관리</button>
       </div>
 
-      <!-- 캠페인 관리 -->
+      <!-- 설문 관리 -->
       <div id="tab-campaigns">
         <div class="card">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
             <div>
-              <h2 style="margin:0;">캠페인 목록</h2>
-              <p class="hint" style="margin:4px 0 0;">캠페인을 만들면 참여 링크가 발급됩니다. 링크를 공지에 붙여넣으세요.</p>
+              <h2 style="margin:0;">설문 목록</h2>
+              <p class="hint" style="margin:4px 0 0;">설문을 만들면 참여 링크가 발급됩니다. 링크를 공지에 붙여넣으세요.</p>
             </div>
-            <button class="primary" id="btn-new">➕ 새 캠페인 만들기</button>
+            <button class="primary" id="btn-new">➕ 새 설문 만들기</button>
           </div>
         </div>
         <div class="card">
@@ -90,10 +90,10 @@
     </section>
   </main>
 
-  <!-- 캠페인/설문지 편집 모달 -->
+  <!-- 설문/설문지 편집 모달 -->
   <div id="builder-modal" class="modal hidden">
     <div class="modal-body" style="max-width:760px;">
-      <h3 id="b-heading">새 캠페인</h3>
+      <h3 id="b-heading">새 설문</h3>
       <div class="tpl-bar">
         <span class="muted" style="font-size:12.5px;">📋 템플릿:</span>
         <select id="b-tpl" style="width:auto; margin:0; max-width:240px;"></select>
@@ -101,7 +101,7 @@
         <button type="button" class="small" id="b-tpl-save">💾 현재 구성 저장</button>
         <button type="button" class="small ghost" id="b-tpl-del">삭제</button>
       </div>
-      <label>캠페인 제목 <span style="color:var(--danger)">*</span>
+      <label>설문 제목 <span style="color:var(--danger)">*</span>
         <input id="b-name" maxlength="200" placeholder="예: 2026 상반기 AI 활용 사례 수집">
       </label>
       <label>안내 문구 (선택)
@@ -160,10 +160,10 @@
     <div id="lb-body" class="lb-body"></div>
   </div>
 
-  <!-- 캠페인 삭제 확인 -->
+  <!-- 설문 삭제 확인 -->
   <div id="del-modal" class="modal hidden">
     <div class="modal-body" style="max-width:500px;">
-      <h3>⚠️ 캠페인 삭제</h3>
+      <h3>⚠️ 설문 삭제</h3>
       <p id="del-msg"></p>
       <p class="hint">삭제하면 제출 내역과 첨부파일이 <strong>모두 사라지며 되돌릴 수 없습니다.</strong><br>
       삭제하기 전에 <strong>전체 ZIP 다운로드</strong>로 설문 내역과 첨부파일을 꼭 받아 두세요.</p>
@@ -175,7 +175,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=14"></script>
-  <script src="/admin.js?v=14"></script>
+  <script src="/common.js?v=15"></script>
+  <script src="/admin.js?v=15"></script>
 </body>
 </html>
