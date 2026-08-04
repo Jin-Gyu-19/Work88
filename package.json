@@ -1,0 +1,19 @@
+{
+  "name": "ai-usecase-hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute ai-usecase-hub --remote --file=./schema.sql",
+    "db:init:local": "wrangler d1 execute ai-usecase-hub --local --file=./schema.sql"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "hono": "^4.6.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

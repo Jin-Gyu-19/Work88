@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 활용 사례 공유</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">AI <span>활용 사례</span> 공유</a>
+    <div class="who" id="who"></div>
+  </header>
+  <main class="container">
+    <div id="loading" class="muted">불러오는 중…</div>
+
+    <section id="login-box" class="card hero hidden">
+      <h1>사내 AI 활용 사례 공유</h1>
+      <p>여러분의 AI 활용 경험(업무 활용, 앱 개발 등)을 나눠 주세요.<br>회사 Microsoft 계정으로 로그인하면 시작할 수 있습니다.</p>
+      <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
+    </section>
+
+    <section id="home-box" class="hidden">
+      <div class="card">
+        <h2>진행 중인 사례 수집</h2>
+        <div id="campaign-list" class="muted">불러오는 중…</div>
+      </div>
+    </section>
+  </main>
+  <script src="/common.js"></script>
+  <script>
+    (async () => {
+      const me = await fetchMe();
+      document.getElementById('loading').classList.add('hidden');
+      if (!me) {
+        document.getElementById('login-box').classList.remove('hidden');
+        document.getElementById('btn-login').onclick = () => location.href = loginUrl();
+        return;
+      }
+      renderWho(me);
+      document.getElementById('home-box').classList.remove('hidden');
+      try {
+        const list = await api('/api/campaigns');
+        const box = document.getElementById('campaign-list');
+        if (!list.length) {
+          box.textContent = '현재 진행 중인 사례 수집이 없습니다. 공지된 링크로 접속해 주세요.';
+          return;
+        }
+        box.innerHTML = list.map((ca) => `
+          <div class="campaign-item">
+            <div>
+              <strong>${esc(ca.title)}</strong>
+              <div class="muted">${esc(ca.description || '')}</div>
+            </div>
+            <a href="/c/${esc(ca.slug)}"><button class="primary small">참여하기</button></a>
+          </div>`).join('');
+      } catch (e) {
+        toast(e.message, true);
+      }
+    })();
+  </script>
+</body>
+</html>

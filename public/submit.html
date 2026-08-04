@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사례 제출 | AI 활용 사례 공유</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">AI <span>활용 사례</span> 공유</a>
+    <div class="who" id="who"></div>
+  </header>
+  <main class="container">
+    <div id="loading" class="muted">불러오는 중…</div>
+
+    <section id="login-box" class="card hero hidden">
+      <h1>로그인이 필요합니다</h1>
+      <p>회사 Microsoft 계정으로 로그인하면 이름과 부서가 자동으로 입력됩니다.</p>
+      <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
+    </section>
+
+    <section id="notfound-box" class="card hero hidden">
+      <h1>설문을 찾을 수 없습니다</h1>
+      <p>링크가 정확한지 다시 확인해 주세요.</p>
+    </section>
+
+    <section id="closed-box" class="card hero hidden">
+      <h1 id="closed-title"></h1>
+      <p>이 사례 수집은 마감되었습니다. 참여해 주셔서 감사합니다.</p>
+    </section>
+
+    <section id="form-box" class="hidden">
+      <div class="card">
+        <h1 id="c-title"></h1>
+        <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
+      </div>
+
+      <form id="form" class="card" autocomplete="off">
+        <div class="grid2">
+          <label>이름 <input id="f-name" disabled></label>
+          <label>부서 <input id="f-dept" disabled></label>
+        </div>
+        <label>제목 <span style="color:var(--danger)">*</span>
+          <input id="f-title" maxlength="200" required placeholder="예: 회의록 자동 요약에 AI 활용">
+        </label>
+        <label>내용 <span style="color:var(--danger)">*</span>
+          <textarea id="f-content" rows="8" required
+            placeholder="어떤 업무에 AI를 어떻게 활용했는지, 효과는 어땠는지 자유롭게 적어 주세요.&#10;(스크린샷은 Ctrl+V 붙여넣기로도 바로 첨부됩니다)"></textarea>
+        </label>
+
+        <fieldset>
+          <legend>첨부 (선택)</legend>
+          <div class="attach-buttons">
+            <button type="button" id="btn-capture">🖥️ 화면 캡쳐</button>
+            <button type="button" id="btn-record">🎥 동영상 촬영</button>
+            <button type="button" id="btn-file">📎 파일 업로드</button>
+            <input type="file" id="file-input" multiple hidden>
+          </div>
+          <p class="hint">이미지 10MB · 동영상 1분 이내/80MB · 기타 파일 25MB, 최대 10개</p>
+          <ul id="attach-list" class="attach-list"></ul>
+        </fieldset>
+
+        <fieldset>
+          <legend>앱을 개발하셨나요? (선택)</legend>
+          <label>앱 주소(URL) <input id="f-appurl" type="url" placeholder="https://..."></label>
+          <button type="button" id="btn-appfile">📦 앱 파일 첨부 (zip 등, 50MB 이내)</button>
+          <input type="file" id="appfile-input" hidden>
+        </fieldset>
+
+        <button type="submit" class="primary" id="btn-submit" style="width:100%; padding:12px;">제출하기</button>
+      </form>
+
+      <section class="card">
+        <h2>내 제출 내역</h2>
+        <div id="mine" class="muted">아직 제출한 사례가 없습니다.</div>
+      </section>
+    </section>
+  </main>
+
+  <!-- 동영상 촬영 모달 -->
+  <div id="rec-modal" class="modal hidden">
+    <div class="modal-body">
+      <h3>동영상 촬영 <span id="rec-timer" class="muted"></span></h3>
+      <video id="rec-preview" playsinline autoplay muted></video>
+      <video id="rec-playback" class="hidden" controls playsinline></video>
+      <div class="modal-actions" id="rec-actions-start">
+        <button id="rec-cam" class="primary">📷 카메라로 촬영</button>
+        <button id="rec-screen">🖥️ 화면 녹화</button>
+        <button class="ghost" id="rec-close1">닫기</button>
+      </div>
+      <div class="modal-actions hidden" id="rec-actions-recording">
+        <button id="rec-stop" class="danger">■ 녹화 중지</button>
+      </div>
+      <div class="modal-actions hidden" id="rec-actions-done">
+        <button id="rec-attach" class="primary">이 영상 첨부하기</button>
+        <button id="rec-retry">다시 촬영</button>
+        <button class="ghost" id="rec-close2">닫기</button>
+      </div>
+      <p class="hint">최대 1분까지 녹화할 수 있으며, 1분이 되면 자동으로 중지됩니다.</p>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/submit.js"></script>
+</body>
+</html>

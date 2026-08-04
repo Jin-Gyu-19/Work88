@@ -1,0 +1,32 @@
+{
+  // Cloudflare Workers 설정
+  "name": "ai-usecase-hub",
+  "main": "src/index.js",
+  "compatibility_date": "2025-08-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-usecase-hub",
+      // 배포 전 `wrangler d1 create ai-usecase-hub` 실행 후 발급된 ID로 교체
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "ai-usecase-files"
+    }
+  ],
+  "vars": {
+    // 초기 관리자 이메일 (쉼표로 여러 명 지정 가능). MS 로그인 계정 이메일로 변경하세요.
+    "ADMIN_EMAILS": "kimdlaek@gmail.com",
+    // "1"로 설정하면 MS SSO 없이 /auth/dev 로 테스트 로그인 가능 (운영에서는 반드시 "0")
+    "DEV_MODE": "0"
+  }
+  // 시크릿은 wrangler secret put 으로 등록:
+  //   MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, SESSION_SECRET
+}

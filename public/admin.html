@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>관리자 | AI 활용 사례 공유</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">AI <span>활용 사례</span> 공유 <span class="badge admin">관리자</span></a>
+    <div class="who" id="who"></div>
+  </header>
+  <main class="container" style="max-width: 1020px;">
+    <div id="loading" class="muted">불러오는 중…</div>
+
+    <section id="login-box" class="card hero hidden">
+      <h1>로그인이 필요합니다</h1>
+      <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
+    </section>
+
+    <section id="denied-box" class="card hero hidden">
+      <h1>접근 권한이 없습니다</h1>
+      <p>관리자 권한이 있는 계정으로 로그인해 주세요.</p>
+    </section>
+
+    <section id="admin-box" class="hidden">
+      <div class="tabs">
+        <button data-tab="campaigns" class="active">캠페인 관리</button>
+        <button data-tab="submissions">제출 현황</button>
+        <button data-tab="users">사용자 관리</button>
+      </div>
+
+      <!-- 캠페인 관리 -->
+      <div id="tab-campaigns">
+        <div class="card">
+          <h2>새 캠페인 만들기</h2>
+          <label>제목 <input id="new-title" placeholder="예: 2026 상반기 AI 활용 사례 수집"></label>
+          <label>안내 문구 (선택)
+            <textarea id="new-desc" rows="3" placeholder="참여자에게 보여줄 안내 문구를 적어 주세요."></textarea>
+          </label>
+          <button class="primary" id="btn-create">캠페인 생성</button>
+        </div>
+        <div class="card">
+          <h2>캠페인 목록</h2>
+          <div id="campaigns"></div>
+        </div>
+      </div>
+
+      <!-- 제출 현황 -->
+      <div id="tab-submissions" class="hidden">
+        <div class="card">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <select id="sel-campaign" style="max-width:380px;"></select>
+            <button class="primary" id="btn-excel">📊 엑셀 다운로드</button>
+            <button id="btn-zip">🗜️ 전체 ZIP (엑셀+첨부)</button>
+          </div>
+          <p class="hint">엑셀의 첨부 셀에는 클릭하면 파일이 열리는 링크가 들어 있습니다. ZIP에는 첨부파일 원본과 상대경로로 연결된 엑셀이 함께 들어 있어 오프라인 보관용으로 좋습니다.</p>
+        </div>
+        <div class="card">
+          <div id="sub-count" class="muted" style="margin-bottom:8px;"></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>제출일시</th><th>이름</th><th>부서</th><th>제목</th><th>첨부</th><th></th></tr></thead>
+              <tbody id="sub-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사용자 관리 -->
+      <div id="tab-users" class="hidden">
+        <div class="card">
+          <h2>사용자 관리</h2>
+          <p class="hint">로그인한 적이 있는 사용자만 표시됩니다. 관리자로 지정된 사용자는 관리자 페이지에 접근할 수 있습니다.</p>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>이름</th><th>부서</th><th>이메일</th><th>권한</th><th>마지막 로그인</th></tr></thead>
+              <tbody id="user-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 제출 상세 모달 -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-body">
+      <h3 id="d-title"></h3>
+      <p class="muted" id="d-meta"></p>
+      <div class="detail-content" id="d-content"></div>
+      <p id="d-appurl"></p>
+      <div class="att-preview" id="d-atts"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="d-close">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
