@@ -6,6 +6,7 @@ let FORM = null; // 캠페인 설문 양식 { questions, oneSubmission }
 let activeQid = null; // 지금 첨부 대상인 질문 id ('app'이면 앱 파일)
 let editingId = null; // 수정 중인 제출 id
 let myList = []; // 내 제출 내역
+let uploading = 0; // 진행 중인 업로드 수
 
 const $ = (id) => document.getElementById(id);
 
@@ -47,8 +48,10 @@ async function init() {
   bindRecorder();
   $('form').addEventListener('submit', onSubmit);
   $('btn-cancel-edit').onclick = cancelEdit;
+  $('btn-draft').onclick = saveDraft;
   await loadMine();
   applyOneSubmissionState();
+  await loadDraft();
 }
 
 // 1인 1회 설문에서 이미 제출했으면 폼 대신 안내를 보여줌
@@ -212,6 +215,8 @@ function uploadBlob(blob, filename, kind, qid) {
     const bar = li.querySelector('.progress > div');
     const pct = li.querySelector('.pct');
 
+    uploading++;
+    const done = () => { uploading = Math.max(0, uploading - 1); };
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/uploads?kind=${kind}&filename=${encodeURIComponent(filename)}`);
     xhr.setRequestHeader('Content-Type', blob.type || 'application/octet-stream');
@@ -223,6 +228,7 @@ function uploadBlob(blob, filename, kind, qid) {
       }
     };
     xhr.onload = () => {
+      done();
       li.remove();
       let data = {};
       try { data = JSON.parse(xhr.responseText); } catch {}
@@ -237,6 +243,7 @@ function uploadBlob(blob, filename, kind, qid) {
       }
     };
     xhr.onerror = () => {
+      done();
       li.remove();
       toast('업로드 중 오류가 발생했습니다', true);
       reject(new Error('network error'));
@@ -468,6 +475,10 @@ function recClose() {
 
 async function onSubmit(e) {
   e.preventDefault();
+  if (uploading > 0) {
+    toast('파일 업로드가 진행 중입니다. 완료된 뒤 제출해 주세요', true);
+    return;
+  }
   const answers = gatherAnswers();
   if (!validateAnswers(answers)) return;
   const btn = $('btn-submit');
@@ -502,17 +513,11 @@ async function onSubmit(e) {
 function setEditUi(on) {
   $('btn-submit').textContent = on ? '수정 완료' : '제출하기';
   $('btn-cancel-edit').classList.toggle('hidden', !on);
+  $('btn-draft').classList.toggle('hidden', on); // 수정 모드에서는 임시저장 숨김
 }
 
-function startEdit(s) {
-  editingId = s.id;
-  applyOneSubmissionState();
-  setEditUi(true);
-
-  // 답변 되살리기
-  let answers = {};
-  try { answers = s.answers ? JSON.parse(s.answers) : {}; } catch {}
-  renderQuestions();
+// 저장된 답변을 폼에 복원 (수정 모드/임시저장 공용)
+function restoreAnswers(answers) {
   for (const q of FORM.questions) {
     const v = answers[q.id];
     if (v === undefined) continue;
@@ -532,11 +537,14 @@ function startEdit(s) {
       if (el) el.value = Array.isArray(v) ? v.join(', ') : v;
     }
   }
-  // 기존 첨부 되살리기 (삭제 가능)
+}
+
+function restoreAttachmentList(list) {
   attachments.length = 0;
   const fallbackQid = FORM.questions.find((q) => q.allowAttach)?.id || null;
-  for (const a of s.attachments || []) {
-    const validQid = FORM.questions.some((q) => q.id === a.question_id && q.allowAttach) ? a.question_id : fallbackQid;
+  for (const a of list || []) {
+    const rawQid = a.qid !== undefined ? a.qid : a.question_id;
+    const validQid = FORM.questions.some((q) => q.id === rawQid && q.allowAttach) ? rawQid : fallbackQid;
     attachments.push({
       id: a.id,
       filename: a.filename,
@@ -547,8 +555,57 @@ function startEdit(s) {
     });
   }
   renderAttachments();
+}
+
+function startEdit(s) {
+  editingId = s.id;
+  applyOneSubmissionState();
+  setEditUi(true);
+
+  let answers = {};
+  try { answers = s.answers ? JSON.parse(s.answers) : {}; } catch {}
+  renderQuestions();
+  restoreAnswers(answers);
+  restoreAttachmentList(s.attachments);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   toast('수정 모드입니다. 내용을 고치고 "수정 완료"를 눌러 주세요');
+}
+
+// ---------- 임시저장 ----------
+
+async function saveDraft() {
+  if (uploading > 0) {
+    toast('파일 업로드가 진행 중입니다. 완료된 뒤 저장해 주세요', true);
+    return;
+  }
+  const btn = $('btn-draft');
+  btn.disabled = true;
+  try {
+    await api(`/api/campaigns/${encodeURIComponent(slug)}/draft`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        answers: gatherAnswers(),
+        attachments: attachments.map((a) => ({ id: a.id, qid: a.qid })),
+      }),
+    });
+    toast('임시저장 되었습니다 💾 다음에 접속하면 이어서 작성할 수 있어요');
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function loadDraft() {
+  if (editingId) return;
+  if (FORM.oneSubmission && myList.length > 0) return; // 이미 제출한 1인1회 설문은 복원 불필요
+  try {
+    const d = await api(`/api/campaigns/${encodeURIComponent(slug)}/draft`);
+    if (!d.exists) return;
+    restoreAnswers(d.answers || {});
+    restoreAttachmentList(d.attachments);
+    toast(`임시저장본을 불러왔습니다 (${kst(d.updated_at)} 저장)`);
+  } catch { /* 무시 */ }
 }
 
 function cancelEdit() {

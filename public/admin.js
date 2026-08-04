@@ -38,7 +38,7 @@ async function init() {
     b.onclick = () => {
       document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('active', x === b));
       ['campaigns', 'submissions', 'users'].forEach((t) => $(`tab-${t}`).classList.toggle('hidden', t !== b.dataset.tab));
-      if (b.dataset.tab === 'users') loadUsers();
+      if (b.dataset.tab === 'users') loadAdmins();
       if (b.dataset.tab === 'submissions') loadSubs();
     };
   });
@@ -68,6 +68,9 @@ async function init() {
     if (id) location.href = `/api/admin/campaigns/${id}/export.zip`;
   };
   $('d-close').onclick = () => $('detail-modal').classList.add('hidden');
+  $('btn-add-admin').onclick = addAdmin;
+  $('lb-close').onclick = closeLightbox;
+  $('lightbox').onclick = (e) => { if (e.target === $('lightbox')) closeLightbox(); };
 
   await loadCampaigns();
 }
@@ -545,55 +548,86 @@ function showDetail(s) {
   $('d-appurl').innerHTML = s.app_url
     ? `📱 앱 URL: <a href="${esc(s.app_url)}" target="_blank" rel="noopener">${esc(s.app_url)}</a>`
     : '';
+  const hasMedia = s.attachments.some((a) => a.kind === 'image' || a.kind === 'video');
+  $('d-atts-hint').style.display = hasMedia ? '' : 'none';
   $('d-atts').innerHTML = s.attachments.map((a) => {
     const url = `/files/${a.id}`;
     let preview = '';
-    if (a.kind === 'image') preview = `<img src="${url}" alt="">`;
-    else if (a.kind === 'video') preview = `<video src="${url}" controls preload="metadata"></video>`;
+    if (a.kind === 'image') preview = `<img src="${url}" alt="" class="lb-zoom" data-lb="image" data-src="${url}" title="클릭하면 크게 보기">`;
+    else if (a.kind === 'video') preview = `<div class="video-thumb lb-zoom" data-lb="video" data-src="${url}" title="클릭하면 크게 재생"><video src="${url}" preload="metadata" muted></video><span class="play-badge">▶</span></div>`;
     return `<div>${preview}<a href="${url}?download=1">${a.kind === 'app' ? '📦' : '📎'} ${esc(a.filename)} (${fmtSize(a.size)})</a></div>`;
   }).join('');
+  $('d-atts').querySelectorAll('.lb-zoom').forEach((el) => {
+    el.onclick = () => openLightbox(el.dataset.lb, el.dataset.src);
+  });
   $('detail-modal').classList.remove('hidden');
 }
 
-// ---------- 사용자 관리 ----------
+// ---------- 이미지/영상 확대 보기 ----------
 
-async function loadUsers() {
-  let users;
+function openLightbox(type, src) {
+  const body = $('lb-body');
+  body.innerHTML = type === 'video'
+    ? `<video src="${src}" controls autoplay playsinline></video>`
+    : `<img src="${src}" alt="">`;
+  $('lightbox').classList.remove('hidden');
+}
+
+function closeLightbox() {
+  $('lb-body').innerHTML = ''; // 영상 재생 중지
+  $('lightbox').classList.add('hidden');
+}
+
+// ---------- 관리자 관리 ----------
+
+async function loadAdmins() {
+  let admins;
   try {
-    users = await api('/api/admin/users');
+    admins = await api('/api/admin/admins');
   } catch (e) {
     toast(e.message, true);
     return;
   }
   const me = await fetchMe();
-  const tbody = $('user-rows');
-  tbody.innerHTML = users.map((u) => {
+  const tbody = $('admin-rows');
+  tbody.innerHTML = admins.map((u) => {
     const isSelf = me && u.email === me.email;
-    const locked = isSelf || u.isFixedAdmin;
+    const removable = !isSelf && !u.isFixedAdmin && u.id;
     return `
       <tr>
-        <td>${esc(u.name)}${isSelf ? ' <span class="muted">(나)</span>' : ''}</td>
-        <td>${esc(u.department)}</td>
+        <td>${u.name ? esc(u.name) : '<span class="muted">(아직 로그인 안 함)</span>'}${isSelf ? ' <span class="muted">(나)</span>' : ''}</td>
+        <td>${esc(u.department || '')}</td>
         <td>${esc(u.email)}</td>
-        <td>
-          <select data-id="${u.id}" ${locked ? 'disabled' : ''} style="width:auto; margin:0;">
-            <option value="user" ${u.role !== 'admin' ? 'selected' : ''}>일반</option>
-            <option value="admin" ${u.role === 'admin' || u.isFixedAdmin ? 'selected' : ''}>관리자</option>
-          </select>
-          ${u.isFixedAdmin ? '<div class="hint">환경설정 지정 관리자</div>' : ''}
-        </td>
         <td style="white-space:nowrap;">${kst(u.last_login)}</td>
+        <td>
+          ${u.isFixedAdmin ? '<span class="hint">환경설정 지정</span>' : ''}
+          ${removable ? `<button class="small ghost" data-remove="${u.id}">해제</button>` : ''}
+        </td>
       </tr>`;
   }).join('');
-  tbody.querySelectorAll('select[data-id]').forEach((sel) => {
-    sel.onchange = async () => {
+  tbody.querySelectorAll('button[data-remove]').forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm('이 사용자의 관리자 권한을 해제할까요?')) return;
       try {
-        await api(`/api/admin/users/${sel.dataset.id}`, { method: 'PATCH', body: JSON.stringify({ role: sel.value }) });
-        toast('권한이 변경되었습니다');
+        await api(`/api/admin/admins/${b.dataset.remove}`, { method: 'DELETE' });
+        toast('관리자 권한이 해제되었습니다');
+        loadAdmins();
       } catch (e) {
         toast(e.message, true);
-        loadUsers();
       }
     };
   });
+}
+
+async function addAdmin() {
+  const email = $('new-admin-email').value.trim();
+  if (!email) { toast('이메일을 입력해 주세요', true); return; }
+  try {
+    await api('/api/admin/admins', { method: 'POST', body: JSON.stringify({ email }) });
+    toast(`${email} 님이 관리자로 지정되었습니다`);
+    $('new-admin-email').value = '';
+    loadAdmins();
+  } catch (e) {
+    toast(e.message, true);
+  }
 }

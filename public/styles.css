@@ -202,6 +202,17 @@ tr.clickable:hover { background: #f7f9fd; }
 .bar-fill { height: 100%; background: var(--primary); border-radius: 4px; min-width: 2px; }
 .bar-count { min-width: 84px; font-size: 12.5px; color: var(--muted); }
 
+.lb-zoom { cursor: zoom-in; }
+.lb-body { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.lb-body img, .lb-body video { max-width: 94vw; max-height: 92vh; border-radius: 8px; box-shadow: 0 8px 40px rgba(0, 0, 0, .5); }
+.lb-x { position: fixed; top: 14px; right: 16px; float: none; }
+.video-thumb { position: relative; display: inline-block; }
+.video-thumb video { pointer-events: none; }
+.play-badge {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0,0,0,.7); pointer-events: none;
+}
+
 .hero { text-align: center; padding: 48px 20px; }
 .hero h1 { font-size: 26px; }
 .hero p { color: var(--muted); }

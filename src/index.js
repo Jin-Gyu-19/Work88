@@ -258,6 +258,15 @@ app.use('*', async (c, next) => {
         created_by TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`).run();
+      await c.env.DB.prepare(`CREATE TABLE IF NOT EXISTS drafts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        campaign_id INTEGER NOT NULL,
+        user_email TEXT NOT NULL,
+        answers TEXT,
+        attachments TEXT,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(campaign_id, user_email)
+      )`).run();
     } catch (e) {
       console.error('migration check failed', e);
     }
@@ -486,7 +495,58 @@ app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
     .run();
   const submissionId = res.meta.last_row_id;
   await claimAttachments(c.env, form, body, submissionId, u.email);
+  await c.env.DB.prepare('DELETE FROM drafts WHERE campaign_id = ? AND user_email = ?').bind(campaign.id, u.email).run();
   return c.json({ ok: true, id: submissionId });
+}));
+
+// ---------- 임시저장 ----------
+
+app.get('/api/campaigns/:slug/draft', needAuth(async (c) => {
+  const campaign = await c.env.DB.prepare('SELECT id FROM campaigns WHERE slug = ?').bind(c.req.param('slug')).first();
+  if (!campaign) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
+  const u = c.get('user');
+  const draft = await c.env.DB
+    .prepare('SELECT * FROM drafts WHERE campaign_id = ? AND user_email = ?')
+    .bind(campaign.id, u.email).first();
+  if (!draft) return c.json({ exists: false });
+
+  let answers = {};
+  let refs = [];
+  try { answers = JSON.parse(draft.answers || '{}'); } catch {}
+  try { refs = JSON.parse(draft.attachments || '[]'); } catch {}
+
+  // 아직 제출에 연결되지 않고 남아 있는 첨부만 되살린다
+  let atts = [];
+  const ids = refs.map((r) => r.id).filter((id) => typeof id === 'string');
+  if (ids.length) {
+    const { results } = await c.env.DB
+      .prepare(`SELECT id, filename, kind, size FROM attachments WHERE uploader_email = ? AND submission_id IS NULL AND id IN (${ids.map(() => '?').join(',')})`)
+      .bind(u.email, ...ids).all();
+    const qidOf = Object.fromEntries(refs.map((r) => [r.id, r.qid]));
+    atts = results.map((a) => ({ ...a, qid: qidOf[a.id] || null }));
+  }
+  return c.json({ exists: true, answers, attachments: atts, updated_at: draft.updated_at });
+}));
+
+app.put('/api/campaigns/:slug/draft', needAuth(async (c) => {
+  const campaign = await c.env.DB.prepare('SELECT id FROM campaigns WHERE slug = ?').bind(c.req.param('slug')).first();
+  if (!campaign) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
+  const body = await c.req.json();
+  const answers = JSON.stringify(body.answers && typeof body.answers === 'object' ? body.answers : {}).slice(0, 100000);
+  const atts = JSON.stringify(Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_ATTACHMENTS) : []);
+  await c.env.DB.prepare(
+    `INSERT INTO drafts (campaign_id, user_email, answers, attachments, updated_at) VALUES (?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(campaign_id, user_email) DO UPDATE SET
+       answers = excluded.answers, attachments = excluded.attachments, updated_at = excluded.updated_at`,
+  ).bind(campaign.id, c.get('user').email, answers, atts).run();
+  return c.json({ ok: true });
+}));
+
+app.delete('/api/campaigns/:slug/draft', needAuth(async (c) => {
+  const campaign = await c.env.DB.prepare('SELECT id FROM campaigns WHERE slug = ?').bind(c.req.param('slug')).first();
+  if (!campaign) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
+  await c.env.DB.prepare('DELETE FROM drafts WHERE campaign_id = ? AND user_email = ?').bind(campaign.id, c.get('user').email).run();
+  return c.json({ ok: true });
 }));
 
 // 제출 수정 (본인, 설문이 열려 있는 동안만)
@@ -733,24 +793,41 @@ app.get('/api/admin/campaigns/:id/export.zip', needAdmin(async (c) => {
   });
 }));
 
-app.get('/api/admin/users', needAdmin(async (c) => {
+// 관리자 지정/해제 (테넌트 구성원은 로그인 시 자동으로 일반 권한)
+app.get('/api/admin/admins', needAdmin(async (c) => {
   const { results } = await c.env.DB
-    .prepare('SELECT id, email, name, department, role, last_login FROM users ORDER BY name, email')
+    .prepare("SELECT id, email, name, department, last_login FROM users WHERE role = 'admin' ORDER BY name, email")
     .all();
   const fixed = adminEmails(c.env);
-  return c.json(results.map((u) => ({ ...u, isFixedAdmin: fixed.includes(u.email) })));
+  const list = results.map((u) => ({ ...u, isFixedAdmin: fixed.includes(u.email) }));
+  // 환경설정 지정 관리자가 아직 로그인 전이라 users에 없으면 목록에 표시
+  for (const email of fixed) {
+    if (!list.some((u) => u.email === email)) {
+      list.push({ id: null, email, name: null, department: null, last_login: null, isFixedAdmin: true });
+    }
+  }
+  return c.json(list);
 }));
 
-app.patch('/api/admin/users/:id', needAdmin(async (c) => {
+app.post('/api/admin/admins', needAdmin(async (c) => {
   const body = await c.req.json();
-  const role = body.role === 'admin' ? 'admin' : 'user';
+  const email = (body.email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: '올바른 이메일 주소를 입력해 주세요' }, 400);
+  await c.env.DB.prepare(
+    `INSERT INTO users (email, role) VALUES (?, 'admin')
+     ON CONFLICT(email) DO UPDATE SET role = 'admin'`,
+  ).bind(email).run();
+  return c.json({ ok: true });
+}));
+
+app.delete('/api/admin/admins/:id', needAdmin(async (c) => {
   const target = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(c.req.param('id')).first();
   if (!target) return c.json({ error: '사용자를 찾을 수 없습니다' }, 404);
-  if (target.email === c.get('user').email) return c.json({ error: '본인의 권한은 변경할 수 없습니다' }, 400);
-  if (adminEmails(c.env).includes(target.email) && role !== 'admin') {
-    return c.json({ error: '기본 관리자(환경설정에 지정된 계정)의 권한은 해제할 수 없습니다' }, 400);
+  if (target.email === c.get('user').email) return c.json({ error: '본인의 관리자 권한은 해제할 수 없습니다' }, 400);
+  if (adminEmails(c.env).includes(target.email)) {
+    return c.json({ error: '기본 관리자(환경설정에 지정된 계정)는 해제할 수 없습니다' }, 400);
   }
-  await c.env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind(role, target.id).run();
+  await c.env.DB.prepare("UPDATE users SET role = 'user' WHERE id = ?").bind(target.id).run();
   return c.json({ ok: true });
 }));
 
