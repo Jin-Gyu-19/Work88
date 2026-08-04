@@ -153,6 +153,7 @@ tr.clickable:hover { background: #f7f9fd; }
 }
 .toast.show { opacity: 1; }
 .toast.error { background: var(--danger); }
+.toast.top { bottom: auto; top: 72px; }
 
 .campaign-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .campaign-item:last-child { border-bottom: none; }

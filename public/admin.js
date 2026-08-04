@@ -220,7 +220,7 @@ function bindDeleteModal() {
       void zip.offsetWidth; // 애니메이션 재시작 트릭
       zip.classList.add('pulse-red');
       setTimeout(() => zip.classList.remove('pulse-red'), 7000);
-      toast('이 버튼을 눌러 설문 내역과 첨부파일을 먼저 받아 두세요 👇', true);
+      toast('이 버튼을 눌러 설문 내역과 첨부파일을 먼저 받아 두세요 👇', true, true);
     }, 250);
   };
   $('del-confirm').onclick = async () => {

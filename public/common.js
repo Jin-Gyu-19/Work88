@@ -44,7 +44,7 @@ async function api(url, opts = {}) {
 }
 
 let toastTimer;
-function toast(msg, isError) {
+function toast(msg, isError, atTop) {
   let el = document.querySelector('.toast');
   if (!el) {
     el = document.createElement('div');
@@ -53,6 +53,7 @@ function toast(msg, isError) {
   }
   el.textContent = msg;
   el.classList.toggle('error', !!isError);
+  el.classList.toggle('top', !!atTop);
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
