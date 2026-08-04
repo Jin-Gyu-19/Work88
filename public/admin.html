@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | AI 활용 사례 공유</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=6">
 </head>
 <body>
   <header class="topbar">
@@ -61,7 +61,7 @@
           <div id="sub-count" class="muted" style="margin-bottom:8px;"></div>
           <div style="overflow-x:auto;">
             <table>
-              <thead><tr><th>제출일시</th><th>이름</th><th>부서</th><th>제목</th><th>첨부</th><th></th></tr></thead>
+              <thead><tr><th>제출일시</th><th>이름</th><th>부서</th><th>요약</th><th>첨부</th><th></th></tr></thead>
               <tbody id="sub-rows"></tbody>
             </table>
           </div>
@@ -102,7 +102,6 @@
 
       <fieldset style="margin-top:16px;">
         <legend>추가 섹션</legend>
-        <label class="choice"><input type="checkbox" id="b-attach" checked> 첨부 섹션 표시 (화면 캡쳐 · 동영상 촬영 · 파일 업로드)</label>
         <label class="choice"><input type="checkbox" id="b-app" checked> 앱 개발 섹션 표시 (앱 URL · 앱 파일 첨부)</label>
       </fieldset>
 
@@ -127,7 +126,7 @@
     </div>
   </div>
 
-  <script src="/common.js"></script>
-  <script src="/admin.js"></script>
+  <script src="/common.js?v=6"></script>
+  <script src="/admin.js?v=6"></script>
 </body>
 </html>

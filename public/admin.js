@@ -139,7 +139,7 @@ async function onCampaignAction(act, ca) {
 // ---------- 설문지 빌더 ----------
 
 function newQuestion() {
-  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [] };
+  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [], allowAttach: false };
 }
 
 function openBuilder(ca) {
@@ -148,15 +148,12 @@ function openBuilder(ca) {
   $('b-name').value = ca ? ca.title : '';
   $('b-desc').value = ca ? (ca.description || '') : '';
   if (ca) {
-    bQuestions = ca.form.questions.map((q) => ({ ...q, options: q.options ? [...q.options] : [] }));
-    $('b-attach').checked = ca.form.showAttach;
+    bQuestions = ca.form.questions.map((q) => ({ ...q, options: q.options ? [...q.options] : [], allowAttach: !!q.allowAttach }));
     $('b-app').checked = ca.form.showApp;
   } else {
     bQuestions = [
-      { id: 'title', label: '제목', type: 'text', required: true, options: [] },
-      { id: 'content', label: '내용', type: 'textarea', required: true, options: [] },
+      { id: 'content', label: '내용', type: 'textarea', required: true, options: [], allowAttach: true },
     ];
-    $('b-attach').checked = true;
     $('b-app').checked = true;
   }
   renderBuilder();
@@ -177,6 +174,7 @@ function renderBuilder() {
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
         <label class="q-req-label"><input type="checkbox" class="q-req" ${q.required ? 'checked' : ''}> 필수</label>
+        <label class="q-req-label" title="이 질문 아래에 화면 캡쳐·동영상 촬영·파일 업로드 버튼이 표시됩니다"><input type="checkbox" class="q-att" ${q.allowAttach ? 'checked' : ''}> 📎 첨부</label>
         <button type="button" class="small ghost q-up" ${i === 0 ? 'disabled' : ''}>▲</button>
         <button type="button" class="small ghost q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''}>▼</button>
         <button type="button" class="small ghost q-del">✕</button>
@@ -190,6 +188,7 @@ function renderBuilder() {
       row.querySelector('.q-opts').classList.toggle('hidden', !(q.type === 'select' || q.type === 'checkbox'));
     };
     row.querySelector('.q-req').onchange = (e) => { q.required = e.target.checked; };
+    row.querySelector('.q-att').onchange = (e) => { q.allowAttach = e.target.checked; };
     row.querySelector('.q-opts').oninput = (e) => {
       q.options = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
     };
@@ -228,7 +227,6 @@ async function saveBuilder() {
     description: $('b-desc').value,
     fields: {
       questions: cleaned,
-      showAttach: $('b-attach').checked,
       showApp: $('b-app').checked,
     },
   };

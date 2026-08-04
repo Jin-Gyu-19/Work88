@@ -1,8 +1,9 @@
 // 제출 페이지 로직
 const slug = location.pathname.split('/').pop();
-const attachments = []; // { id, filename, kind, size, previewUrl }
+const attachments = []; // { id, filename, kind, size, previewUrl, qid }
 const MAX_ATTACHMENTS = 10;
-let FORM = null; // 캠페인 설문 양식 { questions, showAttach, showApp }
+let FORM = null; // 캠페인 설문 양식 { questions, showApp }
+let activeQid = null; // 지금 첨부 대상인 질문 id ('app'이면 앱 파일)
 
 const $ = (id) => document.getElementById(id);
 
@@ -37,11 +38,10 @@ async function init() {
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
   renderQuestions();
-  if (!FORM.showAttach) $('attach-box').classList.add('hidden');
   if (!FORM.showApp) $('app-box').classList.add('hidden');
   $('form-box').classList.remove('hidden');
 
-  bindAttachHandlers();
+  bindGlobalAttachHandlers();
   bindRecorder();
   $('form').addEventListener('submit', onSubmit);
   loadMine();
@@ -53,21 +53,44 @@ function renderQuestions() {
   const box = $('questions');
   box.innerHTML = FORM.questions.map((q) => {
     const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
+    let inner;
     if (q.type === 'textarea') {
-      return `<label>${esc(q.label)}${req}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
-    }
-    if (q.type === 'select') {
-      return `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${
+      inner = `<label>${esc(q.label)}${req}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
+    } else if (q.type === 'select') {
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${
         q.options.map((o) => `<label class="choice"><input type="radio" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
-    }
-    if (q.type === 'checkbox') {
-      return `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${
+    } else if (q.type === 'checkbox') {
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
+    } else {
+      inner = `<label>${esc(q.label)}${req}<input data-q="${q.id}" maxlength="500"></label>`;
     }
-    return `<label>${esc(q.label)}${req}<input data-q="${q.id}" maxlength="500"></label>`;
+    const attach = q.allowAttach ? `
+      <div class="attach-block" data-attq="${q.id}">
+        <div class="attach-buttons">
+          <button type="button" class="small att-capture">🖥️ 화면 캡쳐</button>
+          <button type="button" class="small att-record">🎥 동영상 촬영</button>
+          <button type="button" class="small att-file">📎 파일 업로드</button>
+        </div>
+        <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB · 스크린샷 붙여넣기(Ctrl+V) 가능</p>
+        <ul class="attach-list" data-attlist="${q.id}"></ul>
+      </div>` : '';
+    return `<div class="q-item">${inner}${attach}</div>`;
   }).join('');
+
+  // 질문별 첨부 버튼 연결
+  box.querySelectorAll('.attach-block').forEach((blk) => {
+    const qid = blk.dataset.attq;
+    blk.querySelector('.att-capture').onclick = () => captureScreen(qid);
+    blk.querySelector('.att-record').onclick = () => openRecorder(qid);
+    blk.querySelector('.att-file').onclick = () => {
+      activeQid = qid;
+      $('file-input').click();
+    };
+  });
+  renderAttachments();
 }
 
 function gatherAnswers() {
@@ -103,44 +126,50 @@ function validateAnswers(answers) {
 
 function canAddMore(n = 1) {
   if (attachments.length + n > MAX_ATTACHMENTS) {
-    toast(`첨부는 최대 ${MAX_ATTACHMENTS}개까지 가능합니다`, true);
+    toast(`첨부는 전체 합쳐 최대 ${MAX_ATTACHMENTS}개까지 가능합니다`, true);
     return false;
   }
   return true;
 }
 
+function listFor(qid) {
+  return document.querySelector(`[data-attlist="${qid}"]`);
+}
+
 function renderAttachments() {
-  const ul = $('attach-list');
-  ul.innerHTML = '';
-  for (const a of attachments) {
-    const li = document.createElement('li');
-    let thumb = '📄';
-    if (a.kind === 'image' && a.previewUrl) thumb = `<img class="thumb" src="${a.previewUrl}" alt="">`;
-    else if (a.kind === 'video') thumb = '🎬';
-    else if (a.kind === 'app') thumb = '📦';
-    li.innerHTML = `
-      <span>${thumb}</span>
-      <span class="fname">${esc(a.filename)} <span class="muted">(${fmtSize(a.size)})</span></span>
-      <button type="button" class="small ghost">✕ 삭제</button>`;
-    li.querySelector('button').onclick = async () => {
-      try {
-        await api(`/api/uploads/${a.id}`, { method: 'DELETE' });
-      } catch { /* 이미 지워졌으면 무시 */ }
-      attachments.splice(attachments.indexOf(a), 1);
-      renderAttachments();
-    };
-    ul.appendChild(li);
-  }
+  document.querySelectorAll('[data-attlist]').forEach((ul) => {
+    const qid = ul.dataset.attlist;
+    ul.innerHTML = '';
+    for (const a of attachments.filter((x) => x.qid === qid)) {
+      const li = document.createElement('li');
+      let thumb = '📄';
+      if (a.kind === 'image' && a.previewUrl) thumb = `<img class="thumb" src="${a.previewUrl}" alt="">`;
+      else if (a.kind === 'video') thumb = '🎬';
+      else if (a.kind === 'app') thumb = '📦';
+      li.innerHTML = `
+        <span>${thumb}</span>
+        <span class="fname">${esc(a.filename)} <span class="muted">(${fmtSize(a.size)})</span></span>
+        <button type="button" class="small ghost">✕ 삭제</button>`;
+      li.querySelector('button').onclick = async () => {
+        try {
+          await api(`/api/uploads/${a.id}`, { method: 'DELETE' });
+        } catch { /* 이미 지워졌으면 무시 */ }
+        attachments.splice(attachments.indexOf(a), 1);
+        renderAttachments();
+      };
+      ul.appendChild(li);
+    }
+  });
 }
 
 // XHR 업로드 (진행률 % 표시)
-function uploadBlob(blob, filename, kind) {
+function uploadBlob(blob, filename, kind, qid) {
   return new Promise((resolve, reject) => {
-    const ul = $('attach-list');
+    const ul = listFor(qid) || listFor('app');
     const li = document.createElement('li');
     li.innerHTML = `<span>⬆️</span><span class="fname">${esc(filename)} <span class="muted">(${fmtSize(blob.size)})</span></span>
       <div class="progress"><div></div></div><span class="pct muted" style="min-width:38px; text-align:right;">0%</span>`;
-    ul.appendChild(li);
+    if (ul) ul.appendChild(li);
     const bar = li.querySelector('.progress > div');
     const pct = li.querySelector('.pct');
 
@@ -159,7 +188,7 @@ function uploadBlob(blob, filename, kind) {
       let data = {};
       try { data = JSON.parse(xhr.responseText); } catch {}
       if (xhr.status >= 200 && xhr.status < 300) {
-        const a = { ...data, previewUrl: kind === 'image' ? URL.createObjectURL(blob) : null };
+        const a = { ...data, qid, previewUrl: kind === 'image' ? URL.createObjectURL(blob) : null };
         attachments.push(a);
         renderAttachments();
         resolve(a);
@@ -199,61 +228,48 @@ function kindOf(file) {
   return 'file';
 }
 
-// ---------- 첨부 버튼들 ----------
+// ---------- 화면 캡쳐 ----------
 
-function bindAttachHandlers() {
-  // 화면 캡쳐
-  $('btn-capture').onclick = async () => {
-    if (!canAddMore()) return;
-    if (!navigator.mediaDevices?.getDisplayMedia) {
-      toast('이 브라우저는 화면 캡쳐를 지원하지 않습니다. 스크린샷을 찍어 붙여넣기(Ctrl+V) 해주세요.', true);
-      return;
-    }
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    } catch {
-      return; // 사용자가 취소
-    }
-    try {
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.muted = true;
-      await video.play();
-      await new Promise((r) => setTimeout(r, 400));
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
-      await uploadBlob(blob, `캡쳐_${ts()}.png`, 'image');
-      toast('화면 캡쳐가 첨부되었습니다');
-    } catch {
-      toast('캡쳐에 실패했습니다', true);
-    } finally {
-      stream.getTracks().forEach((t) => t.stop());
-    }
-  };
+async function captureScreen(qid) {
+  if (!canAddMore()) return;
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    toast('이 브라우저는 화면 캡쳐를 지원하지 않습니다. 스크린샷을 찍어 붙여넣기(Ctrl+V) 해주세요.', true);
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+  } catch {
+    return; // 사용자가 취소
+  }
+  try {
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise((r) => setTimeout(r, 400));
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+    await uploadBlob(blob, `캡쳐_${ts()}.png`, 'image', qid);
+    toast('화면 캡쳐가 첨부되었습니다');
+  } catch {
+    toast('캡쳐에 실패했습니다', true);
+  } finally {
+    stream.getTracks().forEach((t) => t.stop());
+  }
+}
 
-  // 클립보드 스크린샷 붙여넣기
-  document.addEventListener('paste', async (e) => {
-    if (FORM && !FORM.showAttach) return;
-    const items = [...(e.clipboardData?.items || [])];
-    const img = items.find((it) => it.type.startsWith('image/'));
-    if (!img || !canAddMore()) return;
-    const file = img.getAsFile();
-    if (file) {
-      await uploadBlob(file, `붙여넣기_${ts()}.png`, 'image');
-      toast('클립보드 이미지가 첨부되었습니다');
-    }
-  });
+// ---------- 전역 첨부 핸들러 (파일 선택 / 붙여넣기 / 앱 파일) ----------
 
-  // 파일 업로드
-  $('btn-file').onclick = () => $('file-input').click();
+function bindGlobalAttachHandlers() {
   $('file-input').onchange = async (e) => {
     const files = [...e.target.files];
+    const qid = activeQid;
     e.target.value = '';
-    if (!canAddMore(files.length)) return;
+    if (!qid || !canAddMore(files.length)) return;
     for (const f of files) {
       const kind = kindOf(f);
       if (kind === 'video') {
@@ -263,17 +279,35 @@ function bindAttachHandlers() {
           continue;
         }
       }
-      await uploadBlob(f, f.name, kind).catch(() => {});
+      await uploadBlob(f, f.name, kind, qid).catch(() => {});
     }
   };
 
+  // 클립보드 스크린샷 붙여넣기 → 첫 번째 첨부 허용 질문에 추가
+  document.addEventListener('paste', async (e) => {
+    if (!FORM) return;
+    const firstQ = FORM.questions.find((q) => q.allowAttach);
+    if (!firstQ) return;
+    const items = [...(e.clipboardData?.items || [])];
+    const img = items.find((it) => it.type.startsWith('image/'));
+    if (!img || !canAddMore()) return;
+    const file = img.getAsFile();
+    if (file) {
+      await uploadBlob(file, `붙여넣기_${ts()}.png`, 'image', firstQ.id);
+      toast(`"${firstQ.label}" 질문에 클립보드 이미지가 첨부되었습니다`);
+    }
+  });
+
   // 앱 파일 업로드
-  $('btn-appfile').onclick = () => $('appfile-input').click();
+  $('btn-appfile').onclick = () => {
+    activeQid = 'app';
+    $('appfile-input').click();
+  };
   $('appfile-input').onchange = async (e) => {
     const f = e.target.files[0];
     e.target.value = '';
     if (!f || !canAddMore()) return;
-    await uploadBlob(f, f.name, 'app').catch(() => {});
+    await uploadBlob(f, f.name, 'app', 'app').catch(() => {});
   };
 }
 
@@ -284,17 +318,20 @@ let recorder = null;
 let recChunks = [];
 let recTimer = null;
 let recBlob = null;
+let recQid = null;
+
+function openRecorder(qid) {
+  if (!canAddMore()) return;
+  if (!window.MediaRecorder) {
+    toast('이 브라우저는 동영상 녹화를 지원하지 않습니다. 파일 업로드를 이용해 주세요.', true);
+    return;
+  }
+  recQid = qid;
+  recReset();
+  $('rec-modal').classList.remove('hidden');
+}
 
 function bindRecorder() {
-  $('btn-record').onclick = () => {
-    if (!canAddMore()) return;
-    if (!window.MediaRecorder) {
-      toast('이 브라우저는 동영상 녹화를 지원하지 않습니다. 파일 업로드를 이용해 주세요.', true);
-      return;
-    }
-    recReset();
-    $('rec-modal').classList.remove('hidden');
-  };
   $('rec-cam').onclick = () => startRecording('camera');
   $('rec-screen').onclick = () => startRecording('screen');
   $('rec-stop').onclick = stopRecording;
@@ -304,9 +341,10 @@ function bindRecorder() {
   $('rec-attach').onclick = async () => {
     if (!recBlob) return;
     const ext = recBlob.type.includes('mp4') ? 'mp4' : 'webm';
+    const qid = recQid;
     recClose();
     toast('동영상 업로드 중… 첨부 목록에서 진행률을 확인하세요');
-    await uploadBlob(recBlob, `녹화_${ts()}.${ext}`, 'video').catch(() => {});
+    await uploadBlob(recBlob, `녹화_${ts()}.${ext}`, 'video', qid).catch(() => {});
   };
 }
 
@@ -408,14 +446,13 @@ async function onSubmit(e) {
       body: JSON.stringify({
         answers,
         app_url: FORM.showApp ? $('f-appurl').value : '',
-        attachment_ids: attachments.map((a) => a.id),
+        attachments: attachments.map((a) => ({ id: a.id, qid: a.qid })),
       }),
     });
     toast('제출이 완료되었습니다. 감사합니다! 🎉');
+    attachments.length = 0;
     renderQuestions();
     $('f-appurl').value = '';
-    attachments.length = 0;
-    renderAttachments();
     loadMine();
   } catch (err) {
     toast(err.message, true);

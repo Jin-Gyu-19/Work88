@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Zip, ZipPassThrough } from 'fflate';
 import { signSession, verifySession } from './auth.js';
-import { buildWorkbook } from './excel.js';
+import { buildWorkbook, groupAtts } from './excel.js';
 
 const app = new Hono();
 
@@ -20,12 +20,12 @@ const MAX_ATTACHMENTS = 10;
 const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox'];
 
 function defaultForm() {
+  // 빌더 도입 전에 만들어진 캠페인(fields 없음)을 위한 기본 양식
   return {
-    showAttach: true,
     showApp: true,
     questions: [
-      { id: 'title', label: '제목', type: 'text', required: true },
-      { id: 'content', label: '내용', type: 'textarea', required: true },
+      { id: 'title', label: '제목', type: 'text', required: true, allowAttach: false },
+      { id: 'content', label: '내용', type: 'textarea', required: true, allowAttach: true },
     ],
   };
 }
@@ -35,7 +35,6 @@ function sanitizeForm(input) {
   const def = defaultForm();
   if (!input || typeof input !== 'object') return def;
   const out = {
-    showAttach: input.showAttach !== false,
     showApp: input.showApp !== false,
     questions: [],
   };
@@ -48,6 +47,7 @@ function sanitizeForm(input) {
       label: q.label.trim().slice(0, 200),
       type,
       required: !!q.required,
+      allowAttach: !!q.allowAttach,
     };
     if (type === 'select' || type === 'checkbox') {
       question.options = (Array.isArray(q.options) ? q.options : [])
@@ -59,6 +59,10 @@ function sanitizeForm(input) {
     out.questions.push(question);
   }
   if (!out.questions.length) out.questions = def.questions;
+  // 구버전 호환: 전체 첨부 섹션을 쓰던 양식이면 마지막 질문에 첨부를 붙인다
+  if (input.showAttach === true && !out.questions.some((q) => q.allowAttach)) {
+    out.questions[out.questions.length - 1].allowAttach = true;
+  }
   return out;
 }
 
@@ -132,8 +136,8 @@ async function attachSubAttachments(db, subs, withKeys = false) {
   if (!subs.length) return subs;
   const ids = subs.map((s) => s.id);
   const cols = withKeys
-    ? 'id, submission_id, kind, filename, content_type, size, r2_key'
-    : 'id, submission_id, kind, filename, content_type, size';
+    ? 'id, submission_id, question_id, kind, filename, content_type, size, r2_key'
+    : 'id, submission_id, question_id, kind, filename, content_type, size';
   const { results } = await db
     .prepare(`SELECT ${cols} FROM attachments WHERE submission_id IN (${ids.map(() => '?').join(',')}) ORDER BY created_at, id`)
     .bind(...ids)
@@ -164,6 +168,10 @@ app.use('*', async (c, next) => {
       const su = await c.env.DB.prepare('PRAGMA table_info(submissions)').all();
       if (su.results?.length && !su.results.some((r) => r.name === 'answers')) {
         await c.env.DB.prepare('ALTER TABLE submissions ADD COLUMN answers TEXT').run();
+      }
+      const at = await c.env.DB.prepare('PRAGMA table_info(attachments)').all();
+      if (at.results?.length && !at.results.some((r) => r.name === 'question_id')) {
+        await c.env.DB.prepare('ALTER TABLE attachments ADD COLUMN question_id TEXT').run();
       }
     } catch (e) {
       console.error('migration check failed', e);
@@ -406,7 +414,8 @@ app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
   }
   if (!title) {
     const v = answers[form.questions[0]?.id];
-    title = (Array.isArray(v) ? v.join(', ') : v || '(제목 없음)').slice(0, 200);
+    const flat = Array.isArray(v) ? v.join(', ') : (v || '(내용 없음)');
+    title = flat.split('\n')[0].slice(0, 100);
   }
   const content = form.questions
     .map((q) => {
@@ -424,13 +433,18 @@ app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
     .run();
   const submissionId = res.meta.last_row_id;
 
-  const ids = form.showAttach || form.showApp
-    ? (Array.isArray(body.attachment_ids) ? body.attachment_ids.slice(0, MAX_ATTACHMENTS) : [])
-    : [];
-  for (const id of ids) {
+  // 첨부 연결: [{id, qid}] 형태. qid는 첨부 허용 질문 id 또는 'app'(앱 파일)
+  const validQids = new Set(form.questions.filter((q) => q.allowAttach).map((q) => q.id));
+  let atts = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_ATTACHMENTS) : [];
+  if (!atts.length && Array.isArray(body.attachment_ids)) {
+    atts = body.attachment_ids.slice(0, MAX_ATTACHMENTS).map((id) => ({ id }));
+  }
+  for (const a of atts) {
+    if (!a || typeof a.id !== 'string') continue;
+    const qid = validQids.has(a.qid) ? a.qid : (a.qid === 'app' && form.showApp ? 'app' : null);
     await c.env.DB
-      .prepare('UPDATE attachments SET submission_id = ? WHERE id = ? AND uploader_email = ? AND submission_id IS NULL')
-      .bind(submissionId, String(id), u.email)
+      .prepare('UPDATE attachments SET submission_id = ?, question_id = ? WHERE id = ? AND uploader_email = ? AND submission_id IS NULL')
+      .bind(submissionId, qid, a.id, u.email)
       .run();
   }
   return c.json({ ok: true, id: submissionId });
@@ -554,12 +568,20 @@ app.get('/api/admin/campaigns/:id/export.zip', needAdmin(async (c) => {
 
   const pathFor = {};
   const allAtts = [];
+  const labelFor = (key) => {
+    if (key === 'app') return '앱파일';
+    if (key === 'etc') return '기타';
+    return form.questions.find((q) => q.id === key)?.label || '기타';
+  };
   subs.forEach((s, i) => {
     const folder = `첨부파일/${String(i + 1).padStart(3, '0')}_${sanitizeName(s.user_name || '')}_${sanitizeName(s.title).slice(0, 24)}`;
-    (s.attachments || []).forEach((a, j) => {
-      pathFor[a.id] = `${folder}/${j + 1}_${a.filename}`;
-      allAtts.push(a);
-    });
+    const g = groupAtts(form, s);
+    for (const key of Object.keys(g)) {
+      g[key].forEach((a, j) => {
+        pathFor[a.id] = `${folder}/${sanitizeName(labelFor(key)).slice(0, 30)}_${j + 1}_${a.filename}`;
+        allAtts.push(a);
+      });
+    }
   });
   const excelBuf = buildWorkbook(campaign, form, subs, { linkFor: (a) => pathFor[a.id] });
 
