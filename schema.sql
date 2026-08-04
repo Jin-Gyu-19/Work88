@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   title TEXT NOT NULL,
   description TEXT,
   is_open INTEGER NOT NULL DEFAULT 1,
+  fields TEXT,
   created_by TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   user_department TEXT,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
+  answers TEXT,
   app_url TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

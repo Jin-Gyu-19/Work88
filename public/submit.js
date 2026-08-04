@@ -2,6 +2,7 @@
 const slug = location.pathname.split('/').pop();
 const attachments = []; // { id, filename, kind, size, previewUrl }
 const MAX_ATTACHMENTS = 10;
+let FORM = null; // 캠페인 설문 양식 { questions, showAttach, showApp }
 
 const $ = (id) => document.getElementById(id);
 
@@ -30,16 +31,72 @@ async function init() {
     return;
   }
 
+  FORM = campaign.form;
   $('c-title').textContent = campaign.title;
   $('c-desc').textContent = campaign.description || '';
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
+  renderQuestions();
+  if (!FORM.showAttach) $('attach-box').classList.add('hidden');
+  if (!FORM.showApp) $('app-box').classList.add('hidden');
   $('form-box').classList.remove('hidden');
 
   bindAttachHandlers();
   bindRecorder();
   $('form').addEventListener('submit', onSubmit);
   loadMine();
+}
+
+// ---------- 설문 질문 렌더링 ----------
+
+function renderQuestions() {
+  const box = $('questions');
+  box.innerHTML = FORM.questions.map((q) => {
+    const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
+    if (q.type === 'textarea') {
+      return `<label>${esc(q.label)}${req}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
+    }
+    if (q.type === 'select') {
+      return `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${
+        q.options.map((o) => `<label class="choice"><input type="radio" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
+      }</fieldset>`;
+    }
+    if (q.type === 'checkbox') {
+      return `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${
+        q.options.map((o) => `<label class="choice"><input type="checkbox" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
+      }</fieldset>`;
+    }
+    return `<label>${esc(q.label)}${req}<input data-q="${q.id}" maxlength="500"></label>`;
+  }).join('');
+}
+
+function gatherAnswers() {
+  const answers = {};
+  for (const q of FORM.questions) {
+    if (q.type === 'select') {
+      const el = document.querySelector(`input[name="${q.id}"]:checked`);
+      if (el) answers[q.id] = el.value;
+    } else if (q.type === 'checkbox') {
+      const els = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)];
+      if (els.length) answers[q.id] = els.map((e) => e.value);
+    } else {
+      const el = document.querySelector(`[data-q="${q.id}"]`);
+      if (el && el.value.trim()) answers[q.id] = el.value.trim();
+    }
+  }
+  return answers;
+}
+
+function validateAnswers(answers) {
+  for (const q of FORM.questions) {
+    if (!q.required) continue;
+    const v = answers[q.id];
+    if (v === undefined || (Array.isArray(v) && !v.length)) {
+      toast(`"${q.label}" 항목을 ${q.type === 'select' || q.type === 'checkbox' ? '선택' : '입력'}해 주세요`, true);
+      return false;
+    }
+  }
+  return true;
 }
 
 // ---------- 첨부 공통 ----------
@@ -76,20 +133,26 @@ function renderAttachments() {
   }
 }
 
-// XHR 업로드 (진행률 표시)
+// XHR 업로드 (진행률 % 표시)
 function uploadBlob(blob, filename, kind) {
   return new Promise((resolve, reject) => {
     const ul = $('attach-list');
     const li = document.createElement('li');
-    li.innerHTML = `<span>⬆️</span><span class="fname">${esc(filename)}</span><div class="progress"><div></div></div>`;
+    li.innerHTML = `<span>⬆️</span><span class="fname">${esc(filename)} <span class="muted">(${fmtSize(blob.size)})</span></span>
+      <div class="progress"><div></div></div><span class="pct muted" style="min-width:38px; text-align:right;">0%</span>`;
     ul.appendChild(li);
     const bar = li.querySelector('.progress > div');
+    const pct = li.querySelector('.pct');
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/uploads?kind=${kind}&filename=${encodeURIComponent(filename)}`);
     xhr.setRequestHeader('Content-Type', blob.type || 'application/octet-stream');
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) bar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+      if (e.lengthComputable) {
+        const p = Math.round((e.loaded / e.total) * 100);
+        bar.style.width = p + '%';
+        pct.textContent = p + '%';
+      }
     };
     xhr.onload = () => {
       li.remove();
@@ -174,6 +237,7 @@ function bindAttachHandlers() {
 
   // 클립보드 스크린샷 붙여넣기
   document.addEventListener('paste', async (e) => {
+    if (FORM && !FORM.showAttach) return;
     const items = [...(e.clipboardData?.items || [])];
     const img = items.find((it) => it.type.startsWith('image/'));
     if (!img || !canAddMore()) return;
@@ -241,6 +305,7 @@ function bindRecorder() {
     if (!recBlob) return;
     const ext = recBlob.type.includes('mp4') ? 'mp4' : 'webm';
     recClose();
+    toast('동영상 업로드 중… 첨부 목록에서 진행률을 확인하세요');
     await uploadBlob(recBlob, `녹화_${ts()}.${ext}`, 'video').catch(() => {});
   };
 }
@@ -267,7 +332,12 @@ async function startRecording(source) {
 
   recChunks = [];
   const mime = pickMime();
-  recorder = new MediaRecorder(recStream, mime ? { mimeType: mime } : undefined);
+  // 비트레이트를 제한해 1분 녹화가 20MB 안팎이 되도록 (업로드 속도 개선)
+  recorder = new MediaRecorder(recStream, {
+    ...(mime ? { mimeType: mime } : {}),
+    videoBitsPerSecond: 2_500_000,
+    audioBitsPerSecond: 128_000,
+  });
   recorder.ondataavailable = (e) => { if (e.data.size) recChunks.push(e.data); };
   recorder.onstop = () => {
     recBlob = new Blob(recChunks, { type: recorder.mimeType || 'video/webm' });
@@ -279,7 +349,7 @@ async function startRecording(source) {
     pb.classList.remove('hidden');
     $('rec-actions-recording').classList.add('hidden');
     $('rec-actions-done').classList.remove('hidden');
-    $('rec-timer').textContent = '';
+    $('rec-timer').textContent = `녹화 완료 (${fmtSize(recBlob.size)})`;
   };
   recorder.start();
 
@@ -327,6 +397,8 @@ function recClose() {
 
 async function onSubmit(e) {
   e.preventDefault();
+  const answers = gatherAnswers();
+  if (!validateAnswers(answers)) return;
   const btn = $('btn-submit');
   btn.disabled = true;
   btn.textContent = '제출 중…';
@@ -334,15 +406,13 @@ async function onSubmit(e) {
     await api(`/api/campaigns/${encodeURIComponent(slug)}/submissions`, {
       method: 'POST',
       body: JSON.stringify({
-        title: $('f-title').value,
-        content: $('f-content').value,
-        app_url: $('f-appurl').value,
+        answers,
+        app_url: FORM.showApp ? $('f-appurl').value : '',
         attachment_ids: attachments.map((a) => a.id),
       }),
     });
     toast('제출이 완료되었습니다. 감사합니다! 🎉');
-    $('f-title').value = '';
-    $('f-content').value = '';
+    renderQuestions();
     $('f-appurl').value = '';
     attachments.length = 0;
     renderAttachments();

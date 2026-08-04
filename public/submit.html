@@ -41,15 +41,10 @@
           <label>이름 <input id="f-name" disabled></label>
           <label>부서 <input id="f-dept" disabled></label>
         </div>
-        <label>제목 <span style="color:var(--danger)">*</span>
-          <input id="f-title" maxlength="200" required placeholder="예: 회의록 자동 요약에 AI 활용">
-        </label>
-        <label>내용 <span style="color:var(--danger)">*</span>
-          <textarea id="f-content" rows="8" required
-            placeholder="어떤 업무에 AI를 어떻게 활용했는지, 효과는 어땠는지 자유롭게 적어 주세요.&#10;(스크린샷은 Ctrl+V 붙여넣기로도 바로 첨부됩니다)"></textarea>
-        </label>
 
-        <fieldset>
+        <div id="questions"></div>
+
+        <fieldset id="attach-box">
           <legend>첨부 (선택)</legend>
           <div class="attach-buttons">
             <button type="button" id="btn-capture">🖥️ 화면 캡쳐</button>
@@ -57,14 +52,14 @@
             <button type="button" id="btn-file">📎 파일 업로드</button>
             <input type="file" id="file-input" multiple hidden>
           </div>
-          <p class="hint">이미지 10MB · 동영상 1분 이내/80MB · 기타 파일 25MB, 최대 10개</p>
+          <p class="hint">이미지 10MB · 동영상 1분 이내/80MB · 기타 파일 25MB, 최대 10개 · 스크린샷은 Ctrl+V 붙여넣기도 됩니다</p>
           <ul id="attach-list" class="attach-list"></ul>
         </fieldset>
 
-        <fieldset>
+        <fieldset id="app-box">
           <legend>앱을 개발하셨나요? (선택)</legend>
           <label>앱 주소(URL) <input id="f-appurl" type="url" placeholder="https://..."></label>
-          <button type="button" id="btn-appfile">📦 앱 파일 첨부 (zip 등, 50MB 이내)</button>
+          <button type="button" id="btn-appfile">📦 앱 파일 첨부 (zip 등, 100MB 이내)</button>
           <input type="file" id="appfile-input" hidden>
         </fieldset>
 

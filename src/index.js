@@ -6,13 +6,70 @@ import { buildWorkbook } from './excel.js';
 const app = new Hono();
 
 // 파일 종류별 업로드 용량 제한 (바이트)
+// 주의: Cloudflare 요청 본문 한도가 100MB라 그 이상은 불가
 const LIMITS = {
   image: 10 * 1024 * 1024,
   video: 80 * 1024 * 1024,
-  app: 50 * 1024 * 1024,
+  app: 100 * 1024 * 1024,
   file: 25 * 1024 * 1024,
 };
 const MAX_ATTACHMENTS = 10;
+
+// ---------- 설문 양식 ----------
+
+const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox'];
+
+function defaultForm() {
+  return {
+    showAttach: true,
+    showApp: true,
+    questions: [
+      { id: 'title', label: '제목', type: 'text', required: true },
+      { id: 'content', label: '내용', type: 'textarea', required: true },
+    ],
+  };
+}
+
+// 관리자가 보낸 양식 정의를 검증/정리
+function sanitizeForm(input) {
+  const def = defaultForm();
+  if (!input || typeof input !== 'object') return def;
+  const out = {
+    showAttach: input.showAttach !== false,
+    showApp: input.showApp !== false,
+    questions: [],
+  };
+  const qs = Array.isArray(input.questions) ? input.questions.slice(0, 20) : [];
+  for (const q of qs) {
+    if (!q || typeof q.label !== 'string' || !q.label.trim()) continue;
+    const type = QUESTION_TYPES.includes(q.type) ? q.type : 'text';
+    const question = {
+      id: typeof q.id === 'string' && /^[\w-]{1,40}$/.test(q.id) ? q.id : 'q' + crypto.randomUUID().slice(0, 8),
+      label: q.label.trim().slice(0, 200),
+      type,
+      required: !!q.required,
+    };
+    if (type === 'select' || type === 'checkbox') {
+      question.options = (Array.isArray(q.options) ? q.options : [])
+        .map((o) => String(o).trim().slice(0, 100))
+        .filter(Boolean)
+        .slice(0, 30);
+      if (!question.options.length) continue;
+    }
+    out.questions.push(question);
+  }
+  if (!out.questions.length) out.questions = def.questions;
+  return out;
+}
+
+function parseForm(fieldsJson) {
+  if (!fieldsJson) return defaultForm();
+  try {
+    return sanitizeForm(JSON.parse(fieldsJson));
+  } catch {
+    return defaultForm();
+  }
+}
 
 // ---------- 공통 유틸 ----------
 
@@ -93,6 +150,27 @@ async function deleteSubmissionDeep(env, id) {
   await env.DB.prepare('DELETE FROM attachments WHERE submission_id = ?').bind(id).run();
   await env.DB.prepare('DELETE FROM submissions WHERE id = ?').bind(id).run();
 }
+
+// 기존 DB에 새 컬럼이 없으면 추가 (배포/업데이트 자동 반영)
+let migrated = false;
+app.use('*', async (c, next) => {
+  if (!migrated) {
+    migrated = true;
+    try {
+      const ca = await c.env.DB.prepare('PRAGMA table_info(campaigns)').all();
+      if (ca.results?.length && !ca.results.some((r) => r.name === 'fields')) {
+        await c.env.DB.prepare('ALTER TABLE campaigns ADD COLUMN fields TEXT').run();
+      }
+      const su = await c.env.DB.prepare('PRAGMA table_info(submissions)').all();
+      if (su.results?.length && !su.results.some((r) => r.name === 'answers')) {
+        await c.env.DB.prepare('ALTER TABLE submissions ADD COLUMN answers TEXT').run();
+      }
+    } catch (e) {
+      console.error('migration check failed', e);
+    }
+  }
+  await next();
+});
 
 app.onError((err, c) => {
   console.error(err);
@@ -245,10 +323,16 @@ app.get('/api/campaigns', needAuth(async (c) => {
 
 app.get('/api/campaigns/:slug', needAuth(async (c) => {
   const row = await c.env.DB
-    .prepare('SELECT slug, title, description, is_open FROM campaigns WHERE slug = ?')
+    .prepare('SELECT slug, title, description, is_open, fields FROM campaigns WHERE slug = ?')
     .bind(c.req.param('slug')).first();
   if (!row) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
-  return c.json(row);
+  return c.json({
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    is_open: row.is_open,
+    form: parseForm(row.fields),
+  });
 }));
 
 // 파일 업로드: 요청 본문이 파일 그 자체 (스트리밍으로 R2에 저장)
@@ -289,21 +373,60 @@ app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
   if (!campaign) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
   if (!campaign.is_open) return c.json({ error: '마감된 설문입니다' }, 400);
 
+  const form = parseForm(campaign.fields);
   const body = await c.req.json();
-  const title = (body.title || '').trim();
-  const content = (body.content || '').trim();
-  const appUrl = (body.app_url || '').trim();
-  if (!title || !content) return c.json({ error: '제목과 내용을 입력해 주세요' }, 400);
-  if (appUrl && !/^https?:\/\//i.test(appUrl)) return c.json({ error: '앱 URL은 http:// 또는 https:// 로 시작해야 합니다' }, 400);
+  const answersIn = body.answers && typeof body.answers === 'object' ? body.answers : {};
+
+  // 답변 검증
+  const answers = {};
+  for (const q of form.questions) {
+    let v = answersIn[q.id];
+    if (q.type === 'checkbox') {
+      v = Array.isArray(v) ? v.map((x) => String(x)).filter((x) => q.options.includes(x)) : [];
+      if (q.required && !v.length) return c.json({ error: `"${q.label}" 항목을 선택해 주세요` }, 400);
+      if (v.length) answers[q.id] = v;
+    } else {
+      v = typeof v === 'string' ? v.trim().slice(0, 4000) : '';
+      if (q.type === 'select' && v && !q.options.includes(v)) v = '';
+      if (q.required && !v) return c.json({ error: `"${q.label}" 항목을 입력해 주세요` }, 400);
+      if (v) answers[q.id] = v;
+    }
+  }
+
+  const appUrl = form.showApp ? (body.app_url || '').trim() : '';
+  if (appUrl && !/^https?:\/\//i.test(appUrl)) {
+    return c.json({ error: '앱 URL은 http:// 또는 https:// 로 시작해야 합니다' }, 400);
+  }
+
+  // 목록/요약용 title, content 파생
+  let title = '';
+  for (const q of form.questions) {
+    const v = answers[q.id];
+    if (typeof v === 'string' && v && (q.type === 'text' || q.type === 'select')) { title = v.slice(0, 200); break; }
+  }
+  if (!title) {
+    const v = answers[form.questions[0]?.id];
+    title = (Array.isArray(v) ? v.join(', ') : v || '(제목 없음)').slice(0, 200);
+  }
+  const content = form.questions
+    .map((q) => {
+      const v = answers[q.id];
+      if (v === undefined) return null;
+      return `${q.label}: ${Array.isArray(v) ? v.join(', ') : v}`;
+    })
+    .filter(Boolean)
+    .join('\n');
 
   const u = c.get('user');
   const res = await c.env.DB
-    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, app_url) VALUES (?,?,?,?,?,?,?)')
-    .bind(campaign.id, u.email, u.name, u.department, title, content, appUrl || null)
+    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers, app_url) VALUES (?,?,?,?,?,?,?,?)')
+    .bind(campaign.id, u.email, u.name, u.department, title, content, JSON.stringify(answers), appUrl || null)
     .run();
   const submissionId = res.meta.last_row_id;
 
-  const ids = Array.isArray(body.attachment_ids) ? body.attachment_ids.slice(0, MAX_ATTACHMENTS) : [];
+  const ids = form.showAttach || form.showApp
+    ? (Array.isArray(body.attachment_ids) ? body.attachment_ids.slice(0, MAX_ATTACHMENTS) : [])
+    : [];
   for (const id of ids) {
     await c.env.DB
       .prepare('UPDATE attachments SET submission_id = ? WHERE id = ? AND uploader_email = ? AND submission_id IS NULL')
@@ -341,17 +464,18 @@ app.get('/api/admin/campaigns', needAdmin(async (c) => {
   const { results } = await c.env.DB.prepare(`
     SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
     FROM campaigns ca ORDER BY ca.id DESC`).all();
-  return c.json(results);
+  return c.json(results.map((ca) => ({ ...ca, form: parseForm(ca.fields), fields: undefined })));
 }));
 
 app.post('/api/admin/campaigns', needAdmin(async (c) => {
   const body = await c.req.json();
   const title = (body.title || '').trim();
   if (!title) return c.json({ error: '캠페인 제목을 입력해 주세요' }, 400);
+  const form = sanitizeForm(body.fields);
   const slug = randomSlug();
   await c.env.DB
-    .prepare('INSERT INTO campaigns (slug, title, description, created_by) VALUES (?,?,?,?)')
-    .bind(slug, title, (body.description || '').trim(), c.get('user').email)
+    .prepare('INSERT INTO campaigns (slug, title, description, fields, created_by) VALUES (?,?,?,?,?)')
+    .bind(slug, title, (body.description || '').trim(), JSON.stringify(form), c.get('user').email)
     .run();
   return c.json({ ok: true, slug });
 }));
@@ -363,6 +487,7 @@ app.patch('/api/admin/campaigns/:id', needAdmin(async (c) => {
   if (body.is_open !== undefined) { fields.push('is_open = ?'); vals.push(body.is_open ? 1 : 0); }
   if (typeof body.title === 'string' && body.title.trim()) { fields.push('title = ?'); vals.push(body.title.trim()); }
   if (typeof body.description === 'string') { fields.push('description = ?'); vals.push(body.description.trim()); }
+  if (body.fields !== undefined) { fields.push('fields = ?'); vals.push(JSON.stringify(sanitizeForm(body.fields))); }
   if (!fields.length) return c.json({ error: '변경할 내용이 없습니다' }, 400);
   vals.push(c.req.param('id'));
   await c.env.DB.prepare(`UPDATE campaigns SET ${fields.join(', ')} WHERE id = ?`).bind(...vals).run();
@@ -386,17 +511,27 @@ app.get('/api/admin/campaigns/:id/submissions', needAdmin(async (c) => {
   return c.json(results);
 }));
 
+// 과거 제출(answers 없음)도 엑셀에 나오도록 기본 양식 답변으로 변환
+function answersOf(sub) {
+  if (sub.answers) {
+    try { return JSON.parse(sub.answers); } catch { /* fall through */ }
+  }
+  return { title: sub.title, content: sub.content };
+}
+
 // 엑셀 다운로드: 첨부는 클릭 가능한 하이퍼링크로 연동
 app.get('/api/admin/campaigns/:id/export.xlsx', needAdmin(async (c) => {
   const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first();
   if (!campaign) return c.json({ error: '존재하지 않는 캠페인입니다' }, 404);
+  const form = parseForm(campaign.fields);
   const { results } = await c.env.DB
     .prepare('SELECT * FROM submissions WHERE campaign_id = ? ORDER BY id')
     .bind(campaign.id)
     .all();
   await attachSubAttachments(c.env.DB, results);
+  for (const s of results) s._answers = answersOf(s);
   const origin = new URL(c.req.url).origin;
-  const buf = buildWorkbook(campaign, results, { linkFor: (a) => `${origin}/files/${a.id}` });
+  const buf = buildWorkbook(campaign, form, results, { linkFor: (a) => `${origin}/files/${a.id}` });
   return new Response(buf, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -409,11 +544,13 @@ app.get('/api/admin/campaigns/:id/export.xlsx', needAdmin(async (c) => {
 app.get('/api/admin/campaigns/:id/export.zip', needAdmin(async (c) => {
   const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first();
   if (!campaign) return c.json({ error: '존재하지 않는 캠페인입니다' }, 404);
+  const form = parseForm(campaign.fields);
   const { results: subs } = await c.env.DB
     .prepare('SELECT * FROM submissions WHERE campaign_id = ? ORDER BY id')
     .bind(campaign.id)
     .all();
   await attachSubAttachments(c.env.DB, subs, true);
+  for (const s of subs) s._answers = answersOf(s);
 
   const pathFor = {};
   const allAtts = [];
@@ -424,7 +561,7 @@ app.get('/api/admin/campaigns/:id/export.zip', needAdmin(async (c) => {
       allAtts.push(a);
     });
   });
-  const excelBuf = buildWorkbook(campaign, subs, { linkFor: (a) => pathFor[a.id] });
+  const excelBuf = buildWorkbook(campaign, form, subs, { linkFor: (a) => pathFor[a.id] });
 
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();

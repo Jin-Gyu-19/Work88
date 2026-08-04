@@ -3,6 +3,17 @@ const $ = (id) => document.getElementById(id);
 let campaigns = [];
 let currentSubs = [];
 
+// 설문지 빌더 상태
+let bQuestions = []; // { id, label, type, required, options[] }
+let editingCampaign = null; // null이면 새 캠페인
+
+const TYPE_LABELS = {
+  text: '단답형',
+  textarea: '장문형',
+  select: '객관식 (하나 선택)',
+  checkbox: '체크박스 (여러 개 선택)',
+};
+
 init();
 
 async function init() {
@@ -29,7 +40,10 @@ async function init() {
     };
   });
 
-  $('btn-create').onclick = createCampaign;
+  $('btn-new').onclick = () => openBuilder(null);
+  $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
+  $('b-save').onclick = saveBuilder;
+  $('b-cancel').onclick = () => $('builder-modal').classList.add('hidden');
   $('sel-campaign').onchange = loadSubs;
   $('btn-excel').onclick = () => {
     const id = $('sel-campaign').value;
@@ -44,7 +58,7 @@ async function init() {
   await loadCampaigns();
 }
 
-// ---------- 캠페인 ----------
+// ---------- 캠페인 목록 ----------
 
 async function loadCampaigns() {
   try {
@@ -55,17 +69,18 @@ async function loadCampaigns() {
   }
   const box = $('campaigns');
   if (!campaigns.length) {
-    box.innerHTML = '<p class="muted">아직 캠페인이 없습니다. 위에서 첫 캠페인을 만들어 보세요.</p>';
+    box.innerHTML = '<p class="muted">아직 캠페인이 없습니다. "새 캠페인 만들기"로 첫 설문지를 만들어 보세요.</p>';
   } else {
     box.innerHTML = campaigns.map((ca) => `
       <div class="campaign-item">
         <div>
           <strong>${esc(ca.title)}</strong>
           <span class="badge ${ca.is_open ? 'open' : 'closed'}">${ca.is_open ? '진행 중' : '마감'}</span>
-          <div class="muted">제출 ${ca.submission_count}건 · ${kst(ca.created_at)} 생성</div>
+          <div class="muted">질문 ${ca.form.questions.length}개 · 제출 ${ca.submission_count}건 · ${kst(ca.created_at)} 생성</div>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button class="small" data-act="copy" data-id="${ca.id}">🔗 링크 복사</button>
+          <button class="small" data-act="edit" data-id="${ca.id}">✏️ 설문 편집</button>
           <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
           <button class="small ghost" data-act="delete" data-id="${ca.id}">삭제</button>
         </div>
@@ -95,6 +110,10 @@ async function onCampaignAction(act, ca) {
     }
     return;
   }
+  if (act === 'edit') {
+    openBuilder(ca);
+    return;
+  }
   if (act === 'toggle') {
     try {
       await api(`/api/admin/campaigns/${ca.id}`, { method: 'PATCH', body: JSON.stringify({ is_open: ca.is_open ? 0 : 1 }) });
@@ -117,27 +136,118 @@ async function onCampaignAction(act, ca) {
   }
 }
 
-async function createCampaign() {
-  const title = $('new-title').value.trim();
-  if (!title) {
-    toast('캠페인 제목을 입력해 주세요', true);
-    return;
+// ---------- 설문지 빌더 ----------
+
+function newQuestion() {
+  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [] };
+}
+
+function openBuilder(ca) {
+  editingCampaign = ca;
+  $('b-heading').textContent = ca ? '설문 편집' : '새 캠페인';
+  $('b-name').value = ca ? ca.title : '';
+  $('b-desc').value = ca ? (ca.description || '') : '';
+  if (ca) {
+    bQuestions = ca.form.questions.map((q) => ({ ...q, options: q.options ? [...q.options] : [] }));
+    $('b-attach').checked = ca.form.showAttach;
+    $('b-app').checked = ca.form.showApp;
+  } else {
+    bQuestions = [
+      { id: 'title', label: '제목', type: 'text', required: true, options: [] },
+      { id: 'content', label: '내용', type: 'textarea', required: true, options: [] },
+    ];
+    $('b-attach').checked = true;
+    $('b-app').checked = true;
   }
-  try {
-    const res = await api('/api/admin/campaigns', {
-      method: 'POST',
-      body: JSON.stringify({ title, description: $('new-desc').value }),
-    });
-    $('new-title').value = '';
-    $('new-desc').value = '';
-    await loadCampaigns();
-    const url = `${location.origin}/c/${res.slug}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast('캠페인이 생성되고 참여 링크가 복사되었습니다');
-    } catch {
-      prompt('캠페인이 생성되었습니다. 참여 링크:', url);
+  renderBuilder();
+  $('builder-modal').classList.remove('hidden');
+}
+
+function renderBuilder() {
+  const box = $('b-questions');
+  box.innerHTML = '';
+  bQuestions.forEach((q, i) => {
+    const row = document.createElement('div');
+    row.className = 'q-row';
+    row.innerHTML = `
+      <div class="q-head">
+        <span class="muted" style="min-width:20px;">${i + 1}.</span>
+        <input class="q-label" placeholder="질문을 입력하세요" value="${esc(q.label)}">
+        <select class="q-type">
+          ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <label class="q-req-label"><input type="checkbox" class="q-req" ${q.required ? 'checked' : ''}> 필수</label>
+        <button type="button" class="small ghost q-up" ${i === 0 ? 'disabled' : ''}>▲</button>
+        <button type="button" class="small ghost q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''}>▼</button>
+        <button type="button" class="small ghost q-del">✕</button>
+      </div>
+      <textarea class="q-opts ${q.type === 'select' || q.type === 'checkbox' ? '' : 'hidden'}" rows="3"
+        placeholder="선택지를 한 줄에 하나씩 입력하세요">${esc((q.options || []).join('\n'))}</textarea>`;
+
+    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; };
+    row.querySelector('.q-type').onchange = (e) => {
+      q.type = e.target.value;
+      row.querySelector('.q-opts').classList.toggle('hidden', !(q.type === 'select' || q.type === 'checkbox'));
+    };
+    row.querySelector('.q-req').onchange = (e) => { q.required = e.target.checked; };
+    row.querySelector('.q-opts').oninput = (e) => {
+      q.options = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+    };
+    row.querySelector('.q-up').onclick = () => {
+      [bQuestions[i - 1], bQuestions[i]] = [bQuestions[i], bQuestions[i - 1]];
+      renderBuilder();
+    };
+    row.querySelector('.q-down').onclick = () => {
+      [bQuestions[i + 1], bQuestions[i]] = [bQuestions[i], bQuestions[i + 1]];
+      renderBuilder();
+    };
+    row.querySelector('.q-del').onclick = () => {
+      bQuestions.splice(i, 1);
+      renderBuilder();
+    };
+    box.appendChild(row);
+  });
+  if (!bQuestions.length) {
+    box.innerHTML = '<p class="muted">질문이 없습니다. "질문 추가"를 눌러 주세요.</p>';
+  }
+}
+
+async function saveBuilder() {
+  const title = $('b-name').value.trim();
+  if (!title) { toast('캠페인 제목을 입력해 주세요', true); return; }
+  const cleaned = bQuestions.filter((q) => q.label.trim());
+  if (!cleaned.length) { toast('질문을 1개 이상 만들어 주세요', true); return; }
+  for (const q of cleaned) {
+    if ((q.type === 'select' || q.type === 'checkbox') && !(q.options || []).length) {
+      toast(`"${q.label}" 질문의 선택지를 입력해 주세요`, true);
+      return;
     }
+  }
+  const payload = {
+    title,
+    description: $('b-desc').value,
+    fields: {
+      questions: cleaned,
+      showAttach: $('b-attach').checked,
+      showApp: $('b-app').checked,
+    },
+  };
+  try {
+    if (editingCampaign) {
+      await api(`/api/admin/campaigns/${editingCampaign.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      toast('설문이 수정되었습니다');
+    } else {
+      const res = await api('/api/admin/campaigns', { method: 'POST', body: JSON.stringify(payload) });
+      const url = `${location.origin}/c/${res.slug}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('캠페인이 생성되고 참여 링크가 복사되었습니다');
+      } catch {
+        prompt('캠페인이 생성되었습니다. 참여 링크:', url);
+      }
+    }
+    $('builder-modal').classList.add('hidden');
+    loadCampaigns();
   } catch (e) {
     toast(e.message, true);
   }
