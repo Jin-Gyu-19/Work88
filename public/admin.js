@@ -47,6 +47,9 @@ async function init() {
   $('btn-new').onclick = () => openBuilder(null);
   $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
   $('bq-file').onchange = onBuilderFilesPicked;
+  $('b-bg-add').onclick = () => $('b-bg-file').click();
+  $('b-bg-file').onchange = onBgFilePicked;
+  $('b-bg-del').onclick = () => { bBg = null; renderBgPreview(); };
   $('b-save').onclick = saveBuilder;
   $('b-cancel').onclick = () => $('builder-modal').classList.add('hidden');
   $('b-preview').onclick = showPreview;
@@ -244,6 +247,33 @@ function bindDeleteModal() {
 // 질문 자료 첨부 (빌더에서 사용)
 let activeMediaQ = null;
 let activeMediaRender = null;
+let bBg = null; // 설문 배경 이미지 { id }
+
+function renderBgPreview() {
+  $('b-bg-preview').innerHTML = bBg ? `<img src="/files/${bBg.id}" alt="배경 이미지">` : '';
+  $('b-bg-del').classList.toggle('hidden', !bBg);
+  $('b-bg-add').textContent = bBg ? '🖼️ 배경 이미지 바꾸기' : '🖼️ 배경 이미지 설정';
+}
+
+async function onBgFilePicked(e) {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const r = await fetch(`/api/uploads?kind=image&filename=${encodeURIComponent(f.name)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': f.type || 'application/octet-stream' },
+      body: f,
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || '업로드에 실패했습니다');
+    bBg = { id: data.id };
+    renderBgPreview();
+    toast('배경 이미지가 설정되었습니다. 저장하면 적용됩니다.');
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
 
 async function addMediaFiles(q, files, render) {
   if (!q || !files.length) return;
@@ -315,12 +345,15 @@ function openBuilder(ca) {
   if (ca) {
     bQuestions = cloneQuestions(ca.form.questions);
     $('b-one').checked = !!ca.form.oneSubmission;
+    bBg = ca.form.bg ? { ...ca.form.bg } : null;
   } else {
     bQuestions = [
       { id: 'content', label: '내용', type: 'textarea', required: true, options: [], allowAttach: true, help: '' },
     ];
     $('b-one').checked = false;
+    bBg = null;
   }
+  renderBgPreview();
   loadTemplates();
   renderBuilder();
   $('builder-modal').classList.remove('hidden');
@@ -711,6 +744,7 @@ async function saveBuilder() {
     fields: {
       questions: cleaned,
       oneSubmission: $('b-one').checked,
+      bg: bBg,
     },
   };
   try {

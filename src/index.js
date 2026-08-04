@@ -82,6 +82,10 @@ function sanitizeForm(input) {
   if (input.showAttach === true && !out.questions.some((q) => q.allowAttach)) {
     out.questions[out.questions.length - 1].allowAttach = true;
   }
+  // 설문 배경 이미지
+  if (input.bg && typeof input.bg === 'object' && typeof input.bg.id === 'string' && /^[0-9a-f-]{36}$/.test(input.bg.id)) {
+    out.bg = { id: input.bg.id };
+  }
   return out;
 }
 
@@ -127,15 +131,15 @@ function isFixedAdmin(env, email) {
   return adminEmails(env).includes((email || '').toLowerCase());
 }
 
-// 설문지에 첨부된 자료 파일을 'media'로 표시 (참여자도 열람 가능해짐)
+// 설문지에 첨부된 자료/배경 파일을 'media'로 표시 (참여자도 열람 가능해짐)
 async function markMediaAttachments(env, form) {
-  for (const q of form.questions) {
-    for (const m of q.media || []) {
-      await env.DB
-        .prepare("UPDATE attachments SET question_id = 'media' WHERE id = ? AND submission_id IS NULL")
-        .bind(m.id)
-        .run();
-    }
+  const ids = form.questions.flatMap((q) => (q.media || []).map((m) => m.id));
+  if (form.bg) ids.push(form.bg.id);
+  for (const id of ids) {
+    await env.DB
+      .prepare("UPDATE attachments SET question_id = 'media' WHERE id = ? AND submission_id IS NULL")
+      .bind(id)
+      .run();
   }
 }
 
@@ -772,15 +776,15 @@ app.delete('/api/admin/campaigns/:id', needAdmin(async (c) => {
   if (errorRes) return errorRes;
   const { results } = await c.env.DB.prepare('SELECT id FROM submissions WHERE campaign_id = ?').bind(id).all();
   for (const s of results) await deleteSubmissionDeep(c.env, s.id);
-  // 설문지에 첨부된 자료 파일도 정리
+  // 설문지에 첨부된 자료/배경 파일도 정리
   const form = parseForm(campaign.fields);
-  for (const q of form.questions) {
-    for (const m of q.media || []) {
-      const a = await c.env.DB.prepare('SELECT r2_key FROM attachments WHERE id = ?').bind(m.id).first();
-      if (a) {
-        await c.env.BUCKET.delete(a.r2_key);
-        await c.env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(m.id).run();
-      }
+  const mediaIds = form.questions.flatMap((q) => (q.media || []).map((m) => m.id));
+  if (form.bg) mediaIds.push(form.bg.id);
+  for (const id of mediaIds) {
+    const a = await c.env.DB.prepare('SELECT r2_key FROM attachments WHERE id = ?').bind(id).first();
+    if (a) {
+      await c.env.BUCKET.delete(a.r2_key);
+      await c.env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(id).run();
     }
   }
   await c.env.DB.prepare('DELETE FROM campaigns WHERE id = ?').bind(id).run();

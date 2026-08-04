@@ -36,6 +36,10 @@ async function init() {
   }
 
   FORM = campaign.form;
+  if (FORM.bg) {
+    document.body.classList.add('has-bg');
+    document.body.style.setProperty('--bg-image', `url(/files/${FORM.bg.id})`);
+  }
   $('c-title').textContent = campaign.title;
   $('c-desc').textContent = campaign.description || '';
   if (campaign.closes_at) $('c-deadline').textContent = `⏰ 마감일: ${campaign.closes_at} (당일까지 제출 가능)`;

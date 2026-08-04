@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=17">
+  <link rel="stylesheet" href="/styles.css?v=18">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/">BDO <span>Survey</span> System <span class="badge admin">관리자</span></a>
+    <a class="brand" href="/"><b>BDO</b> Survey System <span class="badge admin">관리자</span></a>
     <div class="who" id="who"></div>
   </header>
   <main class="container" style="max-width: 1020px;">
@@ -110,6 +110,15 @@
       <label style="max-width:240px;">마감일 (선택, 당일까지 제출 가능)
         <input type="date" id="b-close">
       </label>
+      <div style="margin-bottom:14px;">
+        <span style="font-weight:600; font-size:13.5px;">배경 이미지 (선택)</span>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+          <button type="button" class="small" id="b-bg-add">🖼️ 배경 이미지 설정</button>
+          <button type="button" class="small ghost hidden" id="b-bg-del">✕ 배경 제거</button>
+          <span class="hint" style="margin:0;">참여자 화면 전체 배경으로 은은하게 깔립니다</span>
+        </div>
+        <div id="b-bg-preview"></div>
+      </div>
 
       <h3 style="margin-top:18px;">설문 질문 구성</h3>
       <p class="hint" style="margin-top:-6px;">이름과 부서는 로그인 정보로 자동 입력되므로 질문으로 만들 필요가 없습니다.</p>
@@ -177,8 +186,9 @@
 
   <!-- 설문지 자료 첨부용 파일 선택 -->
   <input type="file" id="bq-file" multiple hidden>
+  <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=17"></script>
-  <script src="/admin.js?v=17"></script>
+  <script src="/common.js?v=18"></script>
+  <script src="/admin.js?v=18"></script>
 </body>
 </html>
