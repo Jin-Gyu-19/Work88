@@ -22,7 +22,6 @@ const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox', 'rating'];
 function defaultForm() {
   // 빌더 도입 전에 만들어진 캠페인(fields 없음)을 위한 기본 양식
   return {
-    showApp: true,
     questions: [
       { id: 'title', label: '제목', type: 'text', required: true, allowAttach: false },
       { id: 'content', label: '내용', type: 'textarea', required: true, allowAttach: true },
@@ -35,7 +34,6 @@ function sanitizeForm(input) {
   const def = defaultForm();
   if (!input || typeof input !== 'object') return def;
   const out = {
-    showApp: input.showApp !== false,
     oneSubmission: input.oneSubmission === true,
     questions: [],
   };
@@ -186,10 +184,6 @@ function buildSubmissionData(form, body) {
       if (v) answers[q.id] = v;
     }
   }
-  const appUrl = form.showApp ? (body.app_url || '').trim() : '';
-  if (appUrl && !/^https?:\/\//i.test(appUrl)) {
-    return { error: '앱 URL은 http:// 또는 https:// 로 시작해야 합니다' };
-  }
   let title = '';
   for (const q of form.questions) {
     const v = answers[q.id];
@@ -208,7 +202,7 @@ function buildSubmissionData(form, body) {
     })
     .filter(Boolean)
     .join('\n');
-  return { answers, appUrl, title, content };
+  return { answers, title, content };
 }
 
 // 업로드된 첨부를 제출에 연결
@@ -220,7 +214,7 @@ async function claimAttachments(env, form, body, submissionId, email) {
   }
   for (const a of atts) {
     if (!a || typeof a.id !== 'string') continue;
-    const qid = validQids.has(a.qid) ? a.qid : (a.qid === 'app' && form.showApp ? 'app' : null);
+    const qid = validQids.has(a.qid) ? a.qid : null;
     await env.DB
       .prepare('UPDATE attachments SET submission_id = ?, question_id = ? WHERE id = ? AND uploader_email = ? AND submission_id IS NULL')
       .bind(submissionId, qid, a.id, email)
@@ -487,8 +481,8 @@ app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
   if (data.error) return c.json({ error: data.error }, 400);
 
   const res = await c.env.DB
-    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers, app_url) VALUES (?,?,?,?,?,?,?,?)')
-    .bind(campaign.id, u.email, u.name, u.department, data.title, data.content, JSON.stringify(data.answers), data.appUrl || null)
+    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers) VALUES (?,?,?,?,?,?,?)')
+    .bind(campaign.id, u.email, u.name, u.department, data.title, data.content, JSON.stringify(data.answers))
     .run();
   const submissionId = res.meta.last_row_id;
   await claimAttachments(c.env, form, body, submissionId, u.email);
@@ -510,8 +504,8 @@ app.put('/api/submissions/:id', needAuth(async (c) => {
   if (data.error) return c.json({ error: data.error }, 400);
 
   await c.env.DB
-    .prepare('UPDATE submissions SET title = ?, content = ?, answers = ?, app_url = ? WHERE id = ?')
-    .bind(data.title, data.content, JSON.stringify(data.answers), data.appUrl || null, sub.id)
+    .prepare('UPDATE submissions SET title = ?, content = ?, answers = ? WHERE id = ?')
+    .bind(data.title, data.content, JSON.stringify(data.answers), sub.id)
     .run();
   await claimAttachments(c.env, form, body, sub.id, u.email);
   return c.json({ ok: true });

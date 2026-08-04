@@ -39,6 +39,8 @@ export function buildWorkbook(campaign, form, submissions, { linkFor }) {
   for (const q of questions) if (q.allowAttach) qMax[q.id] = maxOf(q.id);
   const appMax = maxOf('app');
   const etcMax = maxOf('etc');
+  // 앱 섹션은 폐지됐지만 과거 제출에 앱 URL/앱 파일이 있으면 열을 유지
+  const showAppUrl = submissions.some((s) => s.app_url);
 
   // 헤더 구성 (열 인덱스 기록: 하이퍼링크용)
   const header = ['번호', '제출일시', '이름', '부서', '이메일'];
@@ -50,12 +52,10 @@ export function buildWorkbook(campaign, form, submissions, { linkFor }) {
       for (let i = 1; i <= qMax[q.id]; i++) header.push(`${q.label} 첨부${i}`);
     }
   }
-  if (form.showApp) {
-    colOf.app = header.push('앱 URL') - 1;
-    if (appMax) {
-      colOf.appAtt = header.length;
-      for (let i = 1; i <= appMax; i++) header.push(`앱 파일${i}`);
-    }
+  if (showAppUrl) colOf.app = header.push('앱 URL') - 1;
+  if (appMax) {
+    colOf.appAtt = header.length;
+    for (let i = 1; i <= appMax; i++) header.push(`앱 파일${i}`);
   }
   if (etcMax) {
     colOf.etc = header.length;
@@ -79,10 +79,8 @@ export function buildWorkbook(campaign, form, submissions, { linkFor }) {
         (g[q.id] || []).forEach((a, j) => { row[colOf.qAtt[q.id] + j] = a.filename; });
       }
     }
-    if (form.showApp) {
-      row[colOf.app] = s.app_url || '';
-      if (appMax) g.app.forEach((a, j) => { row[colOf.appAtt + j] = a.filename; });
-    }
+    if (showAppUrl) row[colOf.app] = s.app_url || '';
+    if (appMax) g.app.forEach((a, j) => { row[colOf.appAtt + j] = a.filename; });
     if (etcMax) g.etc.forEach((a, j) => { row[colOf.etc + j] = a.filename; });
     aoa.push(row);
   });
@@ -102,10 +100,8 @@ export function buildWorkbook(campaign, form, submissions, { linkFor }) {
         (g[q.id] || []).forEach((a, j) => link(r, colOf.qAtt[q.id] + j, linkFor(a), a.filename));
       }
     }
-    if (form.showApp) {
-      if (s.app_url) link(r, colOf.app, s.app_url);
-      if (appMax) g.app.forEach((a, j) => link(r, colOf.appAtt + j, linkFor(a), a.filename));
-    }
+    if (showAppUrl && s.app_url) link(r, colOf.app, s.app_url);
+    if (appMax) g.app.forEach((a, j) => link(r, colOf.appAtt + j, linkFor(a), a.filename));
     if (etcMax) g.etc.forEach((a, j) => link(r, colOf.etc + j, linkFor(a), a.filename));
   });
 

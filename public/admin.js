@@ -169,13 +169,11 @@ function openBuilder(ca) {
   $('b-close').value = ca ? (ca.closes_at || '') : '';
   if (ca) {
     bQuestions = cloneQuestions(ca.form.questions);
-    $('b-app').checked = ca.form.showApp;
     $('b-one').checked = !!ca.form.oneSubmission;
   } else {
     bQuestions = [
       { id: 'content', label: '내용', type: 'textarea', required: true, options: [], allowAttach: true, help: '' },
     ];
-    $('b-app').checked = true;
     $('b-one').checked = false;
   }
   loadTemplates();
@@ -201,7 +199,6 @@ function loadTemplateIntoBuilder() {
   const t = templates.find((x) => String(x.id) === $('b-tpl').value);
   if (!t) { toast('불러올 템플릿이 없습니다', true); return; }
   bQuestions = cloneQuestions(t.form.questions);
-  $('b-app').checked = t.form.showApp;
   $('b-one').checked = !!t.form.oneSubmission;
   renderBuilder();
   toast(`"${t.name}" 템플릿을 불러왔습니다`);
@@ -219,7 +216,7 @@ async function saveTemplate() {
       method: 'POST',
       body: JSON.stringify({
         name,
-        fields: { questions: cleaned, showApp: $('b-app').checked, oneSubmission: $('b-one').checked },
+        fields: { questions: cleaned, oneSubmission: $('b-one').checked },
       }),
     });
     toast('템플릿이 저장되었습니다');
@@ -362,13 +359,6 @@ function showPreview() {
     return `<div class="q-item">${inner}${attach}</div>`;
   }).join('') : '<p class="muted">질문이 없습니다.</p>';
 
-  const appHtml = $('b-app').checked ? `
-    <fieldset>
-      <legend>앱을 개발하셨나요? (선택)</legend>
-      <label>앱 주소(URL) <input type="url" placeholder="https://..."></label>
-      <button type="button" disabled>📦 앱 파일 첨부 (zip 등, 100MB 이내)</button>
-    </fieldset>` : '';
-
   $('pv-body').innerHTML = `
     <div class="card" style="margin-bottom:12px;">
       <h1 style="font-size:19px;">${esc(title)}</h1>
@@ -380,7 +370,6 @@ function showPreview() {
         <label>부서 <input value="영업팀 (자동 입력)" disabled></label>
       </div>
       ${qHtml}
-      ${appHtml}
       <button type="button" class="primary" style="width:100%; padding:12px;" disabled>제출하기</button>
     </div>`;
   $('preview-modal').classList.remove('hidden');
@@ -405,7 +394,6 @@ async function saveBuilder() {
     closes_at: $('b-close').value || '',
     fields: {
       questions: cleaned,
-      showApp: $('b-app').checked,
       oneSubmission: $('b-one').checked,
     },
   };

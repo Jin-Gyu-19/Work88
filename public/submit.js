@@ -2,7 +2,7 @@
 const slug = location.pathname.split('/').pop();
 const attachments = []; // { id, filename, kind, size, previewUrl, qid }
 const MAX_ATTACHMENTS = 10;
-let FORM = null; // 캠페인 설문 양식 { questions, showApp, oneSubmission }
+let FORM = null; // 캠페인 설문 양식 { questions, oneSubmission }
 let activeQid = null; // 지금 첨부 대상인 질문 id ('app'이면 앱 파일)
 let editingId = null; // 수정 중인 제출 id
 let myList = []; // 내 제출 내역
@@ -41,7 +41,6 @@ async function init() {
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
   renderQuestions();
-  if (!FORM.showApp) $('app-box').classList.add('hidden');
   $('form-box').classList.remove('hidden');
 
   bindGlobalAttachHandlers();
@@ -172,7 +171,8 @@ function canAddMore(n = 1) {
 }
 
 function listFor(qid) {
-  return document.querySelector(`[data-attlist="${qid}"]`);
+  return document.querySelector(`[data-attlist="${qid}"]`)
+    || document.querySelector('[data-attlist]'); // 대상 질문이 없으면 첫 첨부 목록에 표시
 }
 
 function renderAttachments() {
@@ -204,7 +204,7 @@ function renderAttachments() {
 // XHR 업로드 (진행률 % 표시)
 function uploadBlob(blob, filename, kind, qid) {
   return new Promise((resolve, reject) => {
-    const ul = listFor(qid) || listFor('app');
+    const ul = listFor(qid);
     const li = document.createElement('li');
     li.innerHTML = `<span>⬆️</span><span class="fname">${esc(filename)} <span class="muted">(${fmtSize(blob.size)})</span></span>
       <div class="progress"><div></div></div><span class="pct muted" style="min-width:38px; text-align:right;">0%</span>`;
@@ -336,18 +336,6 @@ function bindGlobalAttachHandlers() {
       toast(`"${firstQ.label}" 질문에 클립보드 이미지가 첨부되었습니다`);
     }
   });
-
-  // 앱 파일 업로드
-  $('btn-appfile').onclick = () => {
-    activeQid = 'app';
-    $('appfile-input').click();
-  };
-  $('appfile-input').onchange = async (e) => {
-    const f = e.target.files[0];
-    e.target.value = '';
-    if (!f || !canAddMore()) return;
-    await uploadBlob(f, f.name, 'app', 'app').catch(() => {});
-  };
 }
 
 // ---------- 동영상 촬영 ----------
@@ -379,11 +367,17 @@ function bindRecorder() {
   $('rec-close2').onclick = recClose;
   $('rec-attach').onclick = async () => {
     if (!recBlob) return;
-    const ext = recBlob.type.includes('mp4') ? 'mp4' : 'webm';
+    // recClose()가 recBlob을 초기화하므로 반드시 먼저 복사해 둔다
+    const blob = recBlob;
+    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
     const qid = recQid;
     recClose();
-    toast('동영상 업로드 중… 첨부 목록에서 진행률을 확인하세요');
-    await uploadBlob(recBlob, `녹화_${ts()}.${ext}`, 'video', qid).catch(() => {});
+    toast(`동영상 업로드 중… (${fmtSize(blob.size)}) 첨부 목록에서 진행률을 확인하세요`);
+    const target = document.querySelector(`[data-attlist="${qid}"]`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await uploadBlob(blob, `녹화_${ts()}.${ext}`, 'video', qid)
+      .then(() => toast('동영상 첨부가 완료되었습니다 🎬'))
+      .catch(() => {});
   };
 }
 
@@ -482,7 +476,6 @@ async function onSubmit(e) {
   try {
     const body = JSON.stringify({
       answers,
-      app_url: FORM.showApp ? $('f-appurl').value : '',
       attachments: attachments.map((a) => ({ id: a.id, qid: a.qid })),
     });
     if (editingId) {
@@ -495,7 +488,6 @@ async function onSubmit(e) {
     editingId = null;
     attachments.length = 0;
     renderQuestions();
-    $('f-appurl').value = '';
     setEditUi(false);
     await loadMine();
     applyOneSubmissionState();
@@ -540,18 +532,17 @@ function startEdit(s) {
       if (el) el.value = Array.isArray(v) ? v.join(', ') : v;
     }
   }
-  $('f-appurl').value = s.app_url || '';
-
   // 기존 첨부 되살리기 (삭제 가능)
   attachments.length = 0;
+  const fallbackQid = FORM.questions.find((q) => q.allowAttach)?.id || null;
   for (const a of s.attachments || []) {
+    const validQid = FORM.questions.some((q) => q.id === a.question_id && q.allowAttach) ? a.question_id : fallbackQid;
     attachments.push({
       id: a.id,
       filename: a.filename,
       kind: a.kind,
       size: a.size,
-      qid: a.question_id === 'app' || a.kind === 'app' ? 'app'
-        : (a.question_id || FORM.questions.find((q) => q.allowAttach)?.id || 'app'),
+      qid: validQid,
       previewUrl: a.kind === 'image' ? `/files/${a.id}` : null,
     });
   }
@@ -564,7 +555,6 @@ function cancelEdit() {
   editingId = null;
   attachments.length = 0;
   renderQuestions();
-  $('f-appurl').value = '';
   setEditUi(false);
   applyOneSubmissionState();
 }
