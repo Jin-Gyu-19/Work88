@@ -17,7 +17,7 @@ const MAX_ATTACHMENTS = 10;
 
 // ---------- 설문 양식 ----------
 
-const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox'];
+const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox', 'rating'];
 
 function defaultForm() {
   // 빌더 도입 전에 만들어진 캠페인(fields 없음)을 위한 기본 양식
@@ -36,6 +36,7 @@ function sanitizeForm(input) {
   if (!input || typeof input !== 'object') return def;
   const out = {
     showApp: input.showApp !== false,
+    oneSubmission: input.oneSubmission === true,
     questions: [],
   };
   const qs = Array.isArray(input.questions) ? input.questions.slice(0, 20) : [];
@@ -48,6 +49,7 @@ function sanitizeForm(input) {
       type,
       required: !!q.required,
       allowAttach: !!q.allowAttach,
+      help: typeof q.help === 'string' ? q.help.trim().slice(0, 500) : '',
     };
     if (type === 'select' || type === 'checkbox') {
       question.options = (Array.isArray(q.options) ? q.options : [])
@@ -148,6 +150,84 @@ async function attachSubAttachments(db, subs, withKeys = false) {
   return subs;
 }
 
+// 한국시간 기준 오늘 날짜 (YYYY-MM-DD)
+function kstToday() {
+  const k = new Date(Date.now() + 9 * 3600 * 1000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${k.getUTCFullYear()}-${p(k.getUTCMonth() + 1)}-${p(k.getUTCDate())}`;
+}
+
+// 마감일까지 포함해서 열려 있는지 판단 (마감일 당일까지 제출 가능)
+function isOpenNow(campaign) {
+  if (!campaign.is_open) return false;
+  if (campaign.closes_at && kstToday() > campaign.closes_at) return false;
+  return true;
+}
+
+// 답변 검증 + 요약(title/content) 파생. 오류 시 { error }, 성공 시 { answers, appUrl, title, content }
+function buildSubmissionData(form, body) {
+  const answersIn = body.answers && typeof body.answers === 'object' ? body.answers : {};
+  const answers = {};
+  for (const q of form.questions) {
+    let v = answersIn[q.id];
+    if (q.type === 'checkbox') {
+      v = Array.isArray(v) ? v.map((x) => String(x)).filter((x) => q.options.includes(x)) : [];
+      if (q.required && !v.length) return { error: `"${q.label}" 항목을 선택해 주세요` };
+      if (v.length) answers[q.id] = v;
+    } else if (q.type === 'rating') {
+      const n = parseInt(v, 10);
+      const s = n >= 1 && n <= 5 ? String(n) : '';
+      if (q.required && !s) return { error: `"${q.label}" 항목을 선택해 주세요` };
+      if (s) answers[q.id] = s;
+    } else {
+      v = typeof v === 'string' ? v.trim().slice(0, 4000) : '';
+      if (q.type === 'select' && v && !q.options.includes(v)) v = '';
+      if (q.required && !v) return { error: `"${q.label}" 항목을 입력해 주세요` };
+      if (v) answers[q.id] = v;
+    }
+  }
+  const appUrl = form.showApp ? (body.app_url || '').trim() : '';
+  if (appUrl && !/^https?:\/\//i.test(appUrl)) {
+    return { error: '앱 URL은 http:// 또는 https:// 로 시작해야 합니다' };
+  }
+  let title = '';
+  for (const q of form.questions) {
+    const v = answers[q.id];
+    if (typeof v === 'string' && v && (q.type === 'text' || q.type === 'select')) { title = v.slice(0, 200); break; }
+  }
+  if (!title) {
+    const v = answers[form.questions[0]?.id];
+    const flat = Array.isArray(v) ? v.join(', ') : (v || '(내용 없음)');
+    title = flat.split('\n')[0].slice(0, 100);
+  }
+  const content = form.questions
+    .map((q) => {
+      const v = answers[q.id];
+      if (v === undefined) return null;
+      return `${q.label}: ${Array.isArray(v) ? v.join(', ') : v}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+  return { answers, appUrl, title, content };
+}
+
+// 업로드된 첨부를 제출에 연결
+async function claimAttachments(env, form, body, submissionId, email) {
+  const validQids = new Set(form.questions.filter((q) => q.allowAttach).map((q) => q.id));
+  let atts = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_ATTACHMENTS) : [];
+  if (!atts.length && Array.isArray(body.attachment_ids)) {
+    atts = body.attachment_ids.slice(0, MAX_ATTACHMENTS).map((id) => ({ id }));
+  }
+  for (const a of atts) {
+    if (!a || typeof a.id !== 'string') continue;
+    const qid = validQids.has(a.qid) ? a.qid : (a.qid === 'app' && form.showApp ? 'app' : null);
+    await env.DB
+      .prepare('UPDATE attachments SET submission_id = ?, question_id = ? WHERE id = ? AND uploader_email = ? AND submission_id IS NULL')
+      .bind(submissionId, qid, a.id, email)
+      .run();
+  }
+}
+
 async function deleteSubmissionDeep(env, id) {
   const { results } = await env.DB.prepare('SELECT id, r2_key FROM attachments WHERE submission_id = ?').bind(id).all();
   for (const a of results) await env.BUCKET.delete(a.r2_key);
@@ -173,6 +253,17 @@ app.use('*', async (c, next) => {
       if (at.results?.length && !at.results.some((r) => r.name === 'question_id')) {
         await c.env.DB.prepare('ALTER TABLE attachments ADD COLUMN question_id TEXT').run();
       }
+      const ca2 = await c.env.DB.prepare('PRAGMA table_info(campaigns)').all();
+      if (ca2.results?.length && !ca2.results.some((r) => r.name === 'closes_at')) {
+        await c.env.DB.prepare('ALTER TABLE campaigns ADD COLUMN closes_at TEXT').run();
+      }
+      await c.env.DB.prepare(`CREATE TABLE IF NOT EXISTS templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        fields TEXT NOT NULL,
+        created_by TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`).run();
     } catch (e) {
       console.error('migration check failed', e);
     }
@@ -324,21 +415,22 @@ app.get('/api/me', needAuth(async (c) => {
 
 app.get('/api/campaigns', needAuth(async (c) => {
   const { results } = await c.env.DB
-    .prepare('SELECT slug, title, description, is_open FROM campaigns WHERE is_open = 1 ORDER BY id DESC')
+    .prepare('SELECT slug, title, description, is_open, closes_at FROM campaigns WHERE is_open = 1 ORDER BY id DESC')
     .all();
-  return c.json(results);
+  return c.json(results.filter(isOpenNow));
 }));
 
 app.get('/api/campaigns/:slug', needAuth(async (c) => {
   const row = await c.env.DB
-    .prepare('SELECT slug, title, description, is_open, fields FROM campaigns WHERE slug = ?')
+    .prepare('SELECT * FROM campaigns WHERE slug = ?')
     .bind(c.req.param('slug')).first();
   if (!row) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
   return c.json({
     slug: row.slug,
     title: row.title,
     description: row.description,
-    is_open: row.is_open,
+    closes_at: row.closes_at,
+    is_open: isOpenNow(row) ? 1 : 0,
     form: parseForm(row.fields),
   });
 }));
@@ -379,75 +471,63 @@ app.delete('/api/uploads/:id', needAuth(async (c) => {
 app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
   const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE slug = ?').bind(c.req.param('slug')).first();
   if (!campaign) return c.json({ error: '존재하지 않는 설문입니다' }, 404);
-  if (!campaign.is_open) return c.json({ error: '마감된 설문입니다' }, 400);
+  if (!isOpenNow(campaign)) return c.json({ error: '마감된 설문입니다' }, 400);
+
+  const form = parseForm(campaign.fields);
+  const u = c.get('user');
+  if (form.oneSubmission) {
+    const dup = await c.env.DB
+      .prepare('SELECT id FROM submissions WHERE campaign_id = ? AND user_email = ?')
+      .bind(campaign.id, u.email).first();
+    if (dup) return c.json({ error: '이미 제출하셨습니다. 기존 제출을 수정하거나 삭제 후 다시 제출해 주세요.' }, 400);
+  }
+
+  const body = await c.req.json();
+  const data = buildSubmissionData(form, body);
+  if (data.error) return c.json({ error: data.error }, 400);
+
+  const res = await c.env.DB
+    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers, app_url) VALUES (?,?,?,?,?,?,?,?)')
+    .bind(campaign.id, u.email, u.name, u.department, data.title, data.content, JSON.stringify(data.answers), data.appUrl || null)
+    .run();
+  const submissionId = res.meta.last_row_id;
+  await claimAttachments(c.env, form, body, submissionId, u.email);
+  return c.json({ ok: true, id: submissionId });
+}));
+
+// 제출 수정 (본인, 설문이 열려 있는 동안만)
+app.put('/api/submissions/:id', needAuth(async (c) => {
+  const sub = await c.env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(c.req.param('id')).first();
+  if (!sub) return c.json({ error: '존재하지 않는 제출입니다' }, 404);
+  const u = c.get('user');
+  if (sub.user_email !== u.email) return c.json({ error: '본인 제출만 수정할 수 있습니다' }, 403);
+  const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(sub.campaign_id).first();
+  if (!campaign || !isOpenNow(campaign)) return c.json({ error: '마감된 설문은 수정할 수 없습니다' }, 400);
 
   const form = parseForm(campaign.fields);
   const body = await c.req.json();
-  const answersIn = body.answers && typeof body.answers === 'object' ? body.answers : {};
+  const data = buildSubmissionData(form, body);
+  if (data.error) return c.json({ error: data.error }, 400);
 
-  // 답변 검증
-  const answers = {};
-  for (const q of form.questions) {
-    let v = answersIn[q.id];
-    if (q.type === 'checkbox') {
-      v = Array.isArray(v) ? v.map((x) => String(x)).filter((x) => q.options.includes(x)) : [];
-      if (q.required && !v.length) return c.json({ error: `"${q.label}" 항목을 선택해 주세요` }, 400);
-      if (v.length) answers[q.id] = v;
-    } else {
-      v = typeof v === 'string' ? v.trim().slice(0, 4000) : '';
-      if (q.type === 'select' && v && !q.options.includes(v)) v = '';
-      if (q.required && !v) return c.json({ error: `"${q.label}" 항목을 입력해 주세요` }, 400);
-      if (v) answers[q.id] = v;
-    }
-  }
-
-  const appUrl = form.showApp ? (body.app_url || '').trim() : '';
-  if (appUrl && !/^https?:\/\//i.test(appUrl)) {
-    return c.json({ error: '앱 URL은 http:// 또는 https:// 로 시작해야 합니다' }, 400);
-  }
-
-  // 목록/요약용 title, content 파생
-  let title = '';
-  for (const q of form.questions) {
-    const v = answers[q.id];
-    if (typeof v === 'string' && v && (q.type === 'text' || q.type === 'select')) { title = v.slice(0, 200); break; }
-  }
-  if (!title) {
-    const v = answers[form.questions[0]?.id];
-    const flat = Array.isArray(v) ? v.join(', ') : (v || '(내용 없음)');
-    title = flat.split('\n')[0].slice(0, 100);
-  }
-  const content = form.questions
-    .map((q) => {
-      const v = answers[q.id];
-      if (v === undefined) return null;
-      return `${q.label}: ${Array.isArray(v) ? v.join(', ') : v}`;
-    })
-    .filter(Boolean)
-    .join('\n');
-
-  const u = c.get('user');
-  const res = await c.env.DB
-    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers, app_url) VALUES (?,?,?,?,?,?,?,?)')
-    .bind(campaign.id, u.email, u.name, u.department, title, content, JSON.stringify(answers), appUrl || null)
+  await c.env.DB
+    .prepare('UPDATE submissions SET title = ?, content = ?, answers = ?, app_url = ? WHERE id = ?')
+    .bind(data.title, data.content, JSON.stringify(data.answers), data.appUrl || null, sub.id)
     .run();
-  const submissionId = res.meta.last_row_id;
+  await claimAttachments(c.env, form, body, sub.id, u.email);
+  return c.json({ ok: true });
+}));
 
-  // 첨부 연결: [{id, qid}] 형태. qid는 첨부 허용 질문 id 또는 'app'(앱 파일)
-  const validQids = new Set(form.questions.filter((q) => q.allowAttach).map((q) => q.id));
-  let atts = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_ATTACHMENTS) : [];
-  if (!atts.length && Array.isArray(body.attachment_ids)) {
-    atts = body.attachment_ids.slice(0, MAX_ATTACHMENTS).map((id) => ({ id }));
+// 첨부 개별 삭제 (본인 파일 또는 관리자, 제출 연결 여부 무관)
+app.delete('/api/attachments/:id', needAuth(async (c) => {
+  const a = await c.env.DB.prepare('SELECT * FROM attachments WHERE id = ?').bind(c.req.param('id')).first();
+  if (!a) return c.json({ error: '파일을 찾을 수 없습니다' }, 404);
+  const u = c.get('user');
+  if (a.uploader_email !== u.email && !(await isAdmin(c, u.email))) {
+    return c.json({ error: '권한이 없습니다' }, 403);
   }
-  for (const a of atts) {
-    if (!a || typeof a.id !== 'string') continue;
-    const qid = validQids.has(a.qid) ? a.qid : (a.qid === 'app' && form.showApp ? 'app' : null);
-    await c.env.DB
-      .prepare('UPDATE attachments SET submission_id = ?, question_id = ? WHERE id = ? AND uploader_email = ? AND submission_id IS NULL')
-      .bind(submissionId, qid, a.id, u.email)
-      .run();
-  }
-  return c.json({ ok: true, id: submissionId });
+  await c.env.BUCKET.delete(a.r2_key);
+  await c.env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(a.id).run();
+  return c.json({ ok: true });
 }));
 
 app.get('/api/campaigns/:slug/my-submissions', needAuth(async (c) => {
@@ -478,7 +558,12 @@ app.get('/api/admin/campaigns', needAdmin(async (c) => {
   const { results } = await c.env.DB.prepare(`
     SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
     FROM campaigns ca ORDER BY ca.id DESC`).all();
-  return c.json(results.map((ca) => ({ ...ca, form: parseForm(ca.fields), fields: undefined })));
+  return c.json(results.map((ca) => ({
+    ...ca,
+    form: parseForm(ca.fields),
+    fields: undefined,
+    open_now: isOpenNow(ca) ? 1 : 0,
+  })));
 }));
 
 app.post('/api/admin/campaigns', needAdmin(async (c) => {
@@ -486,10 +571,11 @@ app.post('/api/admin/campaigns', needAdmin(async (c) => {
   const title = (body.title || '').trim();
   if (!title) return c.json({ error: '캠페인 제목을 입력해 주세요' }, 400);
   const form = sanitizeForm(body.fields);
+  const closesAt = body.closes_at ? String(body.closes_at).slice(0, 10) : null;
   const slug = randomSlug();
   await c.env.DB
-    .prepare('INSERT INTO campaigns (slug, title, description, fields, created_by) VALUES (?,?,?,?,?)')
-    .bind(slug, title, (body.description || '').trim(), JSON.stringify(form), c.get('user').email)
+    .prepare('INSERT INTO campaigns (slug, title, description, fields, closes_at, created_by) VALUES (?,?,?,?,?,?)')
+    .bind(slug, title, (body.description || '').trim(), JSON.stringify(form), closesAt, c.get('user').email)
     .run();
   return c.json({ ok: true, slug });
 }));
@@ -502,9 +588,34 @@ app.patch('/api/admin/campaigns/:id', needAdmin(async (c) => {
   if (typeof body.title === 'string' && body.title.trim()) { fields.push('title = ?'); vals.push(body.title.trim()); }
   if (typeof body.description === 'string') { fields.push('description = ?'); vals.push(body.description.trim()); }
   if (body.fields !== undefined) { fields.push('fields = ?'); vals.push(JSON.stringify(sanitizeForm(body.fields))); }
+  if (body.closes_at !== undefined) { fields.push('closes_at = ?'); vals.push(body.closes_at ? String(body.closes_at).slice(0, 10) : null); }
   if (!fields.length) return c.json({ error: '변경할 내용이 없습니다' }, 400);
   vals.push(c.req.param('id'));
   await c.env.DB.prepare(`UPDATE campaigns SET ${fields.join(', ')} WHERE id = ?`).bind(...vals).run();
+  return c.json({ ok: true });
+}));
+
+// ---------- 설문 템플릿 ----------
+
+app.get('/api/admin/templates', needAdmin(async (c) => {
+  const { results } = await c.env.DB.prepare('SELECT id, name, fields, created_at FROM templates ORDER BY id DESC').all();
+  return c.json(results.map((t) => ({ id: t.id, name: t.name, form: parseForm(t.fields), created_at: t.created_at })));
+}));
+
+app.post('/api/admin/templates', needAdmin(async (c) => {
+  const body = await c.req.json();
+  const name = (body.name || '').trim().slice(0, 100);
+  if (!name) return c.json({ error: '템플릿 이름을 입력해 주세요' }, 400);
+  const form = sanitizeForm(body.fields);
+  await c.env.DB
+    .prepare('INSERT INTO templates (name, fields, created_by) VALUES (?,?,?)')
+    .bind(name, JSON.stringify(form), c.get('user').email)
+    .run();
+  return c.json({ ok: true });
+}));
+
+app.delete('/api/admin/templates/:id', needAdmin(async (c) => {
+  await c.env.DB.prepare('DELETE FROM templates WHERE id = ?').bind(c.req.param('id')).run();
   return c.json({ ok: true });
 }));
 

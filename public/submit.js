@@ -2,8 +2,10 @@
 const slug = location.pathname.split('/').pop();
 const attachments = []; // { id, filename, kind, size, previewUrl, qid }
 const MAX_ATTACHMENTS = 10;
-let FORM = null; // 캠페인 설문 양식 { questions, showApp }
+let FORM = null; // 캠페인 설문 양식 { questions, showApp, oneSubmission }
 let activeQid = null; // 지금 첨부 대상인 질문 id ('app'이면 앱 파일)
+let editingId = null; // 수정 중인 제출 id
+let myList = []; // 내 제출 내역
 
 const $ = (id) => document.getElementById(id);
 
@@ -35,6 +37,7 @@ async function init() {
   FORM = campaign.form;
   $('c-title').textContent = campaign.title;
   $('c-desc').textContent = campaign.description || '';
+  if (campaign.closes_at) $('c-deadline').textContent = `⏰ 마감일: ${campaign.closes_at} (당일까지 제출 가능)`;
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
   renderQuestions();
@@ -44,7 +47,16 @@ async function init() {
   bindGlobalAttachHandlers();
   bindRecorder();
   $('form').addEventListener('submit', onSubmit);
-  loadMine();
+  $('btn-cancel-edit').onclick = cancelEdit;
+  await loadMine();
+  applyOneSubmissionState();
+}
+
+// 1인 1회 설문에서 이미 제출했으면 폼 대신 안내를 보여줌
+function applyOneSubmissionState() {
+  const already = FORM.oneSubmission && myList.length > 0 && !editingId;
+  $('form').classList.toggle('hidden', already);
+  $('already-box').classList.toggle('hidden', !already);
 }
 
 // ---------- 설문 질문 렌더링 ----------
@@ -53,19 +65,27 @@ function renderQuestions() {
   const box = $('questions');
   box.innerHTML = FORM.questions.map((q) => {
     const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
+    const help = q.help ? `<span class="q-help-text">${esc(q.help)}</span>` : '';
+    const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
     let inner;
     if (q.type === 'textarea') {
-      inner = `<label>${esc(q.label)}${req}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
+      inner = `<label>${esc(q.label)}${req}${help}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
     } else if (q.type === 'select') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${
         q.options.map((o) => `<label class="choice"><input type="radio" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else if (q.type === 'checkbox') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${helpP}${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
+    } else if (q.type === 'rating') {
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}
+        <div class="stars" data-q="${q.id}" data-v="">${
+          [1, 2, 3, 4, 5].map((n) => `<button type="button" class="star" data-v="${n}">★</button>`).join('')
+        }<span class="stars-value muted"></span></div>
+      </fieldset>`;
     } else {
-      inner = `<label>${esc(q.label)}${req}<input data-q="${q.id}" maxlength="500"></label>`;
+      inner = `<label>${esc(q.label)}${req}${help}<input data-q="${q.id}" maxlength="500"></label>`;
     }
     const attach = q.allowAttach ? `
       <div class="attach-block" data-attq="${q.id}">
@@ -90,7 +110,23 @@ function renderQuestions() {
       $('file-input').click();
     };
   });
+
+  // 별점 클릭
+  box.querySelectorAll('.stars').forEach((st) => {
+    st.querySelectorAll('.star').forEach((btn) => {
+      btn.onclick = () => setStars(st, btn.dataset.v);
+    });
+  });
   renderAttachments();
+}
+
+function setStars(container, value) {
+  container.dataset.v = String(value);
+  container.querySelectorAll('.star').forEach((b) => {
+    b.classList.toggle('on', Number(b.dataset.v) <= Number(value));
+  });
+  const label = container.querySelector('.stars-value');
+  if (label) label.textContent = value ? `${value}점` : '';
 }
 
 function gatherAnswers() {
@@ -102,6 +138,9 @@ function gatherAnswers() {
     } else if (q.type === 'checkbox') {
       const els = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)];
       if (els.length) answers[q.id] = els.map((e) => e.value);
+    } else if (q.type === 'rating') {
+      const st = document.querySelector(`.stars[data-q="${q.id}"]`);
+      if (st && st.dataset.v) answers[q.id] = st.dataset.v;
     } else {
       const el = document.querySelector(`[data-q="${q.id}"]`);
       if (el && el.value.trim()) answers[q.id] = el.value.trim();
@@ -115,7 +154,7 @@ function validateAnswers(answers) {
     if (!q.required) continue;
     const v = answers[q.id];
     if (v === undefined || (Array.isArray(v) && !v.length)) {
-      toast(`"${q.label}" 항목을 ${q.type === 'select' || q.type === 'checkbox' ? '선택' : '입력'}해 주세요`, true);
+      toast(`"${q.label}" 항목을 ${['select', 'checkbox', 'rating'].includes(q.type) ? '선택' : '입력'}해 주세요`, true);
       return false;
     }
   }
@@ -152,7 +191,7 @@ function renderAttachments() {
         <button type="button" class="small ghost">✕ 삭제</button>`;
       li.querySelector('button').onclick = async () => {
         try {
-          await api(`/api/uploads/${a.id}`, { method: 'DELETE' });
+          await api(`/api/attachments/${a.id}`, { method: 'DELETE' });
         } catch { /* 이미 지워졌으면 무시 */ }
         attachments.splice(attachments.indexOf(a), 1);
         renderAttachments();
@@ -439,57 +478,139 @@ async function onSubmit(e) {
   if (!validateAnswers(answers)) return;
   const btn = $('btn-submit');
   btn.disabled = true;
-  btn.textContent = '제출 중…';
+  btn.textContent = editingId ? '수정 중…' : '제출 중…';
   try {
-    await api(`/api/campaigns/${encodeURIComponent(slug)}/submissions`, {
-      method: 'POST',
-      body: JSON.stringify({
-        answers,
-        app_url: FORM.showApp ? $('f-appurl').value : '',
-        attachments: attachments.map((a) => ({ id: a.id, qid: a.qid })),
-      }),
+    const body = JSON.stringify({
+      answers,
+      app_url: FORM.showApp ? $('f-appurl').value : '',
+      attachments: attachments.map((a) => ({ id: a.id, qid: a.qid })),
     });
-    toast('제출이 완료되었습니다. 감사합니다! 🎉');
+    if (editingId) {
+      await api(`/api/submissions/${editingId}`, { method: 'PUT', body });
+      toast('수정이 완료되었습니다 ✏️');
+    } else {
+      await api(`/api/campaigns/${encodeURIComponent(slug)}/submissions`, { method: 'POST', body });
+      toast('제출이 완료되었습니다. 감사합니다! 🎉');
+    }
+    editingId = null;
     attachments.length = 0;
     renderQuestions();
     $('f-appurl').value = '';
-    loadMine();
+    setEditUi(false);
+    await loadMine();
+    applyOneSubmissionState();
   } catch (err) {
     toast(err.message, true);
   } finally {
     btn.disabled = false;
-    btn.textContent = '제출하기';
+    btn.textContent = editingId ? '수정 완료' : '제출하기';
   }
+}
+
+function setEditUi(on) {
+  $('btn-submit').textContent = on ? '수정 완료' : '제출하기';
+  $('btn-cancel-edit').classList.toggle('hidden', !on);
+}
+
+function startEdit(s) {
+  editingId = s.id;
+  applyOneSubmissionState();
+  setEditUi(true);
+
+  // 답변 되살리기
+  let answers = {};
+  try { answers = s.answers ? JSON.parse(s.answers) : {}; } catch {}
+  renderQuestions();
+  for (const q of FORM.questions) {
+    const v = answers[q.id];
+    if (v === undefined) continue;
+    if (q.type === 'select') {
+      const el = document.querySelector(`input[name="${q.id}"][value="${CSS.escape(String(v))}"]`);
+      if (el) el.checked = true;
+    } else if (q.type === 'checkbox') {
+      (Array.isArray(v) ? v : [v]).forEach((o) => {
+        const el = document.querySelector(`input[name="${q.id}"][value="${CSS.escape(String(o))}"]`);
+        if (el) el.checked = true;
+      });
+    } else if (q.type === 'rating') {
+      const st = document.querySelector(`.stars[data-q="${q.id}"]`);
+      if (st) setStars(st, String(v));
+    } else {
+      const el = document.querySelector(`[data-q="${q.id}"]`);
+      if (el) el.value = Array.isArray(v) ? v.join(', ') : v;
+    }
+  }
+  $('f-appurl').value = s.app_url || '';
+
+  // 기존 첨부 되살리기 (삭제 가능)
+  attachments.length = 0;
+  for (const a of s.attachments || []) {
+    attachments.push({
+      id: a.id,
+      filename: a.filename,
+      kind: a.kind,
+      size: a.size,
+      qid: a.question_id === 'app' || a.kind === 'app' ? 'app'
+        : (a.question_id || FORM.questions.find((q) => q.allowAttach)?.id || 'app'),
+      previewUrl: a.kind === 'image' ? `/files/${a.id}` : null,
+    });
+  }
+  renderAttachments();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('수정 모드입니다. 내용을 고치고 "수정 완료"를 눌러 주세요');
+}
+
+function cancelEdit() {
+  editingId = null;
+  attachments.length = 0;
+  renderQuestions();
+  $('f-appurl').value = '';
+  setEditUi(false);
+  applyOneSubmissionState();
 }
 
 async function loadMine() {
   try {
-    const list = await api(`/api/campaigns/${encodeURIComponent(slug)}/my-submissions`);
-    const box = $('mine');
-    if (!list.length) {
-      box.textContent = '아직 제출한 사례가 없습니다.';
-      return;
-    }
-    box.classList.remove('muted');
-    box.innerHTML = list.map((s) => `
-      <div class="campaign-item">
-        <div>
-          <strong>${esc(s.title)}</strong>
-          <div class="muted">${kst(s.created_at)} · 첨부 ${s.attachments.length}개</div>
-        </div>
+    myList = await api(`/api/campaigns/${encodeURIComponent(slug)}/my-submissions`);
+  } catch {
+    return;
+  }
+  const box = $('mine');
+  if (!myList.length) {
+    box.classList.add('muted');
+    box.textContent = '아직 제출한 사례가 없습니다.';
+    return;
+  }
+  box.classList.remove('muted');
+  box.innerHTML = myList.map((s) => `
+    <div class="campaign-item">
+      <div>
+        <strong>${esc(s.title)}</strong>
+        <div class="muted">${kst(s.created_at)} · 첨부 ${s.attachments.length}개</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="small" data-edit="${s.id}">✏️ 수정</button>
         <button class="small ghost" data-id="${s.id}">삭제</button>
-      </div>`).join('');
-    box.querySelectorAll('button[data-id]').forEach((b) => {
-      b.onclick = async () => {
-        if (!confirm('이 제출을 삭제할까요? 첨부파일도 함께 삭제됩니다.')) return;
-        try {
-          await api(`/api/submissions/${b.dataset.id}`, { method: 'DELETE' });
-          toast('삭제되었습니다');
-          loadMine();
-        } catch (err) {
-          toast(err.message, true);
-        }
-      };
-    });
-  } catch { /* 무시 */ }
+      </div>
+    </div>`).join('');
+  box.querySelectorAll('button[data-edit]').forEach((b) => {
+    b.onclick = () => {
+      const s = myList.find((x) => String(x.id) === b.dataset.edit);
+      if (s) startEdit(s);
+    };
+  });
+  box.querySelectorAll('button[data-id]').forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm('이 제출을 삭제할까요? 첨부파일도 함께 삭제됩니다.')) return;
+      try {
+        await api(`/api/submissions/${b.dataset.id}`, { method: 'DELETE' });
+        toast('삭제되었습니다');
+        if (String(editingId) === b.dataset.id) cancelEdit();
+        await loadMine();
+        applyOneSubmissionState();
+      } catch (err) {
+        toast(err.message, true);
+      }
+    };
+  });
 }

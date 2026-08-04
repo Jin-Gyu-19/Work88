@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>사례 제출 | AI 활용 사례 공유</title>
-  <link rel="stylesheet" href="/styles.css?v=8">
+  <link rel="stylesheet" href="/styles.css?v=9">
 </head>
 <body>
   <header class="topbar">
@@ -34,6 +34,12 @@
       <div class="card">
         <h1 id="c-title"></h1>
         <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
+        <p id="c-deadline" class="hint"></p>
+      </div>
+
+      <div id="already-box" class="card hidden">
+        <h2>이미 제출하셨습니다 ✅</h2>
+        <p class="muted">이 설문은 1인 1회만 제출할 수 있습니다. 아래 <strong>내 제출 내역</strong>에서 수정하거나 삭제할 수 있습니다.</p>
       </div>
 
       <form id="form" class="card" autocomplete="off">
@@ -53,6 +59,7 @@
         </fieldset>
 
         <button type="submit" class="primary" id="btn-submit" style="width:100%; padding:12px;">제출하기</button>
+        <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:8px;">수정 취소</button>
       </form>
 
       <section class="card">
@@ -88,7 +95,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=8"></script>
-  <script src="/submit.js?v=8"></script>
+  <script src="/common.js?v=9"></script>
+  <script src="/submit.js?v=9"></script>
 </body>
 </html>

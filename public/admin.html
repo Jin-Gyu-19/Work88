@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | AI 활용 사례 공유</title>
-  <link rel="stylesheet" href="/styles.css?v=8">
+  <link rel="stylesheet" href="/styles.css?v=9">
 </head>
 <body>
   <header class="topbar">
@@ -54,9 +54,11 @@
             <select id="sel-campaign" style="max-width:380px;"></select>
             <button class="primary" id="btn-excel">📊 엑셀 다운로드</button>
             <button id="btn-zip">🗜️ 전체 ZIP (엑셀+첨부)</button>
+            <button id="btn-stats">📈 통계 보기</button>
           </div>
           <p class="hint">엑셀의 첨부 셀에는 클릭하면 파일이 열리는 링크가 들어 있습니다. ZIP에는 첨부파일 원본과 상대경로로 연결된 엑셀이 함께 들어 있어 오프라인 보관용으로 좋습니다.</p>
         </div>
+        <div class="card hidden" id="stats-box"></div>
         <div class="card">
           <div id="sub-count" class="muted" style="margin-bottom:8px;"></div>
           <div style="overflow-x:auto;">
@@ -88,11 +90,21 @@
   <div id="builder-modal" class="modal hidden">
     <div class="modal-body" style="max-width:760px;">
       <h3 id="b-heading">새 캠페인</h3>
+      <div class="tpl-bar">
+        <span class="muted" style="font-size:12.5px;">📋 템플릿:</span>
+        <select id="b-tpl" style="width:auto; margin:0; max-width:240px;"></select>
+        <button type="button" class="small" id="b-tpl-load">📥 불러오기</button>
+        <button type="button" class="small" id="b-tpl-save">💾 현재 구성 저장</button>
+        <button type="button" class="small ghost" id="b-tpl-del">삭제</button>
+      </div>
       <label>캠페인 제목 <span style="color:var(--danger)">*</span>
         <input id="b-name" maxlength="200" placeholder="예: 2026 상반기 AI 활용 사례 수집">
       </label>
       <label>안내 문구 (선택)
         <textarea id="b-desc" rows="2" placeholder="참여자에게 보여줄 안내 문구"></textarea>
+      </label>
+      <label style="max-width:240px;">마감일 (선택, 당일까지 제출 가능)
+        <input type="date" id="b-close">
       </label>
 
       <h3 style="margin-top:18px;">설문 질문 구성</h3>
@@ -101,8 +113,9 @@
       <button type="button" id="b-add" style="margin-top:4px;">➕ 질문 추가</button>
 
       <fieldset style="margin-top:16px;">
-        <legend>추가 섹션</legend>
+        <legend>추가 설정</legend>
         <label class="choice"><input type="checkbox" id="b-app" checked> 앱 개발 섹션 표시 (앱 URL · 앱 파일 첨부)</label>
+        <label class="choice"><input type="checkbox" id="b-one"> 1인 1회만 제출 가능 (중복 제출 제한)</label>
       </fieldset>
 
       <div class="modal-actions">
@@ -137,7 +150,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=8"></script>
-  <script src="/admin.js?v=8"></script>
+  <script src="/common.js?v=9"></script>
+  <script src="/admin.js?v=9"></script>
 </body>
 </html>

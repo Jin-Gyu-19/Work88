@@ -15,6 +15,15 @@ CREATE TABLE IF NOT EXISTS campaigns (
   description TEXT,
   is_open INTEGER NOT NULL DEFAULT 1,
   fields TEXT,
+  closes_at TEXT,
+  created_by TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS templates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  fields TEXT NOT NULL,
   created_by TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
