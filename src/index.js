@@ -63,6 +63,16 @@ function sanitizeForm(input) {
       && priorChoice[si.qid].options.includes(String(si.value))) {
       question.showIf = { qid: si.qid, value: String(si.value) };
     }
+    // 질문에 첨부된 자료(이미지는 표시 너비 w% 포함)
+    question.media = (Array.isArray(q.media) ? q.media.slice(0, 5) : [])
+      .filter((m) => m && typeof m.id === 'string' && /^[0-9a-f-]{36}$/.test(m.id))
+      .map((m) => ({
+        id: m.id,
+        filename: String(m.filename || 'file').slice(0, 200),
+        kind: m.kind === 'image' ? 'image' : 'file',
+        size: Number(m.size) || 0,
+        w: Math.min(100, Math.max(10, parseInt(m.w, 10) || 60)),
+      }));
     out.questions.push(question);
     if (type === 'select' || type === 'checkbox') priorChoice[question.id] = question;
   }
@@ -114,6 +124,18 @@ async function isAdmin(c, email) {
 // 메인 관리자(환경설정 지정)는 모든 캠페인을 관리할 수 있다
 function isFixedAdmin(env, email) {
   return adminEmails(env).includes((email || '').toLowerCase());
+}
+
+// 설문지에 첨부된 자료 파일을 'media'로 표시 (참여자도 열람 가능해짐)
+async function markMediaAttachments(env, form) {
+  for (const q of form.questions) {
+    for (const m of q.media || []) {
+      await env.DB
+        .prepare("UPDATE attachments SET question_id = 'media' WHERE id = ? AND submission_id IS NULL")
+        .bind(m.id)
+        .run();
+    }
+  }
 }
 
 // 캠페인 조회 + 소유권 확인 (만든 관리자 본인 또는 메인 관리자만)
@@ -692,6 +714,7 @@ app.post('/api/admin/campaigns', needAdmin(async (c) => {
     .prepare('INSERT INTO campaigns (slug, title, description, fields, closes_at, created_by) VALUES (?,?,?,?,?,?)')
     .bind(slug, title, (body.description || '').trim(), JSON.stringify(form), closesAt, c.get('user').email)
     .run();
+  await markMediaAttachments(c.env, form);
   return c.json({ ok: true, slug });
 }));
 
@@ -704,11 +727,17 @@ app.patch('/api/admin/campaigns/:id', needAdmin(async (c) => {
   if (body.is_open !== undefined) { fields.push('is_open = ?'); vals.push(body.is_open ? 1 : 0); }
   if (typeof body.title === 'string' && body.title.trim()) { fields.push('title = ?'); vals.push(body.title.trim()); }
   if (typeof body.description === 'string') { fields.push('description = ?'); vals.push(body.description.trim()); }
-  if (body.fields !== undefined) { fields.push('fields = ?'); vals.push(JSON.stringify(sanitizeForm(body.fields))); }
+  let newForm = null;
+  if (body.fields !== undefined) {
+    newForm = sanitizeForm(body.fields);
+    fields.push('fields = ?');
+    vals.push(JSON.stringify(newForm));
+  }
   if (body.closes_at !== undefined) { fields.push('closes_at = ?'); vals.push(body.closes_at ? String(body.closes_at).slice(0, 10) : null); }
   if (!fields.length) return c.json({ error: '변경할 내용이 없습니다' }, 400);
   vals.push(c.req.param('id'));
   await c.env.DB.prepare(`UPDATE campaigns SET ${fields.join(', ')} WHERE id = ?`).bind(...vals).run();
+  if (newForm) await markMediaAttachments(c.env, newForm);
   return c.json({ ok: true });
 }));
 
@@ -738,10 +767,21 @@ app.delete('/api/admin/templates/:id', needAdmin(async (c) => {
 
 app.delete('/api/admin/campaigns/:id', needAdmin(async (c) => {
   const id = c.req.param('id');
-  const { errorRes } = await getManagedCampaign(c, id);
+  const { campaign, errorRes } = await getManagedCampaign(c, id);
   if (errorRes) return errorRes;
   const { results } = await c.env.DB.prepare('SELECT id FROM submissions WHERE campaign_id = ?').bind(id).all();
   for (const s of results) await deleteSubmissionDeep(c.env, s.id);
+  // 설문지에 첨부된 자료 파일도 정리
+  const form = parseForm(campaign.fields);
+  for (const q of form.questions) {
+    for (const m of q.media || []) {
+      const a = await c.env.DB.prepare('SELECT r2_key FROM attachments WHERE id = ?').bind(m.id).first();
+      if (a) {
+        await c.env.BUCKET.delete(a.r2_key);
+        await c.env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(m.id).run();
+      }
+    }
+  }
   await c.env.DB.prepare('DELETE FROM campaigns WHERE id = ?').bind(id).run();
   return c.json({ ok: true });
 }));
@@ -905,7 +945,8 @@ app.get('/files/:id', async (c) => {
   if (!user) return c.redirect('/auth/login?redirect=' + encodeURIComponent(c.req.path));
   const a = await c.env.DB.prepare('SELECT * FROM attachments WHERE id = ?').bind(c.req.param('id')).first();
   if (!a) return c.text('파일을 찾을 수 없습니다', 404);
-  if (a.uploader_email !== user.email && !(await isAdmin(c, user.email))) {
+  // 설문지 자료(media)는 로그인한 사용자 모두 열람 가능
+  if (a.question_id !== 'media' && a.uploader_email !== user.email && !(await isAdmin(c, user.email))) {
     return c.text('이 파일을 볼 권한이 없습니다', 403);
   }
   const obj = await c.env.BUCKET.get(a.r2_key);

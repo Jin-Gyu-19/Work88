@@ -69,25 +69,31 @@ function renderQuestions() {
     const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
     const help = q.help ? `<span class="q-help-text">${esc(q.help)}</span>` : '';
     const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
+    // 관리자가 질문에 첨부한 자료 (이미지는 지정 너비로 표시)
+    const media = (q.media || []).length ? `<div class="q-media">${
+      q.media.map((m) => m.kind === 'image'
+        ? `<img src="/files/${m.id}" style="width:${m.w || 60}%" alt="${esc(m.filename)}">`
+        : `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`).join('')
+    }</div>` : '';
     let inner;
     if (q.type === 'textarea') {
-      inner = `<label>${esc(q.label)}${req}${help}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
+      inner = `<label>${esc(q.label)}${req}${help}${media}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
     } else if (q.type === 'select') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="radio" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else if (q.type === 'checkbox') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${helpP}${
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else if (q.type === 'rating') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}
         <div class="stars" data-q="${q.id}" data-v="">${
           [1, 2, 3, 4, 5].map((n) => `<button type="button" class="star" data-v="${n}">★</button>`).join('')
         }<span class="stars-value muted"></span></div>
       </fieldset>`;
     } else {
-      inner = `<label>${esc(q.label)}${req}${help}<input data-q="${q.id}" maxlength="500"></label>`;
+      inner = `<label>${esc(q.label)}${req}${help}${media}<input data-q="${q.id}" maxlength="500"></label>`;
     }
     const attach = q.allowAttach ? `
       <div class="attach-block" data-attq="${q.id}">
@@ -96,13 +102,13 @@ function renderQuestions() {
           <button type="button" class="small att-capture">🖥️ 화면 캡쳐</button>
           <button type="button" class="small att-record">🎥 동영상 촬영</button>
         </div>
-        <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB · 스크린샷 붙여넣기(Ctrl+V) 가능</p>
+        <p class="hint">파일을 이곳에 끌어다 놓아도 됩니다 · 이미지 10MB · 동영상 1분/80MB · 기타 25MB · 스크린샷 붙여넣기(Ctrl+V) 가능</p>
         <ul class="attach-list" data-attlist="${q.id}"></ul>
       </div>` : '';
     return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
   }).join('');
 
-  // 질문별 첨부 버튼 연결
+  // 질문별 첨부 버튼 연결 + 드래그앤드롭
   box.querySelectorAll('.attach-block').forEach((blk) => {
     const qid = blk.dataset.attq;
     blk.querySelector('.att-capture').onclick = () => captureScreen(qid);
@@ -111,6 +117,19 @@ function renderQuestions() {
       activeQid = qid;
       $('file-input').click();
     };
+    ['dragenter', 'dragover'].forEach((ev) => blk.addEventListener(ev, (e) => {
+      e.preventDefault();
+      blk.classList.add('drag-over');
+    }));
+    blk.addEventListener('dragleave', (e) => {
+      if (!blk.contains(e.relatedTarget)) blk.classList.remove('drag-over');
+    });
+    blk.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      blk.classList.remove('drag-over');
+      const files = [...(e.dataTransfer?.files || [])];
+      if (files.length) await handleFiles(files, qid);
+    });
   });
 
   // 별점 클릭
@@ -362,23 +381,28 @@ async function captureScreen(qid) {
 
 // ---------- 전역 첨부 핸들러 (파일 선택 / 붙여넣기 / 앱 파일) ----------
 
+// 파일 목록 업로드 (파일 선택·드래그앤드롭 공용)
+async function handleFiles(files, qid) {
+  if (!qid || !canAddMore(files.length)) return;
+  for (const f of files) {
+    const kind = kindOf(f);
+    if (kind === 'video') {
+      const dur = await videoDuration(f);
+      if (dur && dur > 61) {
+        toast(`"${f.name}"은 1분을 초과하는 동영상이라 첨부할 수 없습니다`, true);
+        continue;
+      }
+    }
+    await uploadBlob(f, f.name, kind, qid).catch(() => {});
+  }
+}
+
 function bindGlobalAttachHandlers() {
   $('file-input').onchange = async (e) => {
     const files = [...e.target.files];
     const qid = activeQid;
     e.target.value = '';
-    if (!qid || !canAddMore(files.length)) return;
-    for (const f of files) {
-      const kind = kindOf(f);
-      if (kind === 'video') {
-        const dur = await videoDuration(f);
-        if (dur && dur > 61) {
-          toast(`"${f.name}"은 1분을 초과하는 동영상이라 첨부할 수 없습니다`, true);
-          continue;
-        }
-      }
-      await uploadBlob(f, f.name, kind, qid).catch(() => {});
-    }
+    await handleFiles(files, qid);
   };
 
   // 클립보드 스크린샷 붙여넣기 → 첫 번째 첨부 허용 질문에 추가

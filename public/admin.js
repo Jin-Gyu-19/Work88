@@ -46,6 +46,7 @@ async function init() {
 
   $('btn-new').onclick = () => openBuilder(null);
   $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
+  $('bq-file').onchange = onBuilderFilesPicked;
   $('b-save').onclick = saveBuilder;
   $('b-cancel').onclick = () => $('builder-modal').classList.add('hidden');
   $('b-preview').onclick = showPreview;
@@ -240,8 +241,40 @@ function bindDeleteModal() {
 
 // ---------- 설문지 빌더 ----------
 
+// 질문 자료 첨부 (빌더에서 사용)
+let activeMediaQ = null;
+let activeMediaRender = null;
+
+async function onBuilderFilesPicked(e) {
+  const files = [...e.target.files];
+  e.target.value = '';
+  const q = activeMediaQ;
+  if (!q || !files.length) return;
+  if ((q.media || []).length + files.length > 5) {
+    toast('질문당 자료는 최대 5개까지 첨부할 수 있습니다', true);
+    return;
+  }
+  for (const f of files) {
+    const kind = f.type.startsWith('image/') ? 'image' : 'file';
+    try {
+      const r = await fetch(`/api/uploads?kind=${kind}&filename=${encodeURIComponent(f.name)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': f.type || 'application/octet-stream' },
+        body: f,
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || '업로드에 실패했습니다');
+      q.media = q.media || [];
+      q.media.push({ id: data.id, filename: data.filename, kind, size: data.size, w: 60 });
+    } catch (err) {
+      toast(err.message, true);
+    }
+  }
+  if (activeMediaRender) activeMediaRender();
+}
+
 function newQuestion() {
-  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [], allowAttach: false, help: '', multiple: false, showIf: null };
+  return { id: 'q' + Math.random().toString(36).slice(2, 10), label: '', type: 'text', required: false, options: [], allowAttach: false, help: '', multiple: false, showIf: null, media: [] };
 }
 
 // 서버 형식(select/checkbox) → 빌더 형식(choice + multiple)
@@ -254,6 +287,7 @@ function cloneQuestions(qs) {
     allowAttach: !!q.allowAttach,
     help: q.help || '',
     showIf: q.showIf ? { ...q.showIf } : null,
+    media: (q.media || []).map((m) => ({ ...m })),
   }));
 }
 
@@ -377,6 +411,11 @@ function renderBuilder() {
         <button type="button" class="small opt-add">➕ 선택지 추가</button>
         <label class="choice" style="margin-top:8px;"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용 (여러 개를 고를 수 있게)</label>
       </div>
+      <div class="q-media-box">
+        <button type="button" class="small q-media-add">🖼️ 이미지·파일 첨부</button>
+        <span class="hint" style="margin:0;">이미지는 설문 문항에 바로 표시되고, 크기를 조절할 수 있습니다</span>
+        <div class="q-media-list"></div>
+      </div>
       <div class="q-branch">
         <span class="muted">🔀 표시 조건:</span>
         <select class="q-branch-q" ${priorChoices.length ? '' : 'disabled'} title="${priorChoices.length ? '' : '이 질문보다 앞에 객관식 질문이 있어야 분기를 만들 수 있습니다'}">
@@ -408,6 +447,51 @@ function renderBuilder() {
       }
     };
     if (isChoice) renderOpts();
+
+    // 질문 자료(이미지/파일) 목록 + 이미지 크기 슬라이더
+    const renderMedia = () => {
+      const listBox = row.querySelector('.q-media-list');
+      listBox.innerHTML = '';
+      (q.media || []).forEach((m, j) => {
+        const item = document.createElement('div');
+        item.className = 'bq-media';
+        if (m.kind === 'image') {
+          item.innerHTML = `
+            <img src="/files/${m.id}" style="width:${m.w || 60}%" alt="">
+            <div class="bq-controls">
+              <span class="muted">크기</span>
+              <input type="range" min="10" max="100" value="${m.w || 60}">
+              <span class="bq-pct muted">${m.w || 60}%</span>
+              <button type="button" class="small ghost">✕ 삭제</button>
+            </div>`;
+          const img = item.querySelector('img');
+          const range = item.querySelector('input[type="range"]');
+          const pct = item.querySelector('.bq-pct');
+          range.oninput = () => {
+            m.w = Number(range.value);
+            img.style.width = m.w + '%';
+            pct.textContent = m.w + '%';
+          };
+        } else {
+          item.innerHTML = `
+            <div class="bq-controls">
+              <span>📎 ${esc(m.filename)} <span class="muted">(${fmtSize(m.size)})</span></span>
+              <button type="button" class="small ghost">✕ 삭제</button>
+            </div>`;
+        }
+        item.querySelector('.bq-controls button').onclick = () => {
+          q.media.splice(j, 1);
+          renderMedia();
+        };
+        listBox.appendChild(item);
+      });
+    };
+    renderMedia();
+    row.querySelector('.q-media-add').onclick = () => {
+      activeMediaQ = q;
+      activeMediaRender = renderMedia;
+      $('bq-file').click();
+    };
 
     // 분기 선택지 목록 채우기
     const renderBranchV = () => {
@@ -476,23 +560,29 @@ function showPreview() {
   const qHtml = qs.length ? qs.map((q) => {
     const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
     const help = q.help ? `<span class="q-help-text">${esc(q.help)}</span>` : '';
+    const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
+    const media = (q.media || []).length ? `<div class="q-media">${
+      q.media.map((m) => m.kind === 'image'
+        ? `<img src="/files/${m.id}" style="width:${m.w || 60}%" alt="">`
+        : `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`).join('')
+    }</div>` : '';
     let inner;
     if (q.type === 'textarea') {
-      inner = `<label>${esc(q.label)}${req}${help}<textarea rows="5" placeholder="답변 입력"></textarea></label>`;
+      inner = `<label>${esc(q.label)}${req}${help}${media}<textarea rows="5" placeholder="답변 입력"></textarea></label>`;
     } else if (q.type === 'rating') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : ''}
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}
         <div class="stars">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star" data-v="${n}">★</button>`).join('')}</div>
       </fieldset>`;
     } else if (q.type === 'select') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : ''}${
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="radio" name="pv_${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else if (q.type === 'checkbox') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : ''}${
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="pv_${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else {
-      inner = `<label>${esc(q.label)}${req}${help}<input placeholder="답변 입력"></label>`;
+      inner = `<label>${esc(q.label)}${req}${help}${media}<input placeholder="답변 입력"></label>`;
     }
     const attach = q.allowAttach ? `
       <div class="attach-block">
