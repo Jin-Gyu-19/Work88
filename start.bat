@@ -15,9 +15,10 @@ call npm install --no-audit --no-fund
 
 echo.
 echo [3/4] 로컬 설정 확인 중...
-if not exist .dev.vars (
-  echo DEV_MODE=1> .dev.vars
-  echo SESSION_SECRET=dev-secret>> .dev.vars
+findstr /c:"DEV_MODE=1" .dev.vars >nul 2>&1
+if errorlevel 1 (
+  >.dev.vars echo DEV_MODE=1
+  >>.dev.vars echo SESSION_SECRET=dev-secret
 )
 call npm run db:init:local >nul
 
