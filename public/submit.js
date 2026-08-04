@@ -71,9 +71,11 @@ function renderQuestions() {
     const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
     // 관리자가 질문에 첨부한 자료 (이미지는 지정 너비로 표시)
     const media = (q.media || []).length ? `<div class="q-media">${
-      q.media.map((m) => m.kind === 'image'
-        ? `<img src="/files/${m.id}" style="width:${m.w || 60}%" alt="${esc(m.filename)}">`
-        : `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`).join('')
+      q.media.map((m) => {
+        if (m.kind !== 'image') return `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`;
+        const al = m.align === 'right' ? 'margin-left:auto;' : m.align === 'left' ? '' : 'margin-left:auto;margin-right:auto;';
+        return `<img src="/files/${m.id}" style="width:${m.w || 60}%;${al}" alt="${esc(m.filename)}">`;
+      }).join('')
     }</div>` : '';
     let inner;
     if (q.type === 'textarea') {

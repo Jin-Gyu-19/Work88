@@ -72,6 +72,7 @@ function sanitizeForm(input) {
         kind: m.kind === 'image' ? 'image' : 'file',
         size: Number(m.size) || 0,
         w: Math.min(100, Math.max(10, parseInt(m.w, 10) || 60)),
+        align: ['left', 'center', 'right'].includes(m.align) ? m.align : 'center',
       }));
     out.questions.push(question);
     if (type === 'select' || type === 'checkbox') priorChoice[question.id] = question;

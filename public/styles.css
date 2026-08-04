@@ -185,11 +185,22 @@ tr.clickable:hover { background: #f7f9fd; }
 /* 빌더의 질문 자료 편집 */
 .q-media-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .q-media-box .q-media-list { width: 100%; }
-.bq-media { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 6px; background: #fff; }
-.bq-media img { display: block; max-width: 100%; border-radius: 6px; margin-bottom: 6px; }
-.bq-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; }
-.bq-controls input[type="range"] { width: 160px; margin: 0; padding: 0; }
+.q-media-box.drag-over { background: #e8f0ff; border-radius: 8px; outline: 2px dashed var(--primary); }
+.bq-media { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 6px; background: #fff; }
+.bq-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12.5px; margin-top: 8px; }
 .bq-pct { min-width: 36px; }
+.bq-controls .al.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.img-wrap { position: relative; display: block; min-width: 40px; }
+.img-wrap img { display: block; width: 100%; border-radius: 6px; border: 1px solid var(--line); }
+.resize-handle {
+  position: absolute; right: -8px; bottom: -8px;
+  width: 18px; height: 18px; line-height: 15px; text-align: center;
+  background: var(--primary); color: #fff; font-size: 10px;
+  border: 2px solid #fff; border-radius: 5px;
+  cursor: nwse-resize; box-shadow: 0 1px 5px rgba(0, 0, 0, .35);
+  user-select: none;
+}
 .attach-block { border: 1px dashed #c9d2e3; border-radius: 8px; padding: 10px 12px; margin: -4px 0 16px; background: #fafbfe; }
 .attach-block .hint { margin: 6px 0 0; }
 

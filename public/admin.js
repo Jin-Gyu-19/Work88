@@ -245,10 +245,7 @@ function bindDeleteModal() {
 let activeMediaQ = null;
 let activeMediaRender = null;
 
-async function onBuilderFilesPicked(e) {
-  const files = [...e.target.files];
-  e.target.value = '';
-  const q = activeMediaQ;
+async function addMediaFiles(q, files, render) {
   if (!q || !files.length) return;
   if ((q.media || []).length + files.length > 5) {
     toast('질문당 자료는 최대 5개까지 첨부할 수 있습니다', true);
@@ -265,12 +262,18 @@ async function onBuilderFilesPicked(e) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || '업로드에 실패했습니다');
       q.media = q.media || [];
-      q.media.push({ id: data.id, filename: data.filename, kind, size: data.size, w: 60 });
+      q.media.push({ id: data.id, filename: data.filename, kind, size: data.size, w: 60, align: 'center' });
     } catch (err) {
       toast(err.message, true);
     }
   }
-  if (activeMediaRender) activeMediaRender();
+  if (render) render();
+}
+
+async function onBuilderFilesPicked(e) {
+  const files = [...e.target.files];
+  e.target.value = '';
+  await addMediaFiles(activeMediaQ, files, activeMediaRender);
 }
 
 function newQuestion() {
@@ -448,7 +451,7 @@ function renderBuilder() {
     };
     if (isChoice) renderOpts();
 
-    // 질문 자료(이미지/파일) 목록 + 이미지 크기 슬라이더
+    // 질문 자료(이미지/파일) 목록 — 이미지는 모서리 핸들로 크기 조절 + 정렬 선택
     const renderMedia = () => {
       const listBox = row.querySelector('.q-media-list');
       listBox.innerHTML = '';
@@ -456,30 +459,55 @@ function renderBuilder() {
         const item = document.createElement('div');
         item.className = 'bq-media';
         if (m.kind === 'image') {
+          if (!m.align) m.align = 'center';
+          const wrapAl = m.align === 'right' ? 'margin-left:auto;' : m.align === 'left' ? '' : 'margin-left:auto;margin-right:auto;';
           item.innerHTML = `
-            <img src="/files/${m.id}" style="width:${m.w || 60}%" alt="">
+            <div class="img-wrap" style="width:${m.w || 60}%;${wrapAl}">
+              <img src="/files/${m.id}" alt="">
+              <span class="resize-handle" title="모서리를 드래그해서 크기 조절">◢</span>
+            </div>
             <div class="bq-controls">
-              <span class="muted">크기</span>
-              <input type="range" min="10" max="100" value="${m.w || 60}">
+              <span class="muted">정렬</span>
+              <button type="button" class="small al ${m.align === 'left' ? 'on' : ''}" data-al="left">⯇ 왼쪽</button>
+              <button type="button" class="small al ${m.align === 'center' ? 'on' : ''}" data-al="center">◫ 가운데</button>
+              <button type="button" class="small al ${m.align === 'right' ? 'on' : ''}" data-al="right">⯈ 오른쪽</button>
               <span class="bq-pct muted">${m.w || 60}%</span>
-              <button type="button" class="small ghost">✕ 삭제</button>
+              <button type="button" class="small ghost bq-del">✕ 삭제</button>
             </div>`;
-          const img = item.querySelector('img');
-          const range = item.querySelector('input[type="range"]');
+
+          // 모서리 핸들 드래그로 크기 조절
+          const wrap = item.querySelector('.img-wrap');
           const pct = item.querySelector('.bq-pct');
-          range.oninput = () => {
-            m.w = Number(range.value);
-            img.style.width = m.w + '%';
-            pct.textContent = m.w + '%';
+          item.querySelector('.resize-handle').onmousedown = (e) => {
+            e.preventDefault();
+            const parentW = item.getBoundingClientRect().width;
+            const startW = wrap.getBoundingClientRect().width;
+            const startX = e.clientX;
+            const move = (ev) => {
+              const w = Math.min(100, Math.max(10, Math.round(((startW + (ev.clientX - startX)) / parentW) * 100)));
+              m.w = w;
+              wrap.style.width = w + '%';
+              pct.textContent = w + '%';
+            };
+            const up = () => {
+              document.removeEventListener('mousemove', move);
+              document.removeEventListener('mouseup', up);
+            };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', up);
           };
+
+          item.querySelectorAll('.al').forEach((b) => {
+            b.onclick = () => { m.align = b.dataset.al; renderMedia(); };
+          });
         } else {
           item.innerHTML = `
             <div class="bq-controls">
               <span>📎 ${esc(m.filename)} <span class="muted">(${fmtSize(m.size)})</span></span>
-              <button type="button" class="small ghost">✕ 삭제</button>
+              <button type="button" class="small ghost bq-del">✕ 삭제</button>
             </div>`;
         }
-        item.querySelector('.bq-controls button').onclick = () => {
+        item.querySelector('.bq-del').onclick = () => {
           q.media.splice(j, 1);
           renderMedia();
         };
@@ -492,6 +520,21 @@ function renderBuilder() {
       activeMediaRender = renderMedia;
       $('bq-file').click();
     };
+    // 자료 첨부도 드래그앤드롭 지원
+    const mediaBox = row.querySelector('.q-media-box');
+    ['dragenter', 'dragover'].forEach((ev) => mediaBox.addEventListener(ev, (e) => {
+      e.preventDefault();
+      mediaBox.classList.add('drag-over');
+    }));
+    mediaBox.addEventListener('dragleave', (e) => {
+      if (!mediaBox.contains(e.relatedTarget)) mediaBox.classList.remove('drag-over');
+    });
+    mediaBox.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      mediaBox.classList.remove('drag-over');
+      const files = [...(e.dataTransfer?.files || [])];
+      if (files.length) await addMediaFiles(q, files, renderMedia);
+    });
 
     // 분기 선택지 목록 채우기
     const renderBranchV = () => {
@@ -562,9 +605,11 @@ function showPreview() {
     const help = q.help ? `<span class="q-help-text">${esc(q.help)}</span>` : '';
     const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
     const media = (q.media || []).length ? `<div class="q-media">${
-      q.media.map((m) => m.kind === 'image'
-        ? `<img src="/files/${m.id}" style="width:${m.w || 60}%" alt="">`
-        : `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`).join('')
+      q.media.map((m) => {
+        if (m.kind !== 'image') return `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`;
+        const al = m.align === 'right' ? 'margin-left:auto;' : m.align === 'left' ? '' : 'margin-left:auto;margin-right:auto;';
+        return `<img src="/files/${m.id}" style="width:${m.w || 60}%;${al}" alt="">`;
+      }).join('')
     }</div>` : '';
     let inner;
     if (q.type === 'textarea') {
