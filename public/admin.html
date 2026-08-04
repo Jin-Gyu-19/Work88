@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | AI 활용 사례 공유</title>
-  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="stylesheet" href="/styles.css?v=12">
 </head>
 <body>
   <header class="topbar">
@@ -160,7 +160,22 @@
     <div id="lb-body" class="lb-body"></div>
   </div>
 
-  <script src="/common.js?v=11"></script>
-  <script src="/admin.js?v=11"></script>
+  <!-- 캠페인 삭제 확인 -->
+  <div id="del-modal" class="modal hidden">
+    <div class="modal-body" style="max-width:500px;">
+      <h3>⚠️ 캠페인 삭제</h3>
+      <p id="del-msg"></p>
+      <p class="hint">삭제하면 제출 내역과 첨부파일이 <strong>모두 사라지며 되돌릴 수 없습니다.</strong><br>
+      삭제하기 전에 <strong>전체 ZIP 다운로드</strong>로 설문 내역과 첨부파일을 꼭 받아 두세요.</p>
+      <div class="modal-actions">
+        <button class="primary" id="del-download">📥 설문 다운로드 하러 가기</button>
+        <button class="danger" id="del-confirm">삭제</button>
+        <button class="ghost" id="del-cancel">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/common.js?v=12"></script>
+  <script src="/admin.js?v=12"></script>
 </body>
 </html>

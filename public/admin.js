@@ -71,6 +71,10 @@ async function init() {
   $('btn-add-admin').onclick = addAdmin;
   $('lb-close').onclick = closeLightbox;
   $('lightbox').onclick = (e) => { if (e.target === $('lightbox')) closeLightbox(); };
+  bindDeleteModal();
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) closeAllMenus();
+  });
 
   await loadCampaigns();
 }
@@ -97,7 +101,13 @@ async function loadCampaigns() {
           <div class="muted">질문 ${ca.form.questions.length}개 · 제출 ${ca.submission_count}건${ca.closes_at ? ` · 마감일 ${esc(ca.closes_at)}` : ''} · ${kst(ca.created_at)} 생성</div>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="small" data-act="copy" data-id="${ca.id}">🔗 링크 복사</button>
+          <div class="dropdown">
+            <button class="small primary" data-act="send" data-id="${ca.id}">📤 설문 보내기 ▾</button>
+            <div class="dropdown-menu hidden" data-menu="${ca.id}">
+              <button class="small" data-act="mail" data-id="${ca.id}">📧 메일로 보내기</button>
+              <button class="small" data-act="copy" data-id="${ca.id}">🔗 링크 복사하기</button>
+            </div>
+          </div>
           <button class="small" data-act="edit" data-id="${ca.id}">✏️ 설문 편집</button>
           <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
           <button class="small ghost" data-act="delete" data-id="${ca.id}">삭제</button>
@@ -116,9 +126,39 @@ async function loadCampaigns() {
   if (prev && campaigns.some((ca) => String(ca.id) === prev)) sel.value = prev;
 }
 
+function closeAllMenus() {
+  document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.add('hidden'));
+}
+
 async function onCampaignAction(act, ca) {
   if (!ca) return;
+  if (act === 'send') {
+    const menu = document.querySelector(`[data-menu="${ca.id}"]`);
+    const wasHidden = menu.classList.contains('hidden');
+    closeAllMenus();
+    if (wasHidden) menu.classList.remove('hidden');
+    return;
+  }
+  if (act === 'mail') {
+    closeAllMenus();
+    const url = `${location.origin}/c/${ca.slug}`;
+    const subject = `[AI 활용 사례] ${ca.title} 참여 요청`;
+    const body = [
+      '안녕하세요.',
+      '',
+      `AI 활용 사례 수집 「${ca.title}」에 참여 부탁드립니다.`,
+      '아래 링크를 눌러 사례를 제출해 주세요.',
+      '',
+      url,
+      ...(ca.closes_at ? ['', `※ 마감일: ${ca.closes_at} (당일까지 제출 가능)`] : []),
+      '',
+      '감사합니다.',
+    ].join('\n');
+    location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return;
+  }
   if (act === 'copy') {
+    closeAllMenus();
     const url = `${location.origin}/c/${ca.slug}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -143,7 +183,43 @@ async function onCampaignAction(act, ca) {
     return;
   }
   if (act === 'delete') {
-    if (!confirm(`"${ca.title}" 캠페인을 삭제할까요?\n제출 ${ca.submission_count}건과 첨부파일이 모두 삭제되며 되돌릴 수 없습니다.`)) return;
+    pendingDelete = ca;
+    $('del-msg').innerHTML = `<strong>"${esc(ca.title)}"</strong> 캠페인을 삭제할까요? (제출 ${ca.submission_count}건)`;
+    $('del-modal').classList.remove('hidden');
+  }
+}
+
+// ---------- 캠페인 삭제 확인 모달 ----------
+
+let pendingDelete = null;
+
+function bindDeleteModal() {
+  $('del-cancel').onclick = () => {
+    pendingDelete = null;
+    $('del-modal').classList.add('hidden');
+  };
+  // 삭제 전에 해당 설문의 제출 현황으로 이동해 전체 ZIP 다운로드 버튼을 강조
+  $('del-download').onclick = () => {
+    const ca = pendingDelete;
+    $('del-modal').classList.add('hidden');
+    if (!ca) return;
+    $('sel-campaign').value = String(ca.id); // 삭제하려던 설문을 자동 선택
+    document.querySelector('.tabs button[data-tab="submissions"]').click();
+    setTimeout(() => {
+      const zip = $('btn-zip');
+      zip.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      zip.classList.remove('pulse');
+      void zip.offsetWidth; // 애니메이션 재시작 트릭
+      zip.classList.add('pulse');
+      setTimeout(() => zip.classList.remove('pulse'), 6000);
+      toast('이 버튼을 눌러 설문 내역과 첨부파일을 먼저 받아 두세요 👇');
+    }, 250);
+  };
+  $('del-confirm').onclick = async () => {
+    const ca = pendingDelete;
+    pendingDelete = null;
+    $('del-modal').classList.add('hidden');
+    if (!ca) return;
     try {
       await api(`/api/admin/campaigns/${ca.id}`, { method: 'DELETE' });
       toast('삭제되었습니다');
@@ -151,7 +227,7 @@ async function onCampaignAction(act, ca) {
     } catch (e) {
       toast(e.message, true);
     }
-  }
+  };
 }
 
 // ---------- 설문지 빌더 ----------
