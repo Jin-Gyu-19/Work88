@@ -44,6 +44,8 @@ async function init() {
   $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
   $('b-save').onclick = saveBuilder;
   $('b-cancel').onclick = () => $('builder-modal').classList.add('hidden');
+  $('b-preview').onclick = showPreview;
+  $('pv-close').onclick = () => $('preview-modal').classList.add('hidden');
   $('sel-campaign').onchange = loadSubs;
   $('btn-excel').onclick = () => {
     const id = $('sel-campaign').value;
@@ -166,6 +168,7 @@ function renderBuilder() {
   bQuestions.forEach((q, i) => {
     const row = document.createElement('div');
     row.className = 'q-row';
+    const isChoice = q.type === 'select' || q.type === 'checkbox';
     row.innerHTML = `
       <div class="q-head">
         <span class="muted" style="min-width:20px;">${i + 1}.</span>
@@ -179,19 +182,43 @@ function renderBuilder() {
         <button type="button" class="small ghost q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''}>▼</button>
         <button type="button" class="small ghost q-del">✕</button>
       </div>
-      <textarea class="q-opts ${q.type === 'select' || q.type === 'checkbox' ? '' : 'hidden'}" rows="3"
-        placeholder="선택지를 한 줄에 하나씩 입력하세요">${esc((q.options || []).join('\n'))}</textarea>`;
+      <div class="q-opts-box ${isChoice ? '' : 'hidden'}">
+        <div class="opt-rows"></div>
+        <button type="button" class="small opt-add">➕ 선택지 추가</button>
+      </div>`;
 
+    const renderOpts = (focusLast = false) => {
+      const optBox = row.querySelector('.opt-rows');
+      optBox.innerHTML = '';
+      if (!q.options.length) q.options.push('', '');
+      q.options.forEach((o, j) => {
+        const or = document.createElement('div');
+        or.className = 'opt-row';
+        or.innerHTML = `
+          <span class="muted opt-num">${j + 1}</span>
+          <input class="opt-input" value="${esc(o)}" placeholder="선택지 ${j + 1}">
+          <button type="button" class="small ghost opt-del" ${q.options.length <= 1 ? 'disabled' : ''}>✕</button>`;
+        or.querySelector('.opt-input').oninput = (e) => { q.options[j] = e.target.value; };
+        or.querySelector('.opt-del').onclick = () => { q.options.splice(j, 1); renderOpts(); };
+        optBox.appendChild(or);
+      });
+      if (focusLast) {
+        const inputs = optBox.querySelectorAll('.opt-input');
+        inputs[inputs.length - 1]?.focus();
+      }
+    };
+    if (isChoice) renderOpts();
+
+    row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
     row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; };
     row.querySelector('.q-type').onchange = (e) => {
       q.type = e.target.value;
-      row.querySelector('.q-opts').classList.toggle('hidden', !(q.type === 'select' || q.type === 'checkbox'));
+      const choice = q.type === 'select' || q.type === 'checkbox';
+      row.querySelector('.q-opts-box').classList.toggle('hidden', !choice);
+      if (choice) renderOpts();
     };
     row.querySelector('.q-req').onchange = (e) => { q.required = e.target.checked; };
     row.querySelector('.q-att').onchange = (e) => { q.allowAttach = e.target.checked; };
-    row.querySelector('.q-opts').oninput = (e) => {
-      q.options = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
-    };
     row.querySelector('.q-up').onclick = () => {
       [bQuestions[i - 1], bQuestions[i]] = [bQuestions[i], bQuestions[i - 1]];
       renderBuilder();
@@ -211,13 +238,76 @@ function renderBuilder() {
   }
 }
 
+// ---------- 설문 미리보기 ----------
+
+function showPreview() {
+  const qs = bQuestions
+    .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
+    .filter((q) => q.label.trim());
+  const title = $('b-name').value.trim() || '(캠페인 제목)';
+  const desc = $('b-desc').value.trim();
+
+  const qHtml = qs.length ? qs.map((q) => {
+    const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
+    let inner;
+    if (q.type === 'textarea') {
+      inner = `<label>${esc(q.label)}${req}<textarea rows="5" placeholder="답변 입력"></textarea></label>`;
+    } else if (q.type === 'select') {
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${
+        q.options.map((o) => `<label class="choice"><input type="radio" name="pv_${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
+      }</fieldset>`;
+    } else if (q.type === 'checkbox') {
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${
+        q.options.map((o) => `<label class="choice"><input type="checkbox" name="pv_${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
+      }</fieldset>`;
+    } else {
+      inner = `<label>${esc(q.label)}${req}<input placeholder="답변 입력"></label>`;
+    }
+    const attach = q.allowAttach ? `
+      <div class="attach-block">
+        <div class="attach-buttons">
+          <button type="button" class="small" disabled>🖥️ 화면 캡쳐</button>
+          <button type="button" class="small" disabled>🎥 동영상 촬영</button>
+          <button type="button" class="small" disabled>📎 파일 업로드</button>
+        </div>
+        <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB</p>
+      </div>` : '';
+    return `<div class="q-item">${inner}${attach}</div>`;
+  }).join('') : '<p class="muted">질문이 없습니다.</p>';
+
+  const appHtml = $('b-app').checked ? `
+    <fieldset>
+      <legend>앱을 개발하셨나요? (선택)</legend>
+      <label>앱 주소(URL) <input type="url" placeholder="https://..."></label>
+      <button type="button" disabled>📦 앱 파일 첨부 (zip 등, 100MB 이내)</button>
+    </fieldset>` : '';
+
+  $('pv-body').innerHTML = `
+    <div class="card" style="margin-bottom:12px;">
+      <h1 style="font-size:19px;">${esc(title)}</h1>
+      ${desc ? `<p class="muted" style="white-space:pre-wrap;">${esc(desc)}</p>` : ''}
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="grid2">
+        <label>이름 <input value="홍길동 (자동 입력)" disabled></label>
+        <label>부서 <input value="영업팀 (자동 입력)" disabled></label>
+      </div>
+      ${qHtml}
+      ${appHtml}
+      <button type="button" class="primary" style="width:100%; padding:12px;" disabled>제출하기</button>
+    </div>`;
+  $('preview-modal').classList.remove('hidden');
+}
+
 async function saveBuilder() {
   const title = $('b-name').value.trim();
   if (!title) { toast('캠페인 제목을 입력해 주세요', true); return; }
-  const cleaned = bQuestions.filter((q) => q.label.trim());
+  const cleaned = bQuestions
+    .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
+    .filter((q) => q.label.trim());
   if (!cleaned.length) { toast('질문을 1개 이상 만들어 주세요', true); return; }
   for (const q of cleaned) {
-    if ((q.type === 'select' || q.type === 'checkbox') && !(q.options || []).length) {
+    if ((q.type === 'select' || q.type === 'checkbox') && !q.options.length) {
       toast(`"${q.label}" 질문의 선택지를 입력해 주세요`, true);
       return;
     }
