@@ -25,8 +25,8 @@ echo.
 echo [4/4] 서버 시작! 잠시 후 브라우저가 자동으로 열립니다.
 echo       종료하려면 이 창에서 Ctrl+C 를 누르세요.
 echo.
-echo   관리자 로그인 주소:
-echo   http://localhost:8787/auth/dev?email=kimdlaek@gmail.com^&name=김진규^&dept=BDO
+echo   로그인 버튼을 누르면 테스트 계정 선택 화면이 나옵니다.
+echo   (관리자로 로그인 체크박스로 관리자 전환 가능)
 echo.
 start "" /b cmd /c "timeout /t 8 >nul && start http://localhost:8787"
 call npm run dev

@@ -178,9 +178,39 @@ async function loginUser(c, { email, name, department }) {
 }
 
 // 로컬 개발용 로그인 (DEV_MODE=1 일 때만 동작)
+// email 파라미터 없이 접속하면 테스트 계정 선택 화면을 보여준다
 app.get('/auth/dev', async (c) => {
   if (c.env.DEV_MODE !== '1') return c.notFound();
-  const email = (c.req.query('email') || 'dev@example.com').toLowerCase();
+  const email = (c.req.query('email') || '').trim().toLowerCase();
+  if (!email) {
+    const redirect = c.req.query('redirect') || '/';
+    const adminEmail = adminEmails(c.env)[0] || 'admin@example.com';
+    return c.html(`<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>테스트 로그인</title><link rel="stylesheet" href="/styles.css"></head>
+<body><main class="container" style="max-width:460px;">
+<form class="card" method="GET" action="/auth/dev">
+  <h1>🧪 테스트 로그인</h1>
+  <p class="muted">개발 모드(DEV_MODE=1)에서만 보이는 화면입니다. MS SSO 없이 원하는 계정으로 로그인해 테스트할 수 있습니다.</p>
+  <input type="hidden" name="redirect" value="${redirect.replace(/"/g, '&quot;')}">
+  <label>이름 <input name="name" id="dv-name" value="홍길동"></label>
+  <label>부서 <input name="dept" id="dv-dept" value="영업팀"></label>
+  <label>이메일 <input name="email" id="dv-email" value="hong@example.com"></label>
+  <label style="display:flex; align-items:center; gap:8px; font-weight:400;">
+    <input type="checkbox" id="dv-admin" style="width:auto; margin:0;"> 관리자로 로그인 (${adminEmail})
+  </label>
+  <button type="submit" class="primary" style="width:100%; padding:11px;">로그인</button>
+</form>
+<script>
+document.getElementById('dv-admin').onchange = function () {
+  var e = document.getElementById('dv-email');
+  var n = document.getElementById('dv-name');
+  if (this.checked) { e.dataset.prev = e.value; n.dataset.prev = n.value; e.value = '${adminEmail}'; n.value = '관리자'; }
+  else { e.value = e.dataset.prev || 'hong@example.com'; n.value = n.dataset.prev || '홍길동'; }
+};
+</script>
+</main></body></html>`);
+  }
   await loginUser(c, {
     email,
     name: c.req.query('name') || '테스트사용자',
