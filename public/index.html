@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=37">
+  <link rel="stylesheet" href="/styles.css?v=38">
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
     </section>
   </main>
-  <script src="/common.js?v=37"></script>
+  <script src="/common.js?v=38"></script>
   <script>
     (async () => {
       const me = await fetchMe();
@@ -52,6 +52,7 @@
             <div>
               <strong>${esc(ca.title)}</strong>
               <div class="muted">${esc(ca.description || '')}</div>
+              <div class="muted">${ca.closes_at ? `⏰ 마감 ${esc(ca.closes_at)}` : '기한 없음'}</div>
             </div>
             <a href="/c/${esc(ca.slug)}"><button class="primary small">참여하기</button></a>
           </div>`).join('');

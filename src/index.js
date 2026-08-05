@@ -35,6 +35,7 @@ function sanitizeForm(input) {
   if (!input || typeof input !== 'object') return def;
   const out = {
     oneSubmission: input.oneSubmission === true,
+    noEdit: input.noEdit === true,
     questions: [],
   };
   const qs = Array.isArray(input.questions) ? input.questions.slice(0, 20) : [];
@@ -636,6 +637,7 @@ app.put('/api/submissions/:id', needAuth(async (c) => {
   if (!campaign || !isOpenNow(campaign)) return c.json({ error: '마감된 설문은 수정할 수 없습니다' }, 400);
 
   const form = parseForm(campaign.fields);
+  if (form.noEdit) return c.json({ error: '이 설문은 제출 후 수정할 수 없습니다' }, 400);
   const body = await c.req.json();
   const data = buildSubmissionData(form, body);
   if (data.error) return c.json({ error: data.error }, 400);
@@ -676,13 +678,16 @@ app.delete('/api/submissions/:id', needAuth(async (c) => {
   const sub = await c.env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(c.req.param('id')).first();
   if (!sub) return c.json({ error: '존재하지 않는 제출입니다' }, 404);
   const u = c.get('user');
+  const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(sub.campaign_id).first();
   if (sub.user_email !== u.email) {
     // 관리자 삭제는 해당 캠페인을 관리하는 관리자만
     if (!(await isAdmin(c, u.email))) return c.json({ error: '권한이 없습니다' }, 403);
-    const campaign = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(sub.campaign_id).first();
     if (campaign && !isFixedAdmin(c.env, u.email) && campaign.created_by !== u.email) {
       return c.json({ error: '이 캠페인을 관리할 권한이 없습니다' }, 403);
     }
+  } else if (campaign && parseForm(campaign.fields).noEdit && !(await isAdmin(c, u.email))) {
+    // 수정 금지 설문은 본인 제출도 삭제 불가 (삭제 후 재제출로 우회하는 것을 막음)
+    return c.json({ error: '이 설문은 제출 후 수정·삭제할 수 없습니다' }, 400);
   }
   await deleteSubmissionDeep(c.env, sub.id);
   return c.json({ ok: true });

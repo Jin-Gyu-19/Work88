@@ -57,6 +57,12 @@ async function init() {
   $('form').addEventListener('submit', onSubmit);
   $('btn-cancel-edit').onclick = cancelEdit;
   $('btn-draft').onclick = saveDraft;
+  const closeView = () => $('view-modal').classList.add('hidden');
+  $('v-close').onclick = closeView;
+  $('v-close-x').onclick = closeView;
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('view-modal').classList.contains('hidden')) closeView();
+  });
   await loadMine();
   applyOneSubmissionState();
   await loadDraft();
@@ -67,6 +73,11 @@ function applyOneSubmissionState() {
   const already = FORM.oneSubmission && myList.length > 0 && !editingId;
   $('form').classList.toggle('hidden', already);
   $('already-box').classList.toggle('hidden', !already);
+  if (already) {
+    $('already-desc').textContent = FORM.noEdit
+      ? '1인 1회만 제출할 수 있으며, 이 설문은 제출 후 수정할 수 없습니다. 아래에서 제출 내용을 확인하세요.'
+      : '1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.';
+  }
 }
 
 // ---------- 설문 질문 렌더링 ----------
@@ -837,10 +848,21 @@ async function loadMine() {
         <div class="muted">${kst(s.created_at)} · 첨부 ${s.attachments.length}개</div>
       </div>
       <div style="display:flex; gap:6px;">
+        <button class="small" data-view="${s.id}">👁 보기</button>
+        ${FORM.noEdit ? '' : `
         <button class="small" data-edit="${s.id}">✏️ 수정</button>
-        <button class="small ghost" data-id="${s.id}">삭제</button>
+        <button class="small ghost" data-id="${s.id}">삭제</button>`}
       </div>
     </div>`).join('');
+  if (FORM.noEdit) {
+    box.insertAdjacentHTML('beforeend', '<p class="hint">이 설문은 제출 후 수정·삭제가 제한되어 있습니다. 제출한 내용은 언제든 볼 수 있어요.</p>');
+  }
+  box.querySelectorAll('button[data-view]').forEach((b) => {
+    b.onclick = () => {
+      const s = myList.find((x) => String(x.id) === b.dataset.view);
+      if (s) openView(s);
+    };
+  });
   box.querySelectorAll('button[data-edit]').forEach((b) => {
     b.onclick = () => {
       const s = myList.find((x) => String(x.id) === b.dataset.edit);
@@ -861,4 +883,40 @@ async function loadMine() {
       }
     };
   });
+}
+
+// ---------- 내 제출 보기 (읽기 전용) ----------
+
+function openView(s) {
+  $('v-meta').textContent = `${kst(s.created_at)} 제출 · ${s.user_name}${s.user_department ? ` (${s.user_department})` : ''}`;
+  let answers = {};
+  try { answers = s.answers ? JSON.parse(s.answers) : {}; } catch {}
+  const atts = s.attachments || [];
+  const qIds = new Set(FORM.questions.map((q) => q.id));
+  const attHtml = (list) => (list.length ? `<div class="att-preview">${
+    list.map((a) => (a.kind === 'image'
+      ? `<a href="/files/${a.id}" target="_blank" title="${esc(a.filename)}"><img src="/files/${a.id}" alt="${esc(a.filename)}"></a>`
+      : `<a href="/files/${a.id}" target="_blank">📎 ${esc(a.filename)}</a>`)).join('')
+  }</div>` : '');
+
+  const parts = FORM.questions.map((q) => {
+    const v = answers[q.id];
+    const qa = atts.filter((a) => a.question_id === q.id);
+    const empty = v === undefined || v === '' || (Array.isArray(v) && !v.length);
+    if (empty && !qa.length) return '';
+    let val;
+    if (q.type === 'rating' && !empty) val = `${'★'.repeat(Number(v) || 0)} (${v}점)`;
+    else val = Array.isArray(v) ? v.join(', ') : (v ?? '');
+    return `<div style="margin-bottom:15px;">
+      <div style="font-weight:700; font-size:13.5px; margin-bottom:5px;">${esc(q.label)}</div>
+      ${empty ? '' : `<div class="detail-content">${esc(String(val))}</div>`}
+      ${attHtml(qa)}
+    </div>`;
+  });
+  const etc = atts.filter((a) => !qIds.has(a.question_id));
+  if (etc.length) {
+    parts.push(`<div><div style="font-weight:700; font-size:13.5px; margin-bottom:5px;">기타 첨부</div>${attHtml(etc)}</div>`);
+  }
+  $('v-body').innerHTML = parts.join('') || '<p class="muted">표시할 내용이 없습니다.</p>';
+  $('view-modal').classList.remove('hidden');
 }

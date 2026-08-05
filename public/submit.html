@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>설문 참여 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=37">
+  <link rel="stylesheet" href="/styles.css?v=38">
 </head>
 <body>
   <header class="topbar">
@@ -39,7 +39,7 @@
 
       <div id="already-box" class="card hidden">
         <h2>이미 제출하셨습니다 ✅</h2>
-        <p class="muted">1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.</p>
+        <p class="muted" id="already-desc">1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.</p>
       </div>
 
       <form id="form" class="card" autocomplete="off">
@@ -77,6 +77,19 @@
 
   <!-- 파일 선택 (질문별 첨부에서 공용 사용) -->
   <input type="file" id="file-input" multiple hidden>
+
+  <!-- 내 제출 보기 모달 (읽기 전용) -->
+  <div id="view-modal" class="modal hidden">
+    <div class="modal-body">
+      <button type="button" class="modal-x" id="v-close-x" title="닫기" aria-label="닫기">✕</button>
+      <h3>내 제출 내용</h3>
+      <p class="muted" id="v-meta"></p>
+      <div id="v-body"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="v-close">닫기</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 캡쳐 영역 선택 모달 -->
   <div id="crop-modal" class="modal hidden">
@@ -118,7 +131,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=37"></script>
-  <script src="/submit.js?v=37"></script>
+  <script src="/common.js?v=38"></script>
+  <script src="/submit.js?v=38"></script>
 </body>
 </html>

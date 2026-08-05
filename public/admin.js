@@ -45,6 +45,11 @@ async function init() {
   });
 
   $('btn-new').onclick = () => openBuilder(null);
+  $('b-opts-toggle').onclick = () => {
+    const hidden = $('b-opts').classList.toggle('hidden');
+    $('b-opts-toggle').setAttribute('aria-pressed', String(!hidden));
+  };
+  ['b-close', 'b-one', 'b-noedit'].forEach((id) => { $(id).onchange = updateOptsSum; });
   $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
   $('bq-file').onchange = onBuilderFilesPicked;
   $('b-bg-add').onclick = () => $('b-bg-file').click();
@@ -116,8 +121,9 @@ async function loadCampaigns() {
         <div>
           <div><span class="campaign-title">${esc(ca.title)}</span>
             <span class="badge ${ca.open_now ? 'open' : 'closed'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
-            ${ca.form.oneSubmission ? '<span class="badge admin">1인 1회</span>' : ''}</div>
-          <div class="campaign-meta">제출 ${ca.submission_count}건 · 질문 ${ca.form.questions.length}개${ca.closes_at ? ` · ~${esc(ca.closes_at)}` : ''}</div>
+            ${ca.form.oneSubmission ? '<span class="badge admin">1인 1회</span>' : ''}
+            ${ca.form.noEdit ? '<span class="badge admin">수정 금지</span>' : ''}</div>
+          <div class="campaign-meta">제출 ${ca.submission_count}건 · 질문 ${ca.form.questions.length}개 · ${ca.closes_at ? `마감 ${esc(ca.closes_at)}` : '기한 없음'}</div>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <div class="dropdown">
@@ -160,6 +166,16 @@ async function onCampaignAction(act, ca) {
   }
   if (act === 'mail') {
     closeAllMenus();
+    // 받는 사람: 메일 그룹(배포 그룹) 주소나 개별 주소를 지정 (설문별로 기억)
+    const toKey = `mailTo:${ca.id}`;
+    const prev = localStorage.getItem(toKey) || '';
+    const toRaw = prompt(
+      '받는 사람을 입력하세요 (메일 그룹 주소 가능, 여러 명은 쉼표/세미콜론 구분)\n비워두고 확인하면 받는 사람 없이 초안만 열립니다.',
+      prev,
+    );
+    if (toRaw === null) return; // 취소
+    const to = toRaw.split(/[,;\s]+/).filter(Boolean).join(';');
+    localStorage.setItem(toKey, to);
     const url = `${location.origin}/c/${ca.slug}`;
     const subject = ca.title;
     const sender = adminMe ? `${adminMe.name}${adminMe.department ? ` (${adminMe.department})` : ''}` : '';
@@ -180,7 +196,7 @@ async function onCampaignAction(act, ca) {
       '여러분의 응답 하나하나가 큰 도움이 됩니다.',
       '많은 참여 부탁드립니다. 감사합니다.',
     ].join('\n');
-    location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     return;
   }
   if (act === 'copy') {
@@ -360,14 +376,19 @@ function openBuilder(ca) {
   if (ca) {
     bQuestions = cloneQuestions(ca.form.questions);
     $('b-one').checked = !!ca.form.oneSubmission;
+    $('b-noedit').checked = !!ca.form.noEdit;
     bBg = ca.form.bg ? { ...ca.form.bg } : null;
   } else {
     bQuestions = [
       { id: 'content', label: '내용', type: 'textarea', required: true, options: [], allowAttach: true, help: '' },
     ];
     $('b-one').checked = false;
+    $('b-noedit').checked = false;
     bBg = null;
   }
+  $('b-opts').classList.add('hidden');
+  $('b-opts-toggle').setAttribute('aria-pressed', 'false');
+  updateOptsSum();
   branchOpen.clear();
   // 이미 분기 설정이 있는 질문은 펼친 상태로 시작
   bQuestions.forEach((q, i) => {
@@ -377,6 +398,14 @@ function openBuilder(ca) {
   loadTemplates();
   renderBuilder();
   $('builder-modal').classList.remove('hidden');
+}
+
+// 옵션 버튼 옆에 현재 설정 요약을 표시
+function updateOptsSum() {
+  const parts = [$('b-close').value ? `마감 ${$('b-close').value}` : '기한 없음'];
+  if ($('b-one').checked) parts.push('1인 1회');
+  if ($('b-noedit').checked) parts.push('수정 금지');
+  $('b-opts-sum').textContent = parts.join(' · ');
 }
 
 // ---------- 템플릿 ----------
@@ -398,6 +427,8 @@ function loadTemplateIntoBuilder() {
   if (!t) { toast('불러올 템플릿이 없습니다', true); return; }
   bQuestions = cloneQuestions(t.form.questions);
   $('b-one').checked = !!t.form.oneSubmission;
+  $('b-noedit').checked = !!t.form.noEdit;
+  updateOptsSum();
   renderBuilder();
   toast(`"${t.name}" 템플릿을 불러왔습니다`);
 }
@@ -416,7 +447,7 @@ async function saveTemplate() {
       method: 'POST',
       body: JSON.stringify({
         name,
-        fields: { questions: cleaned, oneSubmission: $('b-one').checked },
+        fields: { questions: cleaned, oneSubmission: $('b-one').checked, noEdit: $('b-noedit').checked },
       }),
     });
     toast('템플릿이 저장되었습니다');
@@ -916,6 +947,7 @@ async function saveBuilder() {
     fields: {
       questions: cleaned,
       oneSubmission: $('b-one').checked,
+      noEdit: $('b-noedit').checked,
       bg: bBg,
     },
   };
