@@ -1,14 +1,18 @@
 :root {
+  /* BDO 브랜드 컬러 */
+  --bdo-blue: #2b3d91;
+  --bdo-red: #e4002b;
+
   --bg: #f6f6f4;
   --card: #ffffff;
-  --text: #20242c;
+  --text: #1e2230;
   --muted: #71767f;
   --line: #e7e7e3;
-  --primary: #263450;
-  --primary-dark: #1a2438;
-  --primary-soft: #eef0f5;
-  --brand: #e2062c;
-  --danger: #c93a44;
+  --primary: var(--bdo-blue);
+  --primary-dark: #1f2d6e;
+  --primary-soft: #eef1fa;
+  --brand: var(--bdo-red);
+  --danger: #d0021b;
   --radius: 14px;
   --shadow-sm: 0 1px 2px rgba(24, 30, 42, .05);
   --shadow-md: 0 8px 28px rgba(24, 30, 42, .1);
@@ -65,10 +69,19 @@ body.has-bg .card { box-shadow: var(--shadow-md); }
   align-items: center;
   gap: 7px;
 }
-.topbar .brand b { color: var(--brand); font-weight: 800; letter-spacing: 0; }
-/* public/logo.png 가 있으면 로고 이미지를, 없으면 텍스트 BDO를 표시 */
-.topbar .brand-logo { height: 26px; width: auto; display: block; }
+/* public/logo.png 가 있으면 로고 이미지를, 없으면 BDO 워드마크를 표시 */
+.topbar .brand-logo { height: 28px; width: auto; display: block; }
 .topbar .brand.has-logo b { display: none; }
+.topbar .brand b {
+  color: var(--bdo-blue);
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  padding: 1px 0 3px 8px;
+  border-left: 5px solid var(--bdo-red);
+  border-bottom: 3px solid var(--bdo-red);
+  line-height: 1.1;
+}
 .topbar .brand span { color: var(--text); }
 .topbar .who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
 
