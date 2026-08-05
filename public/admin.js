@@ -617,16 +617,31 @@ function refreshBranches() {
     const note = row.querySelector('.q-branch-note');
 
     // 조건으로 쓸 수 있는 앞선 질문: 객관식 + 제목 + 선택지가 있어야 함
-    const prior = bQuestions.slice(0, i).filter(
-      (p) => p.type === 'choice' && p.label.trim() && (p.options || []).some((o) => o.trim()),
-    );
+    const before = bQuestions.slice(0, i);
+    const priorChoiceAll = before.filter((p) => p.type === 'choice');
+    const prior = priorChoiceAll.filter((p) => p.label.trim() && (p.options || []).some((o) => o.trim()));
     const curQid = prior.some((p) => p.id === q.showIf?.qid) ? q.showIf.qid : '';
     if (!curQid) q.showIf = null;
 
     qSel.innerHTML = '<option value="">항상 표시 (분기 없음)</option>'
       + prior.map((p) => `<option value="${p.id}" ${curQid === p.id ? 'selected' : ''}>"${esc(p.label)}" 질문에서</option>`).join('');
     qSel.disabled = !prior.length;
-    note.textContent = prior.length ? '' : '※ 분기점을 만들려면 이 질문보다 앞에 선택지가 있는 객관식 질문이 있어야 합니다';
+
+    // 왜 분기를 만들 수 없는지 구체적으로 안내
+    let why = '';
+    if (!prior.length) {
+      if (i === 0) {
+        why = '※ 첫 번째 질문에는 분기를 걸 수 없습니다 (조건이 될 앞 질문이 없어요)';
+      } else if (!priorChoiceAll.length) {
+        why = '※ 이 질문보다 위에 있는 질문 중 하나를 "객관식"으로 바꾸면 분기를 만들 수 있어요';
+      } else {
+        const need = priorChoiceAll.find((p) => !p.label.trim() || !(p.options || []).some((o) => o.trim()));
+        why = !need.label.trim()
+          ? '※ 위 객관식 질문의 제목을 입력하면 분기를 만들 수 있어요'
+          : `※ 위 "${need.label.trim()}" 질문의 선택지를 입력하면 분기를 만들 수 있어요 (선택지 칸이 비어 있습니다)`;
+      }
+    }
+    note.textContent = why;
 
     if (curQid) {
       const parent = bQuestions.find((p) => p.id === curQid);
