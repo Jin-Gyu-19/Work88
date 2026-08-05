@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>설문 참여 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=27">
+  <link rel="stylesheet" href="/styles.css?v=28">
 </head>
 <body>
   <header class="topbar">
@@ -43,19 +43,29 @@
       </div>
 
       <form id="form" class="card" autocomplete="off">
-        <div class="grid2">
-          <label>이름 <input id="f-name" disabled></label>
-          <label>부서 <input id="f-dept" disabled></label>
+        <div class="who-row">
+          <span class="who-avatar" id="f-initial"></span>
+          <div>
+            <div class="who-name" id="f-name-text"></div>
+            <div class="who-dept muted" id="f-dept-text"></div>
+          </div>
+          <span class="who-auto muted">로그인 정보로 자동 입력</span>
         </div>
+        <input id="f-name" type="hidden"><input id="f-dept" type="hidden">
 
         <div id="questions"></div>
 
-        <div style="display:flex; gap:8px;">
-          <button type="button" id="btn-draft" style="flex:1; padding:12px;">💾 임시저장</button>
-          <button type="submit" class="primary" id="btn-submit" style="flex:2; padding:12px;">제출하기</button>
+        <div class="submit-bar">
+          <div class="progress-head">
+            <div class="progress-track"><div id="prog-fill"></div></div>
+            <span id="prog-text" class="muted"></span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="btn-draft" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
+            <button type="submit" class="primary" id="btn-submit" style="flex:1;">제출하기</button>
+          </div>
+          <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:6px;">수정 취소</button>
         </div>
-        <p class="hint" style="text-align:center;">임시저장하면 다음에 이어서 작성할 수 있습니다</p>
-        <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:8px;">수정 취소</button>
       </form>
 
       <section class="card">
@@ -108,7 +118,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=27"></script>
-  <script src="/submit.js?v=27"></script>
+  <script src="/common.js?v=28"></script>
+  <script src="/submit.js?v=28"></script>
 </body>
 </html>

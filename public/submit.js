@@ -45,6 +45,9 @@ async function init() {
   if (campaign.closes_at) $('c-deadline').textContent = `⏰ 마감일: ${campaign.closes_at} (당일까지 제출 가능)`;
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
+  $('f-name-text').textContent = me.name;
+  $('f-dept-text').textContent = me.department || '부서 미지정';
+  $('f-initial').textContent = (me.name || '?').trim().slice(0, 1);
   renderQuestions();
   $('form-box').classList.remove('hidden');
 
@@ -71,7 +74,8 @@ function applyOneSubmissionState() {
 function renderQuestions() {
   const box = $('questions');
   box.innerHTML = FORM.questions.map((q) => {
-    const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';
+    const req = q.required ? ' <span class="req-chip">필수</span>' : '';
+    const num = '<span class="q-num"></span>';
     const help = q.help ? `<span class="q-help-text">${esc(q.help)}</span>` : '';
     const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
     // 관리자가 질문에 첨부한 자료 (이미지는 지정 너비로 표시)
@@ -84,23 +88,23 @@ function renderQuestions() {
     }</div>` : '';
     let inner;
     if (q.type === 'textarea') {
-      inner = `<label>${esc(q.label)}${req}${help}${media}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
+      inner = `<label>${num}${esc(q.label)}${req}${help}${media}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
     } else if (q.type === 'select') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}${
+      inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req}</legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="radio" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else if (q.type === 'checkbox') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${helpP}${media}${
+      inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req} <span class="muted">(복수 선택)</span></legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
       }</fieldset>`;
     } else if (q.type === 'rating') {
-      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}
+      inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req}</legend>${helpP}${media}
         <div class="stars" data-q="${q.id}" data-v="">${
           [1, 2, 3, 4, 5].map((n) => `<button type="button" class="star" data-v="${n}">★</button>`).join('')
         }<span class="stars-value muted"></span></div>
       </fieldset>`;
     } else {
-      inner = `<label>${esc(q.label)}${req}${help}${media}<input data-q="${q.id}" maxlength="500"></label>`;
+      inner = `<label>${num}${esc(q.label)}${req}${help}${media}<input data-q="${q.id}" maxlength="500"></label>`;
     }
     const attach = q.allowAttach ? `
       <div class="attach-block" data-attq="${q.id}">
@@ -239,6 +243,23 @@ function onFormChanged() {
   document.querySelectorAll('.q-item').forEach((el) => {
     el.classList.toggle('q-current', el.dataset.qid === currentId);
   });
+
+  // 진행률
+  const shown = FORM.questions.filter((q) => vis[q.id]);
+  const done = shown.filter((q) => {
+    const v = raw[q.id];
+    return v !== undefined && !(Array.isArray(v) && !v.length);
+  }).length;
+  const pct = shown.length ? Math.round((done / shown.length) * 100) : 0;
+  const fill = $('prog-fill');
+  const text = $('prog-text');
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.classList.toggle('done', done === shown.length && shown.length > 0);
+    text.textContent = done === shown.length && shown.length
+      ? `모든 문항 작성 완료 (${shown.length}/${shown.length})`
+      : `${done} / ${shown.length} 문항 작성`;
+  }
 }
 
 // ---------- 첨부 공통 ----------
@@ -805,7 +826,7 @@ async function loadMine() {
   const box = $('mine');
   if (!myList.length) {
     box.classList.add('muted');
-    box.textContent = '아직 제출한 사례가 없습니다.';
+    box.innerHTML = '<div class="empty"><span class="icon">✍️</span>아직 제출한 내역이 없습니다.</div>';
     return;
   }
   box.classList.remove('muted');

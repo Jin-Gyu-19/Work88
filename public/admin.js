@@ -95,15 +95,15 @@ async function loadCampaigns() {
   }
   const box = $('campaigns');
   if (!campaigns.length) {
-    box.innerHTML = '<p class="muted">아직 설문이 없습니다. "새 설문 만들기"로 첫 설문지를 만들어 보세요.</p>';
+    box.innerHTML = '<div class="empty"><span class="icon">📋</span>아직 설문이 없습니다.<br>오른쪽 위 <b>새 설문 만들기</b>로 시작하세요.</div>';
   } else {
     box.innerHTML = campaigns.map((ca) => `
       <div class="campaign-item">
         <div>
-          <strong>${esc(ca.title)}</strong>
-          <span class="badge ${ca.open_now ? 'open' : 'closed'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
-          ${ca.form.oneSubmission ? '<span class="badge admin">1인 1회</span>' : ''}
-          <div class="muted">질문 ${ca.form.questions.length}개 · 제출 ${ca.submission_count}건${ca.closes_at ? ` · 마감일 ${esc(ca.closes_at)}` : ''} · ${kst(ca.created_at)} 생성</div>
+          <div><span class="campaign-title">${esc(ca.title)}</span>
+            <span class="badge ${ca.open_now ? 'open' : 'closed'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
+            ${ca.form.oneSubmission ? '<span class="badge admin">1인 1회</span>' : ''}</div>
+          <div class="campaign-meta">제출 ${ca.submission_count}건 · 질문 ${ca.form.questions.length}개${ca.closes_at ? ` · ~${esc(ca.closes_at)}` : ''}</div>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <div class="dropdown">
@@ -833,6 +833,10 @@ async function loadSubs() {
   }
   $('sub-count').textContent = `총 ${currentSubs.length}건`;
   if (statsVisible) renderStats();
+  if (!currentSubs.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="icon">📭</span>아직 제출된 응답이 없습니다.<br>설문 링크를 공유해 보세요.</div></td></tr>';
+    return;
+  }
   tbody.innerHTML = currentSubs.map((s) => `
     <tr class="clickable" data-id="${s.id}">
       <td style="white-space:nowrap;">${kst(s.created_at)}</td>
