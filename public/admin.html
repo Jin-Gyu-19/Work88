@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=23">
+  <link rel="stylesheet" href="/styles.css?v=24">
 </head>
 <body>
   <header class="topbar">
@@ -122,7 +122,8 @@
 
       <h3 style="margin-top:18px;">설문 질문 구성</h3>
       <p class="hint" style="margin-top:-6px;">이름과 부서는 로그인 정보로 자동 입력되므로 질문으로 만들 필요가 없습니다.<br>
-      <strong>분기점 만들기</strong>: 기본값 <em>항상 표시</em>는 모든 참여자에게 그 질문이 보인다는 뜻입니다. 앞선 객관식 질문의 특정 답변을 고른 사람에게만 보이게 하려면 조건을 지정하세요.</p>
+      <strong>🔀 분기점 만들기</strong>는 <strong>객관식 질문</strong> 안에 나타납니다. 그 질문의 답변에 따라 <em>아래에 있는 질문들</em>을 보이거나 숨길 수 있습니다.
+      (예: 1번에서 <em>YES</em>를 고르면 2번 질문 표시 / <em>NO</em>를 고르면 3번 질문 표시)</p>
       <div id="b-questions"></div>
       <button type="button" id="b-add" style="margin-top:4px;">➕ 질문 추가</button>
 
@@ -189,7 +190,7 @@
   <input type="file" id="bq-file" multiple hidden>
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=23"></script>
-  <script src="/admin.js?v=23"></script>
+  <script src="/common.js?v=24"></script>
+  <script src="/admin.js?v=24"></script>
 </body>
 </html>

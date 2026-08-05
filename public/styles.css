@@ -242,8 +242,20 @@ tr.clickable:hover { background: #f8f8f6; }
 }
 .q-item.q-current { background: var(--primary-soft); border-left-color: var(--brand); }
 
-.q-branch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; }
-.q-branch select { width: auto; margin: 0; padding: 6px 9px; font-size: 12.5px; }
+/* 분기점 만들기 (객관식 질문에 표시) */
+.q-branch-src {
+  margin-top: 10px; padding: 11px 13px;
+  border: 1px solid #d6dcf0; border-radius: 10px; background: var(--primary-soft);
+}
+.q-branch-title { font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 4px; }
+.br-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 5px 0; font-size: 12.5px; }
+.br-row .br-q { min-width: 150px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.br-row select { width: auto; margin: 0; padding: 6px 9px; font-size: 12.5px; }
+.q-cond-badge {
+  margin-top: 8px; font-size: 12.5px; font-weight: 600;
+  color: var(--primary); background: var(--primary-soft);
+  border-left: 3px solid var(--brand); border-radius: 6px; padding: 5px 10px;
+}
 
 /* 질문에 첨부된 자료 (설문 화면/미리보기) */
 .q-media { margin: 8px 0 6px; }

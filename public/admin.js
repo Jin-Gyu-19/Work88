@@ -450,12 +450,10 @@ function renderBuilder() {
         <span class="hint" style="margin:0;">이미지는 설문 문항에 바로 표시되고, 크기를 조절할 수 있습니다</span>
         <div class="q-media-list"></div>
       </div>
-      <div class="q-branch">
-        <span class="muted">🔀 분기점 만들기:</span>
-        <select class="q-branch-q"><option value="">항상 표시 (분기 없음)</option></select>
-        <select class="q-branch-v hidden"></select>
-        <span class="q-branch-tail muted hidden">답변을 고른 사람에게만 표시</span>
-        <span class="q-branch-note muted"></span>
+      <div class="q-cond-badge hidden"></div>
+      <div class="q-branch-src hidden">
+        <div class="q-branch-title">🔀 분기점 만들기</div>
+        <div class="q-branch-body"></div>
       </div>`;
 
     const renderOpts = (focusLast = false) => {
@@ -565,13 +563,6 @@ function renderBuilder() {
       if (files.length) await addMediaFiles(q, files, renderMedia);
     });
 
-    // 분기 조건: 조건 질문을 고르면 값 목록이 채워짐 (목록 자체는 refreshBranches가 관리)
-    row.querySelector('.q-branch-q').onchange = (e) => {
-      q.showIf = e.target.value ? { qid: e.target.value, value: '' } : null;
-      refreshBranches();
-    };
-    row.querySelector('.q-branch-v').onchange = (e) => { if (q.showIf) q.showIf.value = e.target.value; };
-
     row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
     row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); };
     row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; };
@@ -607,55 +598,75 @@ function renderBuilder() {
 
 // 분기(표시 조건) 드롭다운을 현재 질문 구성에 맞춰 실시간 갱신
 function refreshBranches() {
+  // 1) 더 이상 유효하지 않은 분기 조건은 자동 해제
+  bQuestions.forEach((q, i) => {
+    if (!q.showIf) return;
+    const src = bQuestions.find((p) => p.id === q.showIf.qid);
+    const srcIdx = src ? bQuestions.indexOf(src) : -1;
+    const opts = (src?.options || []).map((o) => o.trim()).filter(Boolean);
+    if (!src || src.type !== 'choice' || srcIdx >= i || !opts.includes(q.showIf.value)) q.showIf = null;
+  });
+
   const rows = [...document.querySelectorAll('#b-questions .q-row')];
   rows.forEach((row, i) => {
     const q = bQuestions[i];
-    const qSel = row.querySelector('.q-branch-q');
-    if (!q || !qSel) return;
-    const vSel = row.querySelector('.q-branch-v');
-    const tail = row.querySelector('.q-branch-tail');
-    const note = row.querySelector('.q-branch-note');
+    if (!q) return;
+    const badge = row.querySelector('.q-cond-badge');
+    const panel = row.querySelector('.q-branch-src');
+    const body = row.querySelector('.q-branch-body');
+    if (!badge || !panel || !body) return;
 
-    // 조건으로 쓸 수 있는 앞선 질문: 객관식 + 제목 + 선택지가 있어야 함
-    const before = bQuestions.slice(0, i);
-    const priorChoiceAll = before.filter((p) => p.type === 'choice');
-    const prior = priorChoiceAll.filter((p) => p.label.trim() && (p.options || []).some((o) => o.trim()));
-    const curQid = prior.some((p) => p.id === q.showIf?.qid) ? q.showIf.qid : '';
-    if (!curQid) q.showIf = null;
-
-    qSel.innerHTML = '<option value="">항상 표시 (분기 없음)</option>'
-      + prior.map((p) => `<option value="${p.id}" ${curQid === p.id ? 'selected' : ''}>"${esc(p.label)}" 질문에서</option>`).join('');
-    qSel.disabled = !prior.length;
-
-    // 왜 분기를 만들 수 없는지 구체적으로 안내
-    let why = '';
-    if (!prior.length) {
-      if (i === 0) {
-        why = '※ 첫 번째 질문에는 분기를 걸 수 없습니다 (조건이 될 앞 질문이 없어요)';
-      } else if (!priorChoiceAll.length) {
-        why = '※ 이 질문보다 위에 있는 질문 중 하나를 "객관식"으로 바꾸면 분기를 만들 수 있어요';
-      } else {
-        const need = priorChoiceAll.find((p) => !p.label.trim() || !(p.options || []).some((o) => o.trim()));
-        why = !need.label.trim()
-          ? '※ 위 객관식 질문의 제목을 입력하면 분기를 만들 수 있어요'
-          : `※ 위 "${need.label.trim()}" 질문의 선택지를 입력하면 분기를 만들 수 있어요 (선택지 칸이 비어 있습니다)`;
-      }
-    }
-    note.textContent = why;
-
-    if (curQid) {
-      const parent = bQuestions.find((p) => p.id === curQid);
-      const opts = (parent.options || []).map((o) => o.trim()).filter(Boolean);
-      const curV = opts.includes(q.showIf.value) ? q.showIf.value : opts[0];
-      vSel.innerHTML = opts.map((o) => `<option value="${esc(o)}" ${curV === o ? 'selected' : ''}>"${esc(o)}"</option>`).join('');
-      q.showIf = { qid: curQid, value: curV };
-      vSel.classList.remove('hidden');
-      tail.classList.remove('hidden');
+    // 이 질문이 분기로 제어되고 있으면 배지로 표시
+    if (q.showIf) {
+      const src = bQuestions.find((p) => p.id === q.showIf.qid);
+      const srcNo = bQuestions.indexOf(src) + 1;
+      badge.textContent = `🔀 ${srcNo}번 질문에서 "${q.showIf.value}"를 고른 사람에게만 표시됩니다`;
+      badge.classList.remove('hidden');
     } else {
-      vSel.innerHTML = '';
-      vSel.classList.add('hidden');
-      tail.classList.add('hidden');
+      badge.textContent = '';
+      badge.classList.add('hidden');
     }
+
+    // 분기점 패널은 객관식 질문에만 표시
+    const isChoice = q.type === 'choice';
+    panel.classList.toggle('hidden', !isChoice);
+    if (!isChoice) return;
+
+    const opts = (q.options || []).map((o) => o.trim()).filter(Boolean);
+    const following = bQuestions.slice(i + 1);
+    if (!opts.length) {
+      body.innerHTML = '<p class="hint" style="margin:0;">선택지를 먼저 입력하면, 답변에 따라 보여줄 질문을 정할 수 있어요</p>';
+      return;
+    }
+    if (!following.length) {
+      body.innerHTML = '<p class="hint" style="margin:0;">아래에 질문을 더 추가하면, 이 질문의 답변에 따라 보여줄 질문을 정할 수 있어요</p>';
+      return;
+    }
+
+    body.innerHTML = '<p class="hint" style="margin:0 0 8px;">이 질문의 답변에 따라 아래 질문을 보이거나 숨깁니다. (지정하지 않은 질문은 모두에게 보입니다)</p>'
+      + following.map((fq, k) => {
+        const no = i + k + 2;
+        const cur = fq.showIf?.qid === q.id ? fq.showIf.value : '';
+        const byOther = fq.showIf && fq.showIf.qid !== q.id;
+        const otherNo = byOther ? bQuestions.findIndex((p) => p.id === fq.showIf.qid) + 1 : 0;
+        return `<div class="br-row">
+          <span class="br-q">${no}. ${esc(fq.label.trim() || '(제목 없음)')}</span>
+          <select data-target="${fq.id}" ${byOther ? 'disabled' : ''}>
+            <option value="">항상 표시</option>
+            ${opts.map((o) => `<option value="${esc(o)}" ${cur === o ? 'selected' : ''}>"${esc(o)}"를 고르면 표시</option>`).join('')}
+          </select>
+          ${byOther ? `<span class="hint" style="margin:0;">${otherNo}번 질문의 분기로 제어 중</span>` : ''}
+        </div>`;
+      }).join('');
+
+    body.querySelectorAll('select[data-target]').forEach((sel) => {
+      sel.onchange = () => {
+        const fq = bQuestions.find((p) => p.id === sel.dataset.target);
+        if (!fq) return;
+        fq.showIf = sel.value ? { qid: q.id, value: sel.value } : null;
+        refreshBranches();
+      };
+    });
   });
 }
 
