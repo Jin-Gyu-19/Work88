@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>설문 참여 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=26">
+  <link rel="stylesheet" href="/styles.css?v=27">
 </head>
 <body>
   <header class="topbar">
@@ -68,6 +68,23 @@
   <!-- 파일 선택 (질문별 첨부에서 공용 사용) -->
   <input type="file" id="file-input" multiple hidden>
 
+  <!-- 캡쳐 영역 선택 모달 -->
+  <div id="crop-modal" class="modal hidden">
+    <div class="modal-body" style="max-width:960px;">
+      <h3>캡쳐 영역 선택 <span class="muted" id="crop-info" style="font-size:13px; font-weight:400;"></span></h3>
+      <div id="crop-stage" class="crop-stage">
+        <img id="crop-img" alt="">
+        <div id="crop-sel" class="crop-sel hidden"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary" id="crop-ok" disabled>선택 영역 첨부</button>
+        <button id="crop-all">전체 첨부</button>
+        <button class="ghost" id="crop-cancel">취소</button>
+      </div>
+      <p class="hint">이미지 위에서 드래그해 원하는 영역을 지정하세요</p>
+    </div>
+  </div>
+
   <!-- 동영상 촬영 모달 -->
   <div id="rec-modal" class="modal hidden">
     <div class="modal-body">
@@ -91,7 +108,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=26"></script>
-  <script src="/submit.js?v=26"></script>
+  <script src="/common.js?v=27"></script>
+  <script src="/submit.js?v=27"></script>
 </body>
 </html>

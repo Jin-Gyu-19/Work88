@@ -50,6 +50,7 @@ async function init() {
 
   bindGlobalAttachHandlers();
   bindRecorder();
+  bindCropper();
   $('form').addEventListener('submit', onSubmit);
   $('btn-cancel-edit').onclick = cancelEdit;
   $('btn-draft').onclick = saveDraft;
@@ -353,6 +354,10 @@ function kindOf(file) {
 
 // ---------- 화면 캡쳐 ----------
 
+let cropCanvas = null; // 캡쳐된 전체 화면
+let cropQid = null;
+let cropRect = null;   // 선택 영역 (원본 픽셀 기준)
+
 async function captureScreen(qid) {
   if (!canAddMore()) return;
   if (!navigator.mediaDevices?.getDisplayMedia) {
@@ -375,14 +380,106 @@ async function captureScreen(qid) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
-    const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
-    await uploadBlob(blob, `캡쳐_${ts()}.png`, 'image', qid);
-    toast('화면 캡쳐가 첨부되었습니다');
+    cropCanvas = canvas;
+    cropQid = qid;
+    openCropper();
   } catch {
     toast('캡쳐에 실패했습니다', true);
   } finally {
     stream.getTracks().forEach((t) => t.stop());
   }
+}
+
+// ---------- 캡쳐 영역 선택 ----------
+
+function openCropper() {
+  cropRect = null;
+  $('crop-img').src = cropCanvas.toDataURL('image/png');
+  $('crop-sel').classList.add('hidden');
+  $('crop-ok').disabled = true;
+  $('crop-info').textContent = `원본 ${cropCanvas.width} × ${cropCanvas.height}`;
+  $('crop-modal').classList.remove('hidden');
+}
+
+function closeCropper() {
+  $('crop-modal').classList.add('hidden');
+  $('crop-img').src = '';
+  cropCanvas = null;
+  cropRect = null;
+}
+
+function bindCropper() {
+  const stage = $('crop-stage');
+  const img = $('crop-img');
+  const sel = $('crop-sel');
+  let startX = 0;
+  let startY = 0;
+  let dragging = false;
+
+  const pos = (e) => {
+    const r = img.getBoundingClientRect();
+    return {
+      x: Math.min(Math.max(e.clientX - r.left, 0), r.width),
+      y: Math.min(Math.max(e.clientY - r.top, 0), r.height),
+      r,
+    };
+  };
+
+  stage.addEventListener('mousedown', (e) => {
+    if (e.target !== img && e.target !== sel) return;
+    e.preventDefault();
+    const p = pos(e);
+    dragging = true;
+    startX = p.x;
+    startY = p.y;
+    sel.classList.remove('hidden');
+    sel.style.cssText = `left:${startX}px; top:${startY}px; width:0; height:0;`;
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const p = pos(e);
+    const x = Math.min(startX, p.x);
+    const y = Math.min(startY, p.y);
+    const w = Math.abs(p.x - startX);
+    const h = Math.abs(p.y - startY);
+    sel.style.cssText = `left:${x}px; top:${y}px; width:${w}px; height:${h}px;`;
+    // 화면 좌표 → 원본 픽셀 좌표
+    const scale = cropCanvas.width / p.r.width;
+    cropRect = { x: x * scale, y: y * scale, w: w * scale, h: h * scale };
+    $('crop-ok').disabled = w < 5 || h < 5;
+    $('crop-info').textContent = `선택 ${Math.round(cropRect.w)} × ${Math.round(cropRect.h)} (원본 ${cropCanvas.width} × ${cropCanvas.height})`;
+  });
+
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  $('crop-cancel').onclick = closeCropper;
+  $('crop-all').onclick = () => attachCapture(false);
+  $('crop-ok').onclick = () => attachCapture(true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('crop-modal').classList.contains('hidden')) closeCropper();
+  });
+}
+
+async function attachCapture(useSelection) {
+  if (!cropCanvas) return;
+  let canvas = cropCanvas;
+  if (useSelection && cropRect && cropRect.w > 4 && cropRect.h > 4) {
+    const c = document.createElement('canvas');
+    c.width = Math.round(cropRect.w);
+    c.height = Math.round(cropRect.h);
+    c.getContext('2d').drawImage(
+      cropCanvas,
+      Math.round(cropRect.x), Math.round(cropRect.y), c.width, c.height,
+      0, 0, c.width, c.height,
+    );
+    canvas = c;
+  }
+  const qid = cropQid;
+  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+  closeCropper();
+  await uploadBlob(blob, `캡쳐_${ts()}.png`, 'image', qid).catch(() => {});
+  toast('화면 캡쳐가 첨부되었습니다');
 }
 
 // ---------- 전역 첨부 핸들러 (파일 선택 / 붙여넣기 / 앱 파일) ----------

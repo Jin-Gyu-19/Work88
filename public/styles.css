@@ -369,6 +369,19 @@ tr.clickable:hover { background: #f8f8f6; }
   font-weight: 700;
 }
 
+/* 캡쳐 영역 선택 */
+.crop-stage {
+  position: relative; display: inline-block; max-width: 100%;
+  background: #1e2230; border-radius: 10px; overflow: hidden; user-select: none;
+}
+.crop-stage img { display: block; max-width: 100%; max-height: 62vh; cursor: crosshair; }
+.crop-sel {
+  position: absolute; border: 2px solid var(--brand);
+  background: rgba(228, 0, 43, .12);
+  box-shadow: 0 0 0 9999px rgba(20, 24, 34, .48);
+  pointer-events: none;
+}
+
 .lb-zoom { cursor: zoom-in; }
 .lb-body { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .lb-body img, .lb-body video { max-width: 94vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 40px rgba(0, 0, 0, .5); }
