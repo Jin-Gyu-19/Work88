@@ -868,30 +868,38 @@ async function loadSubs() {
 }
 
 // ---------- 통계 대시보드 ----------
+// 폼: 요약=스탯타일(히어로 1개) / 분포=수평 막대(단일 시리즈=단색) / 별점=순서형 램프
+// 램프는 dataviz 검증기 통과: 단일 색상(5°), 명도 단조, 밝은 끝 대비 2.05:1
+const RATING_RAMP = ['#a8b1da', '#8b97cd', '#6c7ac0', '#4a5aac', '#2b3d91'];
+let statsTable = false;
 
-function barRows(counts, total) {
-  const max = Math.max(1, ...Object.values(counts));
-  return Object.entries(counts).map(([label, n]) => {
-    const pct = total ? Math.round((n / total) * 100) : 0;
-    return `
-      <div class="bar-row">
-        <span class="bar-label" title="${esc(label)}">${esc(label)}</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.round((n / max) * 100)}%"></div></div>
-        <span class="bar-count">${n}건 (${pct}%)</span>
-      </div>`;
-  }).join('');
+function barChart(rows, total, { ramp = null, unit = '건' } = {}) {
+  const max = Math.max(1, ...rows.map((r) => r.n));
+  if (statsTable) {
+    return `<table class="stat-table"><thead><tr><th>항목</th><th>응답</th><th>비율</th></tr></thead><tbody>${
+      rows.map((r) => `<tr><td>${esc(r.label)}</td><td>${r.n}${unit}</td><td>${total ? Math.round((r.n / total) * 100) : 0}%</td></tr>`).join('')
+    }</tbody></table>`;
+  }
+  return `<div class="chart">${rows.map((r, i) => {
+    const pct = total ? Math.round((r.n / total) * 100) : 0;
+    const color = ramp ? ramp[Math.min(i, ramp.length - 1)] : 'var(--primary)';
+    return `<div class="bar-row" title="${esc(r.label)} · ${r.n}${unit} (${pct}%)">
+      <span class="bar-label">${esc(r.label)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${(r.n / max) * 100}%; background:${color}"></span></span>
+      <span class="bar-value">${r.n}<span class="bar-pct">${pct}%</span></span>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function renderStats() {
   const box = $('stats-box');
   const ca = campaigns.find((x) => String(x.id) === $('sel-campaign').value);
-  if (!ca) { box.innerHTML = '<p class="muted">설문이 없습니다.</p>'; return; }
+  if (!ca) { box.innerHTML = '<div class="empty"><span class="icon">📈</span>설문을 선택해 주세요.</div>'; return; }
   const subs = currentSubs;
   const answersList = subs.map((s) => {
     try { return s.answers ? JSON.parse(s.answers) : {}; } catch { return {}; }
   });
 
-  // 참여 요약
   const people = new Set(subs.map((s) => s.user_email)).size;
   const deptCounts = {};
   for (const s of subs) {
@@ -899,22 +907,36 @@ function renderStats() {
     deptCounts[d] = (deptCounts[d] || 0) + 1;
   }
   const attCount = subs.reduce((n, s) => n + (s.attachments?.length || 0), 0);
+  const deptRows = Object.entries(deptCounts)
+    .map(([label, n]) => ({ label, n }))
+    .sort((a, b) => b.n - a.n);
 
   let html = `
-    <h2>📈 ${esc(ca.title)} — 통계</h2>
-    <div class="stat-tiles">
-      <div class="stat-tile"><b>${subs.length}</b><div class="muted">총 제출</div></div>
-      <div class="stat-tile"><b>${people}</b><div class="muted">참여 인원</div></div>
-      <div class="stat-tile"><b>${Object.keys(deptCounts).length}</b><div class="muted">참여 부서</div></div>
-      <div class="stat-tile"><b>${attCount}</b><div class="muted">첨부파일</div></div>
+    <div class="stats-head">
+      <h2 style="margin:0;">📈 ${esc(ca.title)}</h2>
+      <button class="small" id="stats-view">${statsTable ? '📊 그래프로 보기' : '📋 표로 보기'}</button>
     </div>
-    <div class="stat-q"><h3>부서별 제출</h3>${barRows(deptCounts, subs.length) || '<p class="muted">데이터 없음</p>'}</div>`;
+    <div class="kpi-row">
+      <div class="kpi-hero">
+        <div class="kpi-label">총 제출</div>
+        <div class="hero-figure">${subs.length}</div>
+      </div>
+      <div class="stat-tile"><div class="kpi-label">참여 인원</div><b>${people}</b></div>
+      <div class="stat-tile"><div class="kpi-label">참여 부서</div><b>${deptRows.length}</b></div>
+      <div class="stat-tile"><div class="kpi-label">첨부파일</div><b>${attCount}</b></div>
+    </div>`;
 
-  // 질문별 통계 (객관식/체크박스/별점)
+  if (!subs.length) {
+    box.innerHTML = html + '<div class="empty"><span class="icon">📭</span>아직 응답이 없습니다.</div>';
+    $('stats-view').onclick = toggleStatsView;
+    return;
+  }
+
+  html += `<section class="stat-q"><h3>부서별 제출</h3>${barChart(deptRows, subs.length)}</section>`;
+
   for (const q of ca.form.questions) {
     if (q.type === 'select' || q.type === 'checkbox') {
-      const counts = {};
-      for (const o of q.options) counts[o] = 0;
+      const counts = Object.fromEntries(q.options.map((o) => [o, 0]));
       let answered = 0;
       answersList.forEach((ans) => {
         const v = ans[q.id];
@@ -922,20 +944,31 @@ function renderStats() {
         answered++;
         (Array.isArray(v) ? v : [v]).forEach((o) => { if (o in counts) counts[o]++; });
       });
-      html += `<div class="stat-q"><h3>${esc(q.label)} <span class="muted" style="font-size:12.5px;">(응답 ${answered}건)</span></h3>${barRows(counts, answered)}</div>`;
+      const rows = q.options.map((o) => ({ label: o, n: counts[o] }));
+      html += `<section class="stat-q"><h3>${esc(q.label)} <span class="stat-sub">응답 ${answered}건</span></h3>${barChart(rows, answered)}</section>`;
     } else if (q.type === 'rating') {
-      const counts = { '5점': 0, '4점': 0, '3점': 0, '2점': 0, '1점': 0 };
+      const counts = [0, 0, 0, 0, 0];
       let sum = 0;
       let answered = 0;
       answersList.forEach((ans) => {
         const n = parseInt(ans[q.id], 10);
-        if (n >= 1 && n <= 5) { counts[`${n}점`]++; sum += n; answered++; }
+        if (n >= 1 && n <= 5) { counts[n - 1]++; sum += n; answered++; }
       });
       const avg = answered ? (sum / answered).toFixed(1) : '-';
-      html += `<div class="stat-q"><h3>${esc(q.label)} <span class="muted" style="font-size:12.5px;">(응답 ${answered}건 · 평균 ⭐${avg})</span></h3>${barRows(counts, answered)}</div>`;
+      const rows = counts.map((n, i) => ({ label: `${i + 1}점`, n }));
+      html += `<section class="stat-q">
+        <h3>${esc(q.label)} <span class="stat-sub">평균 ${avg} · 응답 ${answered}건</span></h3>
+        ${barChart(rows, answered, { ramp: RATING_RAMP })}
+      </section>`;
     }
   }
   box.innerHTML = html;
+  $('stats-view').onclick = toggleStatsView;
+}
+
+function toggleStatsView() {
+  statsTable = !statsTable;
+  renderStats();
 }
 
 function showDetail(s) {

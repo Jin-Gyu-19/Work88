@@ -371,17 +371,47 @@ tr.clickable:hover { background: #f8f8f6; }
 .star.on { color: #efb220; }
 .stars-value { margin-left: 8px; font-size: 13px; }
 
-.stat-tiles { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0 4px; }
-.stat-tile { border: 1px solid var(--line); border-radius: 12px; padding: 12px 20px; text-align: center; background: #fbfbf9; }
-.stat-tile b { font-size: 22px; color: var(--primary); }
-.stat-tile .muted { font-size: 12px; }
-.stat-q { margin: 20px 0 6px; }
-.stat-q h3 { margin-bottom: 8px; }
-.bar-row { display: flex; align-items: center; gap: 10px; margin: 5px 0; font-size: 13px; }
-.bar-label { min-width: 110px; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
-.bar-track { flex: 1; background: #ececea; border-radius: 4px; height: 18px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--primary); border-radius: 4px; min-width: 2px; }
-.bar-count { min-width: 84px; font-size: 12.5px; color: var(--muted); }
+/* ── 통계 대시보드 (dataviz 규격) ────────────────────────────
+   막대: 20px 두께(≤24), 끝만 4px 라운드·기준선은 각지게, 행 사이 2px 표면 간격
+   색: 단일 시리즈=단색 / 순서형(별점)=검증 통과한 단일 색상 램프
+   텍스트는 데이터 색을 입지 않음 (ink 토큰만 사용) */
+.stats-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+
+.kpi-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; margin-bottom: 6px; }
+.kpi-label { font-size: 12px; color: var(--muted); }
+.kpi-hero { padding: 12px 22px 10px; border: 1px solid var(--line); border-radius: 12px; background: #fbfbf9; }
+.hero-figure { font-size: 44px; line-height: 1.05; font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
+.stat-tile {
+  display: flex; flex-direction: column; justify-content: center;
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 20px; background: #fbfbf9; min-width: 92px;
+}
+.stat-tile b { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+
+.stat-q { margin: 26px 0 6px; }
+.stat-q h3 { margin-bottom: 10px; font-size: 14.5px; }
+.stat-sub { font-weight: 400; font-size: 12.5px; color: var(--muted); margin-left: 4px; }
+
+.chart { display: flex; flex-direction: column; gap: 2px; }
+.bar-row {
+  display: flex; align-items: center; gap: 12px; font-size: 13px;
+  padding: 3px 4px; border-radius: 6px; transition: background .12s;
+}
+.bar-row:hover { background: #f6f6f3; }
+.bar-label {
+  min-width: 96px; max-width: 190px; text-align: right; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bar-track { flex: 1; height: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--line); }
+.bar-fill { height: 20px; border-radius: 0 4px 4px 0; min-width: 3px; transition: width .35s ease; }
+.bar-value {
+  min-width: 74px; font-size: 12.5px; color: var(--text); font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.bar-pct { color: var(--muted); font-weight: 400; margin-left: 5px; }
+
+.stat-table { margin-top: 4px; }
+.stat-table th, .stat-table td { padding: 7px 10px; }
+.stat-table td:nth-child(2), .stat-table td:nth-child(3) { font-variant-numeric: tabular-nums; }
 
 .dropdown { position: relative; display: inline-block; }
 .dropdown-menu {
