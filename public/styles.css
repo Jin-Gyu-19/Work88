@@ -609,6 +609,19 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
   color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); pointer-events: none;
 }
 
+/* 제출 완료 감사 모달 */
+.thanks-body { max-width: 420px; text-align: center; padding: 34px 28px 26px; }
+.thanks-icon {
+  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(140deg, #2b3d91, #4457b3); color: #fff; font-size: 30px;
+  box-shadow: 0 10px 26px rgba(43, 61, 145, .35);
+  animation: thanks-pop .45s cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes thanks-pop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.thanks-body h3 { font-size: 19px; margin-bottom: 8px; }
+.thanks-body p { line-height: 1.7; }
+
 .hero { text-align: center; padding: 54px 22px; }
 .hero h1 { font-size: 27px; margin-left: auto; margin-right: auto; }
 .hero p { color: var(--muted); }
@@ -628,6 +641,31 @@ button:focus-visible { outline-offset: 2px; }
 .campaign-item:hover { background: rgba(255, 255, 255, .7); }
 .campaign-title { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
 .campaign-meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+/* 설문 목록: 작은 상태·옵션 태그 + 눈에 띄는 요약 숫자 */
+.ci-title-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.stag {
+  font-size: 10px; font-weight: 700; letter-spacing: .01em; white-space: nowrap;
+  padding: 1.5px 7px; border-radius: 6px;
+  border: 1px solid rgba(196, 201, 214, .55); color: var(--muted); background: rgba(255, 255, 255, .7);
+}
+.stag.on { color: #1d7a3d; border-color: #c4e3cf; background: #eef8f1; }
+.stag.on::before { content: '●'; font-size: 6.5px; vertical-align: 2px; margin-right: 4px; }
+.stag.off { color: #a04040; border-color: #ecd2d2; background: #faeeee; }
+.ci-meta {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--muted); margin-top: 5px;
+}
+.ci-meta b { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.ci-meta .sep { color: #c4c9d6; }
+.ci-count {
+  font: inherit; font-size: 12.5px; font-weight: 400; color: inherit;
+  background: none; border: none; box-shadow: none; border-radius: 7px;
+  padding: 2px 6px; margin: -2px -6px; cursor: pointer;
+  text-decoration: underline dotted rgba(107, 113, 131, .55); text-underline-offset: 3px;
+}
+.ci-count:hover { background: rgba(43, 61, 145, .07); color: var(--primary); border: none; text-decoration-color: var(--primary); }
+.ci-count:hover b { color: var(--primary); }
 
 /* 모바일 */
 @media (max-width: 640px) {

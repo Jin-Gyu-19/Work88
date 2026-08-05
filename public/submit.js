@@ -60,8 +60,15 @@ async function init() {
   const closeView = () => $('view-modal').classList.add('hidden');
   $('v-close').onclick = closeView;
   $('v-close-x').onclick = closeView;
+  const closeThanks = () => {
+    $('thanks-modal').classList.add('hidden');
+    document.querySelector('#mine')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  $('thanks-close').onclick = closeThanks;
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !$('view-modal').classList.contains('hidden')) closeView();
+    if (e.key !== 'Escape') return;
+    if (!$('thanks-modal').classList.contains('hidden')) closeThanks();
+    else if (!$('view-modal').classList.contains('hidden')) closeView();
   });
   await loadMine();
   applyOneSubmissionState();
@@ -705,7 +712,7 @@ async function onSubmit(e) {
       toast('수정이 완료되었습니다 ✏️');
     } else {
       await api(`/api/campaigns/${encodeURIComponent(slug)}/submissions`, { method: 'POST', body });
-      toast('제출이 완료되었습니다. 감사합니다! 🎉');
+      $('thanks-modal').classList.remove('hidden');
     }
     editingId = null;
     attachments.length = 0;

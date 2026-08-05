@@ -119,11 +119,15 @@ async function loadCampaigns() {
     box.innerHTML = campaigns.map((ca) => `
       <div class="campaign-item">
         <div>
-          <div><span class="campaign-title">${esc(ca.title)}</span>
-            <span class="badge ${ca.open_now ? 'open' : 'closed'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
-            ${ca.form.oneSubmission ? '<span class="badge admin">1인 1회</span>' : ''}
-            ${ca.form.noEdit ? '<span class="badge admin">수정 금지</span>' : ''}</div>
-          <div class="campaign-meta">제출 ${ca.submission_count}건 · 질문 ${ca.form.questions.length}개 · ${ca.closes_at ? `마감 ${esc(ca.closes_at)}` : '기한 없음'}</div>
+          <div class="ci-title-row"><span class="campaign-title">${esc(ca.title)}</span>
+            <span class="stag ${ca.open_now ? 'on' : 'off'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
+            ${ca.form.oneSubmission ? '<span class="stag">1인 1회</span>' : ''}
+            ${ca.form.noEdit ? '<span class="stag">수정 금지</span>' : ''}</div>
+          <div class="ci-meta">
+            <button type="button" class="ci-count" data-act="subs" data-id="${ca.id}" title="클릭하면 이 설문의 제출 현황으로 이동합니다">제출 <b>${ca.submission_count}</b>건</button>
+            <span class="sep">·</span><span>질문 <b>${ca.form.questions.length}</b>개</span>
+            <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
+          </div>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <div class="dropdown">
@@ -157,6 +161,12 @@ function closeAllMenus() {
 
 async function onCampaignAction(act, ca) {
   if (!ca) return;
+  if (act === 'subs') {
+    // 제출 건수 클릭 → 해당 설문이 선택된 제출 현황으로 이동
+    $('sel-campaign').value = String(ca.id);
+    document.querySelector('.tabs button[data-tab="submissions"]').click();
+    return;
+  }
   if (act === 'send') {
     const menu = document.querySelector(`[data-menu="${ca.id}"]`);
     const wasHidden = menu.classList.contains('hidden');
