@@ -434,20 +434,19 @@ function renderBuilder() {
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
         <label class="q-req-label"><input type="checkbox" class="q-req" ${q.required ? 'checked' : ''}> 필수</label>
-        <label class="q-req-label" title="이 질문 아래에 화면 캡쳐·동영상 촬영·파일 업로드 버튼이 표시됩니다"><input type="checkbox" class="q-att" ${q.allowAttach ? 'checked' : ''}> 📎 첨부</label>
+        <label class="q-req-label" title="참여자가 이 질문에 파일을 첨부할 수 있게 합니다"><input type="checkbox" class="q-att" ${q.allowAttach ? 'checked' : ''}> 📎 첨부</label>
         <button type="button" class="small ghost q-up" ${i === 0 ? 'disabled' : ''}>▲</button>
         <button type="button" class="small ghost q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''}>▼</button>
         <button type="button" class="small ghost q-del">✕</button>
       </div>
-      <input class="q-help" placeholder="질문 설명문 (선택) — 질문 아래 작은 글씨로 표시됩니다" value="${esc(q.help || '')}">
+      <input class="q-help" placeholder="설명문 (선택)" value="${esc(q.help || '')}">
       <div class="q-opts-box ${isChoice ? '' : 'hidden'}">
         <div class="opt-rows"></div>
-        <button type="button" class="small opt-add">➕ 선택지 추가</button>
-        <label class="choice" style="margin-top:8px;"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용 (여러 개를 고를 수 있게)</label>
+        <button type="button" class="small opt-add">➕ 선택지</button>
+        <label class="choice" style="margin-top:8px;"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용</label>
       </div>
       <div class="q-media-box">
-        <button type="button" class="small q-media-add">🖼️ 이미지·파일 첨부</button>
-        <span class="hint" style="margin:0;">이미지는 설문 문항에 바로 표시되고, 크기를 조절할 수 있습니다</span>
+        <button type="button" class="small q-media-add" title="질문에 보여줄 이미지·파일을 첨부합니다 (드래그앤드롭 가능)">🖼️ 자료 첨부</button>
         <div class="q-media-list"></div>
       </div>
       <div class="q-cond-badge hidden"></div>
@@ -491,15 +490,14 @@ function renderBuilder() {
           item.innerHTML = `
             <div class="img-wrap" style="width:${m.w || 60}%;${wrapAl}">
               <img src="/files/${m.id}" alt="">
-              <span class="resize-handle" title="모서리를 드래그해서 크기 조절">◢</span>
+              <span class="resize-handle" title="드래그해서 크기 조절">◢</span>
             </div>
             <div class="bq-controls">
-              <span class="muted">정렬</span>
-              <button type="button" class="small al ${m.align === 'left' ? 'on' : ''}" data-al="left">⯇ 왼쪽</button>
-              <button type="button" class="small al ${m.align === 'center' ? 'on' : ''}" data-al="center">◫ 가운데</button>
-              <button type="button" class="small al ${m.align === 'right' ? 'on' : ''}" data-al="right">⯈ 오른쪽</button>
+                            <button type="button" class="small al ${m.align === 'left' ? 'on' : ''}" data-al="left" title="왼쪽 정렬">⯇</button>
+              <button type="button" class="small al ${m.align === 'center' ? 'on' : ''}" data-al="center" title="가운데 정렬">◫</button>
+              <button type="button" class="small al ${m.align === 'right' ? 'on' : ''}" data-al="right" title="오른쪽 정렬">⯈</button>
               <span class="bq-pct muted">${m.w || 60}%</span>
-              <button type="button" class="small ghost bq-del">✕ 삭제</button>
+              <button type="button" class="small ghost bq-del" title="삭제">✕</button>
             </div>`;
 
           // 모서리 핸들 드래그로 크기 조절
@@ -531,7 +529,7 @@ function renderBuilder() {
           item.innerHTML = `
             <div class="bq-controls">
               <span>📎 ${esc(m.filename)} <span class="muted">(${fmtSize(m.size)})</span></span>
-              <button type="button" class="small ghost bq-del">✕ 삭제</button>
+              <button type="button" class="small ghost bq-del" title="삭제">✕</button>
             </div>`;
         }
         item.querySelector('.bq-del').onclick = () => {
@@ -620,7 +618,7 @@ function refreshBranches() {
     if (q.showIf) {
       const src = bQuestions.find((p) => p.id === q.showIf.qid);
       const srcNo = bQuestions.indexOf(src) + 1;
-      badge.textContent = `🔀 ${srcNo}번 질문에서 "${q.showIf.value}"를 고른 사람에게만 표시됩니다`;
+      badge.textContent = `🔀 ${srcNo}번 "${q.showIf.value}"일 때만 표시`;
       badge.classList.remove('hidden');
     } else {
       badge.textContent = '';
@@ -635,20 +633,20 @@ function refreshBranches() {
     const opts = (q.options || []).map((o) => o.trim()).filter(Boolean);
     const following = bQuestions.slice(i + 1);
     if (!opts.length) {
-      body.innerHTML = '<p class="hint" style="margin:0;">선택지를 먼저 입력하면, 답변에 따라 보여줄 질문을 정할 수 있어요</p>';
+      body.innerHTML = '<p class="hint" style="margin:0;">선택지를 입력하면 분기를 설정할 수 있어요</p>';
       return;
     }
     if (!following.length) {
-      body.innerHTML = '<p class="hint" style="margin:0;">아래에 질문을 더 추가하면, 이 질문의 답변에 따라 보여줄 질문을 정할 수 있어요</p>';
+      body.innerHTML = '<p class="hint" style="margin:0;">아래에 질문을 추가하면 분기를 설정할 수 있어요</p>';
       return;
     }
 
     // 답변별로 "보여줄 질문"을 칩 클릭 한 번으로 지정
     const used = following.filter((fq) => fq.showIf?.qid === q.id).length;
-    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변을 고르면 보여줄 질문을 눌러서 켜고 끄세요. ${used ? `<b>${used}개 지정됨</b> · ` : ''}선택하지 않은 질문은 모두에게 표시됩니다.</p>`
+    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 보여줄 질문을 클릭하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
       + opts.map((o) => `
         <div class="br-line">
-          <span class="br-opt">"${esc(o)}" 를 고르면 →</span>
+          <span class="br-opt">"${esc(o)}" →</span>
           <span class="br-chips">${following.map((fq, k) => {
             const no = i + k + 2;
             const on = fq.showIf?.qid === q.id && fq.showIf.value === o;
@@ -714,11 +712,11 @@ function showPreview() {
     const attach = q.allowAttach ? `
       <div class="attach-block">
         <div class="attach-buttons">
-          <button type="button" class="small" disabled>📎 파일 업로드</button>
-          <button type="button" class="small" disabled>🖥️ 화면 캡쳐</button>
-          <button type="button" class="small" disabled>🎥 동영상 촬영</button>
+          <button type="button" class="small" disabled>📎 파일</button>
+          <button type="button" class="small" disabled>🖥️ 캡쳐</button>
+          <button type="button" class="small" disabled>🎥 촬영</button>
         </div>
-        <p class="hint">이미지 10MB · 동영상 1분/80MB · 기타 25MB</p>
+        <p class="hint">파일 첨부 가능</p>
       </div>` : '';
     return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
   }).join('') : '<p class="muted">질문이 없습니다.</p>';

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>설문 참여 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=25">
+  <link rel="stylesheet" href="/styles.css?v=26">
 </head>
 <body>
   <header class="topbar">
@@ -16,7 +16,7 @@
 
     <section id="login-box" class="card hero hidden">
       <h1>로그인이 필요합니다</h1>
-      <p>회사 Microsoft 계정으로 로그인하면 이름과 부서가 자동으로 입력됩니다.</p>
+      <p>회사 Microsoft 계정으로 로그인해 주세요.</p>
       <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
     </section>
 
@@ -39,7 +39,7 @@
 
       <div id="already-box" class="card hidden">
         <h2>이미 제출하셨습니다 ✅</h2>
-        <p class="muted">이 설문은 1인 1회만 제출할 수 있습니다. 아래 <strong>내 제출 내역</strong>에서 수정하거나 삭제할 수 있습니다.</p>
+        <p class="muted">1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.</p>
       </div>
 
       <form id="form" class="card" autocomplete="off">
@@ -54,7 +54,7 @@
           <button type="button" id="btn-draft" style="flex:1; padding:12px;">💾 임시저장</button>
           <button type="submit" class="primary" id="btn-submit" style="flex:2; padding:12px;">제출하기</button>
         </div>
-        <p class="hint" style="text-align:center;">임시저장하면 작성 중인 내용과 첨부파일이 보관되어, 다음에 다시 접속해도 이어서 작성할 수 있습니다.</p>
+        <p class="hint" style="text-align:center;">임시저장하면 다음에 이어서 작성할 수 있습니다</p>
         <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:8px;">수정 취소</button>
       </form>
 
@@ -87,11 +87,11 @@
         <button id="rec-retry">다시 촬영</button>
         <button class="ghost" id="rec-close2">닫기</button>
       </div>
-      <p class="hint">최대 1분까지 녹화할 수 있으며, 1분이 되면 자동으로 중지됩니다.</p>
+      <p class="hint">최대 1분, 이후 자동 중지</p>
     </div>
   </div>
 
-  <script src="/common.js?v=25"></script>
-  <script src="/submit.js?v=25"></script>
+  <script src="/common.js?v=26"></script>
+  <script src="/submit.js?v=26"></script>
 </body>
 </html>

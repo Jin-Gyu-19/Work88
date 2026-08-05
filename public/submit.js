@@ -104,11 +104,11 @@ function renderQuestions() {
     const attach = q.allowAttach ? `
       <div class="attach-block" data-attq="${q.id}">
         <div class="attach-buttons">
-          <button type="button" class="small att-file">📎 파일 업로드</button>
-          <button type="button" class="small att-capture">🖥️ 화면 캡쳐</button>
-          <button type="button" class="small att-record">🎥 동영상 촬영</button>
+          <button type="button" class="small att-file">📎 파일</button>
+          <button type="button" class="small att-capture">🖥️ 캡쳐</button>
+          <button type="button" class="small att-record">🎥 촬영</button>
         </div>
-        <p class="hint">파일을 이곳에 끌어다 놓아도 됩니다 · 이미지 10MB · 동영상 1분/80MB · 기타 25MB · 스크린샷 붙여넣기(Ctrl+V) 가능</p>
+        <p class="hint">여기로 끌어다 놓기 · Ctrl+V 붙여넣기 · 동영상 1분/80MB</p>
         <ul class="attach-list" data-attlist="${q.id}"></ul>
       </div>` : '';
     return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
