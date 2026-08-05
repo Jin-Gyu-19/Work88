@@ -66,6 +66,9 @@ body.has-bg .card { box-shadow: var(--shadow-md); }
   gap: 7px;
 }
 .topbar .brand b { color: var(--brand); font-weight: 800; letter-spacing: 0; }
+/* public/logo.png 가 있으면 로고 이미지를, 없으면 텍스트 BDO를 표시 */
+.topbar .brand-logo { height: 26px; width: auto; display: block; }
+.topbar .brand.has-logo b { display: none; }
 .topbar .brand span { color: var(--text); }
 .topbar .who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
 
