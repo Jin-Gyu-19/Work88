@@ -3,3 +3,5 @@ node_modules/
 dist/
 .dev.vars
 .DS_Store
+
+uitest*.mjs
