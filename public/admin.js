@@ -451,8 +451,8 @@ function renderBuilder() {
         <div class="q-media-list"></div>
       </div>
       <div class="q-branch">
-        <span class="muted">🔀 표시 조건:</span>
-        <select class="q-branch-q"><option value="">항상 표시</option></select>
+        <span class="muted">🔀 분기점 만들기:</span>
+        <select class="q-branch-q"><option value="">항상 표시 (분기 없음)</option></select>
         <select class="q-branch-v hidden"></select>
         <span class="q-branch-tail muted hidden">답변을 고른 사람에게만 표시</span>
         <span class="q-branch-note muted"></span>
@@ -623,10 +623,10 @@ function refreshBranches() {
     const curQid = prior.some((p) => p.id === q.showIf?.qid) ? q.showIf.qid : '';
     if (!curQid) q.showIf = null;
 
-    qSel.innerHTML = '<option value="">항상 표시</option>'
+    qSel.innerHTML = '<option value="">항상 표시 (분기 없음)</option>'
       + prior.map((p) => `<option value="${p.id}" ${curQid === p.id ? 'selected' : ''}>"${esc(p.label)}" 질문에서</option>`).join('');
     qSel.disabled = !prior.length;
-    note.textContent = prior.length ? '' : '※ 이 질문 앞에 선택지가 있는 객관식 질문이 있어야 분기를 만들 수 있습니다';
+    note.textContent = prior.length ? '' : '※ 분기점을 만들려면 이 질문보다 앞에 선택지가 있는 객관식 질문이 있어야 합니다';
 
     if (curQid) {
       const parent = bQuestions.find((p) => p.id === curQid);
