@@ -262,6 +262,7 @@ function bindDeleteModal() {
 let activeMediaQ = null;
 let activeMediaRender = null;
 let bBg = null; // 설문 배경 이미지 { id }
+const branchOpen = new Set(); // 분기 설정을 펼쳐 둔 질문 id
 
 function renderBgPreview() {
   $('b-bg-preview').innerHTML = bBg ? `<img src="/files/${bBg.id}" alt="배경 이미지">` : '';
@@ -367,6 +368,11 @@ function openBuilder(ca) {
     $('b-one').checked = false;
     bBg = null;
   }
+  branchOpen.clear();
+  // 이미 분기 설정이 있는 질문은 펼친 상태로 시작
+  bQuestions.forEach((q, i) => {
+    if (q.showIf || bQuestions.some((p, k) => k > i && p.showIf?.qid === q.id)) branchOpen.add(q.id);
+  });
   renderBgPreview();
   loadTemplates();
   renderBuilder();
@@ -462,6 +468,8 @@ function renderBuilder() {
           <button type="button" class="toggle q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
           <button type="button" class="toggle q-att" aria-pressed="${q.allowAttach ? 'true' : 'false'}" title="참여자가 파일을 첨부할 수 있게 합니다">📎 첨부 허용</button>
           <button type="button" class="small q-media-add" title="질문에 보여줄 이미지·파일 (끌어다 놓기 가능)">🖼 자료 추가</button>
+          <button type="button" class="toggle q-branch-toggle" aria-pressed="false" title="이 질문의 표시 조건과 분기를 설정합니다">🔀 분기</button>
+          <span class="q-branch-sum muted"></span>
         </div>
         <div class="q-icons">
           <button type="button" class="icon-btn q-up" ${i === 0 ? 'disabled' : ''} title="위로" aria-label="위로 이동">↑</button>
@@ -469,16 +477,18 @@ function renderBuilder() {
           <button type="button" class="icon-btn del q-del" title="질문 삭제" aria-label="질문 삭제">✕</button>
         </div>
       </div>
+      <div class="q-branch-wrap hidden">
       <div class="q-cond">
-        <span class="q-cond-label">🔀 표시 조건</span>
+        <span class="q-cond-label">표시 조건</span>
         <select class="q-cond-q" aria-label="이 질문을 언제 보여줄지"><option value="">항상 표시</option></select>
         <select class="q-cond-v hidden" aria-label="조건이 되는 답변"></select>
         <span class="q-cond-tail muted hidden">일 때만 표시</span>
         <span class="q-cond-note muted"></span>
       </div>
       <div class="q-branch-src hidden">
-        <div class="q-branch-title">🔀 이 질문의 답변으로 다음 질문 나누기</div>
+        <div class="q-branch-title">이 질문의 답변으로 다음 질문 나누기</div>
         <div class="q-branch-body"></div>
+      </div>
       </div>`;
 
     const renderOpts = (focusLast = false) => {
@@ -607,6 +617,12 @@ function renderBuilder() {
       refreshBranches();
     };
 
+    const brBtn = row.querySelector('.q-branch-toggle');
+    brBtn.onclick = () => {
+      if (branchOpen.has(q.id)) branchOpen.delete(q.id); else branchOpen.add(q.id);
+      refreshBranches();
+    };
+
     const reqBtn = row.querySelector('.q-req');
     reqBtn.onclick = () => {
       q.required = !q.required;
@@ -659,6 +675,9 @@ function refreshBranches() {
     if (!q) return;
     const panel = row.querySelector('.q-branch-src');
     const body = row.querySelector('.q-branch-body');
+    const wrap = row.querySelector('.q-branch-wrap');
+    const brBtn = row.querySelector('.q-branch-toggle');
+    const brSum = row.querySelector('.q-branch-sum');
     const condQ = row.querySelector('.q-cond-q');
     const condV = row.querySelector('.q-cond-v');
     const condTail = row.querySelector('.q-cond-tail');
@@ -690,6 +709,23 @@ function refreshBranches() {
       condV.innerHTML = '';
       condV.classList.add('hidden');
       condTail.classList.add('hidden');
+    }
+
+    // ── 접기/펼치기: 설정이 있으면 자동으로 펼침 ──
+    const open = branchOpen.has(q.id);
+    wrap.classList.toggle('hidden', !open);
+    brBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    if (!open) {
+      const parts = [];
+      if (q.showIf) {
+        const src = bQuestions.find((p) => p.id === q.showIf.qid);
+        parts.push(`${bQuestions.indexOf(src) + 1}번 "${q.showIf.value}"일 때만 표시`);
+      }
+      const n = bQuestions.filter((p, k) => k > i && p.showIf?.qid === q.id).length;
+      if (n) parts.push(`${n}개 질문 분기`);
+      brSum.textContent = parts.join(' · ');
+    } else {
+      brSum.textContent = '';
     }
 
     // 분기점 패널은 객관식 질문에만 표시

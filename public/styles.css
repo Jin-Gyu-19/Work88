@@ -290,20 +290,24 @@ tr.clickable:hover { background: #f8f8f6; }
 .progress-track > div.done { background: #2e9e5b; }
 #prog-text { font-size: 12px; white-space: nowrap; }
 
-/* 표시 조건 — 모든 질문 카드에 표시 */
+/* 분기 설정 (토글로 펼침) */
+.q-branch-wrap {
+  margin-top: 10px; padding: 12px 14px;
+  border: 1px solid #dfe3f1; border-radius: 10px; background: #fafbff;
+}
+.q-branch-sum { font-size: 12px; }
+
+/* 표시 조건 */
 .q-cond {
   display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
-  margin-top: 10px; font-size: 12.5px; color: var(--muted);
+  font-size: 12.5px; color: var(--muted);
 }
 .q-cond-label { font-weight: 700; color: var(--text); }
 .q-cond select { width: auto; margin: 0; padding: 5px 9px; font-size: 12.5px; max-width: 220px; }
 .q-cond select:disabled { background: #f4f4f1; }
 
 /* 분기점 만들기 (객관식 질문에 표시) */
-.q-branch-src {
-  margin-top: 10px; padding: 11px 13px;
-  border: 1px solid #d6dcf0; border-radius: 10px; background: var(--primary-soft);
-}
+.q-branch-src { margin-top: 12px; padding-top: 11px; border-top: 1px solid #e3e7f5; }
 .q-branch-title { font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 4px; }
 .br-line { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin: 7px 0; font-size: 12.5px; }
 .br-opt { min-width: 130px; font-weight: 700; color: var(--text); padding-top: 5px; }
