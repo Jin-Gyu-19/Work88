@@ -426,8 +426,6 @@ function renderBuilder() {
     const row = document.createElement('div');
     row.className = 'q-row';
     const isChoice = q.type === 'choice';
-    // 이 질문보다 앞에 있는 객관식 질문들 (분기 조건으로 사용 가능)
-    const priorChoices = bQuestions.slice(0, i).filter((p) => p.type === 'choice' && p.label.trim());
     row.innerHTML = `
       <div class="q-head">
         <span class="muted" style="min-width:20px;">${i + 1}.</span>
@@ -454,12 +452,10 @@ function renderBuilder() {
       </div>
       <div class="q-branch">
         <span class="muted">🔀 표시 조건:</span>
-        <select class="q-branch-q" ${priorChoices.length ? '' : 'disabled'} title="${priorChoices.length ? '' : '이 질문보다 앞에 객관식 질문이 있어야 분기를 만들 수 있습니다'}">
-          <option value="">항상 표시</option>
-          ${priorChoices.map((p) => `<option value="${p.id}" ${q.showIf?.qid === p.id ? 'selected' : ''}>"${esc(p.label)}" 질문에서</option>`).join('')}
-        </select>
-        <select class="q-branch-v ${q.showIf?.qid ? '' : 'hidden'}"></select>
-        <span class="q-branch-tail muted ${q.showIf?.qid ? '' : 'hidden'}">답변을 고른 사람에게만 표시</span>
+        <select class="q-branch-q"><option value="">항상 표시</option></select>
+        <select class="q-branch-v hidden"></select>
+        <span class="q-branch-tail muted hidden">답변을 고른 사람에게만 표시</span>
+        <span class="q-branch-note muted"></span>
       </div>`;
 
     const renderOpts = (focusLast = false) => {
@@ -473,8 +469,8 @@ function renderBuilder() {
           <span class="muted opt-num">${j + 1}</span>
           <input class="opt-input" value="${esc(o)}" placeholder="선택지 ${j + 1}">
           <button type="button" class="small ghost opt-del" ${q.options.length <= 1 ? 'disabled' : ''}>✕</button>`;
-        or.querySelector('.opt-input').oninput = (e) => { q.options[j] = e.target.value; };
-        or.querySelector('.opt-del').onclick = () => { q.options.splice(j, 1); renderOpts(); };
+        or.querySelector('.opt-input').oninput = (e) => { q.options[j] = e.target.value; refreshBranches(); };
+        or.querySelector('.opt-del').onclick = () => { q.options.splice(j, 1); renderOpts(); refreshBranches(); };
         optBox.appendChild(or);
       });
       if (focusLast) {
@@ -569,30 +565,15 @@ function renderBuilder() {
       if (files.length) await addMediaFiles(q, files, renderMedia);
     });
 
-    // 분기 선택지 목록 채우기
-    const renderBranchV = () => {
-      const qid = row.querySelector('.q-branch-q').value;
-      const vSel = row.querySelector('.q-branch-v');
-      const tail = row.querySelector('.q-branch-tail');
-      if (!qid) {
-        q.showIf = null;
-        vSel.classList.add('hidden');
-        tail.classList.add('hidden');
-        return;
-      }
-      const parent = bQuestions.find((p) => p.id === qid);
-      const opts = (parent?.options || []).map((o) => o.trim()).filter(Boolean);
-      vSel.innerHTML = opts.map((o) => `<option value="${esc(o)}" ${q.showIf?.value === o ? 'selected' : ''}>"${esc(o)}"</option>`).join('');
-      vSel.classList.remove('hidden');
-      tail.classList.remove('hidden');
-      q.showIf = { qid, value: vSel.value };
+    // 분기 조건: 조건 질문을 고르면 값 목록이 채워짐 (목록 자체는 refreshBranches가 관리)
+    row.querySelector('.q-branch-q').onchange = (e) => {
+      q.showIf = e.target.value ? { qid: e.target.value, value: '' } : null;
+      refreshBranches();
     };
-    if (q.showIf?.qid) renderBranchV();
-    row.querySelector('.q-branch-q').onchange = renderBranchV;
     row.querySelector('.q-branch-v').onchange = (e) => { if (q.showIf) q.showIf.value = e.target.value; };
 
     row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
-    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; };
+    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); };
     row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; };
     row.querySelector('.q-multi').onchange = (e) => { q.multiple = e.target.checked; };
     row.querySelector('.q-type').onchange = (e) => {
@@ -600,6 +581,7 @@ function renderBuilder() {
       const choice = q.type === 'choice';
       row.querySelector('.q-opts-box').classList.toggle('hidden', !choice);
       if (choice) renderOpts();
+      refreshBranches();
     };
     row.querySelector('.q-req').onchange = (e) => { q.required = e.target.checked; };
     row.querySelector('.q-att').onchange = (e) => { q.allowAttach = e.target.checked; };
@@ -620,6 +602,46 @@ function renderBuilder() {
   if (!bQuestions.length) {
     box.innerHTML = '<p class="muted">질문이 없습니다. "질문 추가"를 눌러 주세요.</p>';
   }
+  refreshBranches();
+}
+
+// 분기(표시 조건) 드롭다운을 현재 질문 구성에 맞춰 실시간 갱신
+function refreshBranches() {
+  const rows = [...document.querySelectorAll('#b-questions .q-row')];
+  rows.forEach((row, i) => {
+    const q = bQuestions[i];
+    const qSel = row.querySelector('.q-branch-q');
+    if (!q || !qSel) return;
+    const vSel = row.querySelector('.q-branch-v');
+    const tail = row.querySelector('.q-branch-tail');
+    const note = row.querySelector('.q-branch-note');
+
+    // 조건으로 쓸 수 있는 앞선 질문: 객관식 + 제목 + 선택지가 있어야 함
+    const prior = bQuestions.slice(0, i).filter(
+      (p) => p.type === 'choice' && p.label.trim() && (p.options || []).some((o) => o.trim()),
+    );
+    const curQid = prior.some((p) => p.id === q.showIf?.qid) ? q.showIf.qid : '';
+    if (!curQid) q.showIf = null;
+
+    qSel.innerHTML = '<option value="">항상 표시</option>'
+      + prior.map((p) => `<option value="${p.id}" ${curQid === p.id ? 'selected' : ''}>"${esc(p.label)}" 질문에서</option>`).join('');
+    qSel.disabled = !prior.length;
+    note.textContent = prior.length ? '' : '※ 이 질문 앞에 선택지가 있는 객관식 질문이 있어야 분기를 만들 수 있습니다';
+
+    if (curQid) {
+      const parent = bQuestions.find((p) => p.id === curQid);
+      const opts = (parent.options || []).map((o) => o.trim()).filter(Boolean);
+      const curV = opts.includes(q.showIf.value) ? q.showIf.value : opts[0];
+      vSel.innerHTML = opts.map((o) => `<option value="${esc(o)}" ${curV === o ? 'selected' : ''}>"${esc(o)}"</option>`).join('');
+      q.showIf = { qid: curQid, value: curV };
+      vSel.classList.remove('hidden');
+      tail.classList.remove('hidden');
+    } else {
+      vSel.innerHTML = '';
+      vSel.classList.add('hidden');
+      tail.classList.add('hidden');
+    }
+  });
 }
 
 // ---------- 설문 미리보기 ----------
