@@ -703,14 +703,10 @@ function refreshBranches() {
       body.innerHTML = '<p class="hint" style="margin:0;">선택지를 입력하면 분기를 설정할 수 있어요</p>';
       return;
     }
-    if (!following.length) {
-      body.innerHTML = '<p class="hint" style="margin:0;">아래에 질문을 추가하면 분기를 설정할 수 있어요</p>';
-      return;
-    }
 
-    // 답변별로 "보여줄 질문"을 칩 클릭 한 번으로 지정
+    // 답변별 줄: 기존 질문은 칩 클릭으로 지정, '＋ 새 질문'으로 그 자리에서 분기 질문 생성
     const used = following.filter((fq) => fq.showIf?.qid === q.id).length;
-    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 보여줄 아래 질문을 클릭하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
+    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 이어질 질문을 지정하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
       + opts.map((o) => `
         <div class="br-line">
           <span class="br-opt">"${esc(o)}" →</span>
@@ -721,16 +717,42 @@ function refreshBranches() {
             const label = fq.label.trim() || '(제목 없음)';
             return `<button type="button" class="chip ${on ? 'on' : ''}" data-t="${fq.id}" data-o="${esc(o)}"
               ${byOther ? 'disabled title="다른 질문의 분기로 제어 중입니다"' : ''}>${no}. ${esc(label.slice(0, 18))}</button>`;
-          }).join('')}</span>
+          }).join('')}<button type="button" class="chip add" data-new="${esc(o)}" title="이 답변을 고른 사람에게만 보일 질문을 새로 만듭니다">＋ 새 질문</button></span>
         </div>`).join('');
 
-    body.querySelectorAll('.chip').forEach((chip) => {
+    body.querySelectorAll('.chip[data-t]').forEach((chip) => {
       chip.onclick = () => {
         const fq = bQuestions.find((p) => p.id === chip.dataset.t);
         if (!fq) return;
         const already = fq.showIf?.qid === q.id && fq.showIf.value === chip.dataset.o;
         fq.showIf = already ? null : { qid: q.id, value: chip.dataset.o };
         refreshBranches();
+      };
+    });
+
+    // 이 답변 전용 질문을 바로 추가 (같은 분기의 마지막 질문 뒤에 삽입)
+    body.querySelectorAll('.chip.add').forEach((btn) => {
+      btn.onclick = () => {
+        const val = btn.dataset.new;
+        // 같은 답변의 질문이 있으면 그 블록 끝에, 없으면 이 질문의 모든 분기 뒤에 붙인다
+        let sameAt = -1;
+        let anyAt = i + 1;
+        bQuestions.forEach((p, k) => {
+          if (k <= i || p.showIf?.qid !== q.id) return;
+          anyAt = k + 1;
+          if (p.showIf.value === val) sameAt = k + 1;
+        });
+        const insertAt = sameAt > 0 ? sameAt : anyAt;
+        const nq = newQuestion();
+        nq.showIf = { qid: q.id, value: val };
+        bQuestions.splice(insertAt, 0, nq);
+        renderBuilder();
+        const el = document.querySelectorAll('#b-questions .q-row')[insertAt];
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.querySelector('.q-label')?.focus();
+        }
+        toast(`"${val}" 분기에 새 질문을 추가했습니다`);
       };
     });
   });
