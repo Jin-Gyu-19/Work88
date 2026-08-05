@@ -51,7 +51,9 @@ async function init() {
   $('b-bg-file').onchange = onBgFilePicked;
   $('b-bg-del').onclick = () => { bBg = null; renderBgPreview(); };
   $('b-save').onclick = saveBuilder;
-  $('b-cancel').onclick = () => $('builder-modal').classList.add('hidden');
+  const closeBuilder = () => $('builder-modal').classList.add('hidden');
+  $('b-cancel').onclick = closeBuilder;
+  $('b-close-x').onclick = closeBuilder;
   $('b-preview').onclick = showPreview;
   $('pv-close').onclick = () => $('preview-modal').classList.add('hidden');
   $('b-tpl-load').onclick = loadTemplateIntoBuilder;
@@ -72,11 +74,23 @@ async function init() {
     const id = $('sel-campaign').value;
     if (id) location.href = `/api/admin/campaigns/${id}/export.zip`;
   };
-  $('d-close').onclick = () => $('detail-modal').classList.add('hidden');
+  const closeDetail = () => $('detail-modal').classList.add('hidden');
+  $('d-close').onclick = closeDetail;
+  $('d-close-x').onclick = closeDetail;
   $('btn-add-admin').onclick = addAdmin;
   $('lb-close').onclick = closeLightbox;
   $('lightbox').onclick = (e) => { if (e.target === $('lightbox')) closeLightbox(); };
   bindDeleteModal();
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    for (const id of ['lightbox', 'preview-modal', 'detail-modal', 'del-modal', 'builder-modal']) {
+      const el = $(id);
+      if (el && !el.classList.contains('hidden')) {
+        if (id === 'lightbox') closeLightbox(); else el.classList.add('hidden');
+        return;
+      }
+    }
+  });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown')) closeAllMenus();
   });
@@ -455,9 +469,15 @@ function renderBuilder() {
           <button type="button" class="icon-btn del q-del" title="질문 삭제" aria-label="질문 삭제">✕</button>
         </div>
       </div>
-      <div class="q-cond-badge hidden"></div>
+      <div class="q-cond">
+        <span class="q-cond-label">🔀 표시 조건</span>
+        <select class="q-cond-q" aria-label="이 질문을 언제 보여줄지"><option value="">항상 표시</option></select>
+        <select class="q-cond-v hidden" aria-label="조건이 되는 답변"></select>
+        <span class="q-cond-tail muted hidden">일 때만 표시</span>
+        <span class="q-cond-note muted"></span>
+      </div>
       <div class="q-branch-src hidden">
-        <div class="q-branch-title">🔀 분기점 만들기</div>
+        <div class="q-branch-title">🔀 이 질문의 답변으로 다음 질문 나누기</div>
         <div class="q-branch-body"></div>
       </div>`;
 
@@ -578,6 +598,15 @@ function renderBuilder() {
       if (choice) renderOpts();
       refreshBranches();
     };
+    row.querySelector('.q-cond-q').onchange = (e) => {
+      q.showIf = e.target.value ? { qid: e.target.value, value: '' } : null;
+      refreshBranches();
+    };
+    row.querySelector('.q-cond-v').onchange = (e) => {
+      if (q.showIf) q.showIf.value = e.target.value;
+      refreshBranches();
+    };
+
     const reqBtn = row.querySelector('.q-req');
     reqBtn.onclick = () => {
       q.required = !q.required;
@@ -616,27 +645,51 @@ function refreshBranches() {
     const src = bQuestions.find((p) => p.id === q.showIf.qid);
     const srcIdx = src ? bQuestions.indexOf(src) : -1;
     const opts = (src?.options || []).map((o) => o.trim()).filter(Boolean);
-    if (!src || src.type !== 'choice' || srcIdx >= i || !opts.includes(q.showIf.value)) q.showIf = null;
+    // 조건 질문 자체가 무효해진 경우만 해제하고, 답변만 비어 있으면 첫 선택지로 채운다
+    if (!src || src.type !== 'choice' || srcIdx >= i || !opts.length) {
+      q.showIf = null;
+    } else if (!opts.includes(q.showIf.value)) {
+      q.showIf.value = opts[0];
+    }
   });
 
   const rows = [...document.querySelectorAll('#b-questions .q-row')];
   rows.forEach((row, i) => {
     const q = bQuestions[i];
     if (!q) return;
-    const badge = row.querySelector('.q-cond-badge');
     const panel = row.querySelector('.q-branch-src');
     const body = row.querySelector('.q-branch-body');
-    if (!badge || !panel || !body) return;
+    const condQ = row.querySelector('.q-cond-q');
+    const condV = row.querySelector('.q-cond-v');
+    const condTail = row.querySelector('.q-cond-tail');
+    const condNote = row.querySelector('.q-cond-note');
+    if (!panel || !body || !condQ) return;
 
-    // 이 질문이 분기로 제어되고 있으면 배지로 표시
-    if (q.showIf) {
-      const src = bQuestions.find((p) => p.id === q.showIf.qid);
-      const srcNo = bQuestions.indexOf(src) + 1;
-      badge.textContent = `🔀 ${srcNo}번 "${q.showIf.value}"일 때만 표시`;
-      badge.classList.remove('hidden');
+    // ── 이 질문의 표시 조건 (질문마다 직접 설정) ──
+    const prior = bQuestions.slice(0, i).filter(
+      (p) => p.type === 'choice' && p.label.trim() && (p.options || []).some((o) => o.trim()),
+    );
+    const curQid = q.showIf?.qid && prior.some((p) => p.id === q.showIf.qid) ? q.showIf.qid : '';
+    condQ.innerHTML = '<option value="">항상 표시</option>'
+      + prior.map((p) => {
+        const no = bQuestions.indexOf(p) + 1;
+        return `<option value="${p.id}" ${curQid === p.id ? 'selected' : ''}>${no}번 "${esc(p.label.slice(0, 18))}"에서</option>`;
+      }).join('');
+    condQ.disabled = !prior.length;
+    condNote.textContent = prior.length ? ''
+      : (i === 0 ? '앞에 조건이 될 질문이 없습니다' : '앞쪽에 선택지가 있는 객관식 질문이 필요합니다');
+    if (curQid) {
+      const src = bQuestions.find((p) => p.id === curQid);
+      const opts = (src.options || []).map((o) => o.trim()).filter(Boolean);
+      const curV = opts.includes(q.showIf.value) ? q.showIf.value : opts[0];
+      condV.innerHTML = opts.map((o) => `<option value="${esc(o)}" ${curV === o ? 'selected' : ''}>"${esc(o)}"</option>`).join('');
+      q.showIf = { qid: curQid, value: curV };
+      condV.classList.remove('hidden');
+      condTail.classList.remove('hidden');
     } else {
-      badge.textContent = '';
-      badge.classList.add('hidden');
+      condV.innerHTML = '';
+      condV.classList.add('hidden');
+      condTail.classList.add('hidden');
     }
 
     // 분기점 패널은 객관식 질문에만 표시
@@ -657,7 +710,7 @@ function refreshBranches() {
 
     // 답변별로 "보여줄 질문"을 칩 클릭 한 번으로 지정
     const used = following.filter((fq) => fq.showIf?.qid === q.id).length;
-    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 보여줄 질문을 클릭하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
+    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 보여줄 아래 질문을 클릭하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
       + opts.map((o) => `
         <div class="br-line">
           <span class="br-opt">"${esc(o)}" →</span>
