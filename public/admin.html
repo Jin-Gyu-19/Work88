@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=29">
+  <link rel="stylesheet" href="/styles.css?v=30">
 </head>
 <body>
   <header class="topbar">
@@ -94,7 +94,7 @@
   <div id="builder-modal" class="modal hidden">
     <div class="modal-body" style="max-width:760px;">
       <h3 id="b-heading">새 설문</h3>
-      <div class="tpl-bar">
+      <div class="tpl-bar hidden">
         <span class="muted" style="font-size:12.5px;">📋 템플릿</span>
         <select id="b-tpl" style="width:auto; margin:0; max-width:240px;"></select>
         <button type="button" class="small" id="b-tpl-load" title="선택한 템플릿의 질문 구성을 불러옵니다">불러오기</button>
@@ -110,7 +110,7 @@
       <label style="max-width:240px;">마감일 (선택)
         <input type="date" id="b-close">
       </label>
-      <div style="margin-bottom:14px;">
+      <div style="margin-bottom:14px;" class="hidden">
         <span style="font-weight:600; font-size:13.5px;">배경 이미지 (선택)</span>
         <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
           <button type="button" class="small" id="b-bg-add">🖼️ 배경 이미지</button>
@@ -186,7 +186,7 @@
   <input type="file" id="bq-file" multiple hidden>
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=29"></script>
-  <script src="/admin.js?v=29"></script>
+  <script src="/common.js?v=30"></script>
+  <script src="/admin.js?v=30"></script>
 </body>
 </html>

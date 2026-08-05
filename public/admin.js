@@ -428,26 +428,32 @@ function renderBuilder() {
     const isChoice = q.type === 'choice';
     row.innerHTML = `
       <div class="q-head">
-        <span class="muted" style="min-width:20px;">${i + 1}.</span>
+        <span class="q-index">${i + 1}</span>
         <input class="q-label" placeholder="질문을 입력하세요" value="${esc(q.label)}">
-        <select class="q-type">
+        <select class="q-type" aria-label="질문 유형">
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
-        <label class="q-req-label"><input type="checkbox" class="q-req" ${q.required ? 'checked' : ''}> 필수</label>
-        <label class="q-req-label" title="참여자가 이 질문에 파일을 첨부할 수 있게 합니다"><input type="checkbox" class="q-att" ${q.allowAttach ? 'checked' : ''}> 📎 첨부</label>
-        <button type="button" class="small ghost q-up" ${i === 0 ? 'disabled' : ''}>▲</button>
-        <button type="button" class="small ghost q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''}>▼</button>
-        <button type="button" class="small ghost q-del">✕</button>
       </div>
       <input class="q-help" placeholder="설명문 (선택)" value="${esc(q.help || '')}">
       <div class="q-opts-box ${isChoice ? '' : 'hidden'}">
         <div class="opt-rows"></div>
-        <button type="button" class="small opt-add">➕ 선택지</button>
-        <label class="choice" style="margin-top:8px;"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용</label>
+        <div class="opt-foot">
+          <button type="button" class="small opt-add">＋ 선택지 추가</button>
+          <label class="opt-multi"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용</label>
+        </div>
       </div>
-      <div class="q-media-box">
-        <button type="button" class="small q-media-add" title="질문에 보여줄 이미지·파일을 첨부합니다 (드래그앤드롭 가능)">🖼️ 자료 첨부</button>
-        <div class="q-media-list"></div>
+      <div class="q-media-list"></div>
+      <div class="q-toolbar">
+        <div class="q-toggles">
+          <button type="button" class="toggle q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
+          <button type="button" class="toggle q-att" aria-pressed="${q.allowAttach ? 'true' : 'false'}" title="참여자가 파일을 첨부할 수 있게 합니다">📎 첨부 허용</button>
+          <button type="button" class="small q-media-add" title="질문에 보여줄 이미지·파일 (끌어다 놓기 가능)">🖼 자료 추가</button>
+        </div>
+        <div class="q-icons">
+          <button type="button" class="icon-btn q-up" ${i === 0 ? 'disabled' : ''} title="위로" aria-label="위로 이동">↑</button>
+          <button type="button" class="icon-btn q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''} title="아래로" aria-label="아래로 이동">↓</button>
+          <button type="button" class="icon-btn del q-del" title="질문 삭제" aria-label="질문 삭제">✕</button>
+        </div>
       </div>
       <div class="q-cond-badge hidden"></div>
       <div class="q-branch-src hidden">
@@ -463,9 +469,9 @@ function renderBuilder() {
         const or = document.createElement('div');
         or.className = 'opt-row';
         or.innerHTML = `
-          <span class="muted opt-num">${j + 1}</span>
+          <span class="opt-dot"></span>
           <input class="opt-input" value="${esc(o)}" placeholder="선택지 ${j + 1}">
-          <button type="button" class="small ghost opt-del" ${q.options.length <= 1 ? 'disabled' : ''}>✕</button>`;
+          <button type="button" class="icon-btn sm opt-del" ${q.options.length <= 1 ? 'disabled' : ''} title="선택지 삭제" aria-label="선택지 삭제">✕</button>`;
         or.querySelector('.opt-input').oninput = (e) => { q.options[j] = e.target.value; refreshBranches(); };
         or.querySelector('.opt-del').onclick = () => { q.options.splice(j, 1); renderOpts(); refreshBranches(); };
         optBox.appendChild(or);
@@ -546,7 +552,7 @@ function renderBuilder() {
       $('bq-file').click();
     };
     // 자료 첨부도 드래그앤드롭 지원
-    const mediaBox = row.querySelector('.q-media-box');
+    const mediaBox = row;
     ['dragenter', 'dragover'].forEach((ev) => mediaBox.addEventListener(ev, (e) => {
       e.preventDefault();
       mediaBox.classList.add('drag-over');
@@ -572,8 +578,16 @@ function renderBuilder() {
       if (choice) renderOpts();
       refreshBranches();
     };
-    row.querySelector('.q-req').onchange = (e) => { q.required = e.target.checked; };
-    row.querySelector('.q-att').onchange = (e) => { q.allowAttach = e.target.checked; };
+    const reqBtn = row.querySelector('.q-req');
+    reqBtn.onclick = () => {
+      q.required = !q.required;
+      reqBtn.setAttribute('aria-pressed', q.required ? 'true' : 'false');
+    };
+    const attBtn = row.querySelector('.q-att');
+    attBtn.onclick = () => {
+      q.allowAttach = !q.allowAttach;
+      attBtn.setAttribute('aria-pressed', q.allowAttach ? 'true' : 'false');
+    };
     row.querySelector('.q-up').onclick = () => {
       [bQuestions[i - 1], bQuestions[i]] = [bQuestions[i], bQuestions[i - 1]];
       renderBuilder();
