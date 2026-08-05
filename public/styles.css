@@ -248,9 +248,17 @@ tr.clickable:hover { background: #f8f8f6; }
   border: 1px solid #d6dcf0; border-radius: 10px; background: var(--primary-soft);
 }
 .q-branch-title { font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 4px; }
-.br-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 5px 0; font-size: 12.5px; }
-.br-row .br-q { min-width: 150px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.br-row select { width: auto; margin: 0; padding: 6px 9px; font-size: 12.5px; }
+.br-line { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin: 7px 0; font-size: 12.5px; }
+.br-opt { min-width: 130px; font-weight: 700; color: var(--text); padding-top: 5px; }
+.br-chips { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+.chip {
+  padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  border: 1px solid #cfd6ea; background: #fff; color: var(--muted);
+}
+.chip:hover { background: #fff; border-color: var(--primary); color: var(--primary); }
+.chip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.chip.on::before { content: '✓ '; }
+.chip:disabled { opacity: .4; }
 .q-cond-badge {
   margin-top: 8px; font-size: 12.5px; font-weight: 600;
   color: var(--primary); background: var(--primary-soft);

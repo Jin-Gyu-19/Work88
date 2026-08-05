@@ -643,27 +643,28 @@ function refreshBranches() {
       return;
     }
 
-    body.innerHTML = '<p class="hint" style="margin:0 0 8px;">이 질문의 답변에 따라 아래 질문을 보이거나 숨깁니다. (지정하지 않은 질문은 모두에게 보입니다)</p>'
-      + following.map((fq, k) => {
-        const no = i + k + 2;
-        const cur = fq.showIf?.qid === q.id ? fq.showIf.value : '';
-        const byOther = fq.showIf && fq.showIf.qid !== q.id;
-        const otherNo = byOther ? bQuestions.findIndex((p) => p.id === fq.showIf.qid) + 1 : 0;
-        return `<div class="br-row">
-          <span class="br-q">${no}. ${esc(fq.label.trim() || '(제목 없음)')}</span>
-          <select data-target="${fq.id}" ${byOther ? 'disabled' : ''}>
-            <option value="">항상 표시</option>
-            ${opts.map((o) => `<option value="${esc(o)}" ${cur === o ? 'selected' : ''}>"${esc(o)}"를 고르면 표시</option>`).join('')}
-          </select>
-          ${byOther ? `<span class="hint" style="margin:0;">${otherNo}번 질문의 분기로 제어 중</span>` : ''}
-        </div>`;
-      }).join('');
+    // 답변별로 "보여줄 질문"을 칩 클릭 한 번으로 지정
+    const used = following.filter((fq) => fq.showIf?.qid === q.id).length;
+    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변을 고르면 보여줄 질문을 눌러서 켜고 끄세요. ${used ? `<b>${used}개 지정됨</b> · ` : ''}선택하지 않은 질문은 모두에게 표시됩니다.</p>`
+      + opts.map((o) => `
+        <div class="br-line">
+          <span class="br-opt">"${esc(o)}" 를 고르면 →</span>
+          <span class="br-chips">${following.map((fq, k) => {
+            const no = i + k + 2;
+            const on = fq.showIf?.qid === q.id && fq.showIf.value === o;
+            const byOther = fq.showIf && fq.showIf.qid !== q.id;
+            const label = fq.label.trim() || '(제목 없음)';
+            return `<button type="button" class="chip ${on ? 'on' : ''}" data-t="${fq.id}" data-o="${esc(o)}"
+              ${byOther ? 'disabled title="다른 질문의 분기로 제어 중입니다"' : ''}>${no}. ${esc(label.slice(0, 18))}</button>`;
+          }).join('')}</span>
+        </div>`).join('');
 
-    body.querySelectorAll('select[data-target]').forEach((sel) => {
-      sel.onchange = () => {
-        const fq = bQuestions.find((p) => p.id === sel.dataset.target);
+    body.querySelectorAll('.chip').forEach((chip) => {
+      chip.onclick = () => {
+        const fq = bQuestions.find((p) => p.id === chip.dataset.t);
         if (!fq) return;
-        fq.showIf = sel.value ? { qid: q.id, value: sel.value } : null;
+        const already = fq.showIf?.qid === q.id && fq.showIf.value === chip.dataset.o;
+        fq.showIf = already ? null : { qid: q.id, value: chip.dataset.o };
         refreshBranches();
       };
     });
