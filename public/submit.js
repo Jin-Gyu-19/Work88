@@ -60,10 +60,8 @@ async function init() {
   const closeView = () => $('view-modal').classList.add('hidden');
   $('v-close').onclick = closeView;
   $('v-close-x').onclick = closeView;
-  const closeThanks = () => {
-    $('thanks-modal').classList.add('hidden');
-    document.querySelector('#mine')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
+  // 제출을 마치면 설문 목록(홈)으로 돌아간다
+  const closeThanks = () => { location.href = '/'; };
   $('thanks-close').onclick = closeThanks;
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
