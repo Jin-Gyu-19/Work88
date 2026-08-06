@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>설문 참여 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=40">
+  <link rel="stylesheet" href="/styles.css?v=41">
 </head>
 <body>
   <header class="topbar">
@@ -34,7 +34,8 @@
       <div class="card">
         <h1 id="c-title"></h1>
         <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
-        <p id="c-deadline" class="hint"></p>
+        <p id="c-meta" class="hint"></p>
+        <p id="c-deadline" class="hint" style="margin-top:2px;"></p>
       </div>
 
       <div id="already-box" class="card hidden">
@@ -61,7 +62,9 @@
             <span id="prog-text" class="muted"></span>
           </div>
           <div style="display:flex; gap:8px;">
+            <button type="button" id="btn-prev" class="hidden">← 이전</button>
             <button type="button" id="btn-draft" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
+            <button type="button" id="btn-next" class="primary hidden" style="flex:1;">다음 →</button>
             <button type="submit" class="primary" id="btn-submit" style="flex:1;">제출하기</button>
           </div>
           <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:6px;">수정 취소</button>
@@ -144,7 +147,7 @@
     </div>
   </div>
 
-  <script src="/common.js?v=40"></script>
-  <script src="/submit.js?v=40"></script>
+  <script src="/common.js?v=41"></script>
+  <script src="/submit.js?v=41"></script>
 </body>
 </html>

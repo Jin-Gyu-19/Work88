@@ -30,7 +30,7 @@ export function groupAtts(form, sub) {
 // linkFor(attachment) 가 반환하는 URL/상대경로가 첨부 셀의 하이퍼링크로 들어간다.
 // 각 submission에는 _answers (질문 id → 답변) 가 채워져 있어야 한다.
 export function buildWorkbook(campaign, form, submissions, { linkFor }) {
-  const questions = form.questions;
+  const questions = form.questions.filter((q) => q.type !== 'section'); // 구역은 답변 열이 없다
   const groups = submissions.map((s) => groupAtts(form, s));
 
   // 그룹별 최대 첨부 수 계산

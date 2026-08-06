@@ -17,7 +17,8 @@ const MAX_ATTACHMENTS = 10;
 
 // ---------- 설문 양식 ----------
 
-const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox', 'rating'];
+const QUESTION_TYPES = ['text', 'textarea', 'select', 'checkbox', 'dropdown', 'rating', 'scale', 'section'];
+const CHOICE_TYPES = ['select', 'checkbox', 'dropdown'];
 
 function defaultForm() {
   // 빌더 도입 전에 만들어진 캠페인(fields 없음)을 위한 기본 양식
@@ -51,16 +52,28 @@ function sanitizeForm(input) {
       allowAttach: !!q.allowAttach,
       help: typeof q.help === 'string' ? q.help.trim().slice(0, 500) : '',
     };
-    if (type === 'select' || type === 'checkbox') {
+    if (CHOICE_TYPES.includes(type)) {
       question.options = (Array.isArray(q.options) ? q.options : [])
         .map((o) => String(o).trim().slice(0, 100))
         .filter(Boolean)
         .slice(0, 30);
       if (!question.options.length) continue;
+      // 기타(직접 입력) 허용 — 객관식(단일/복수)만
+      if (type !== 'dropdown') question.allowOther = q.allowOther === true;
     }
-    // 분기(표시 조건): 앞선 객관식 질문의 특정 답변일 때만 표시
+    if (type === 'scale') {
+      question.scaleMax = q.scaleMax === 10 || q.scaleMax === '10' ? 10 : 5;
+      question.minLabel = typeof q.minLabel === 'string' ? q.minLabel.trim().slice(0, 40) : '';
+      question.maxLabel = typeof q.maxLabel === 'string' ? q.maxLabel.trim().slice(0, 40) : '';
+    }
+    if (type === 'section') {
+      // 구역은 답변이 없는 페이지 구분선: 필수/첨부/분기를 갖지 않는다
+      question.required = false;
+      question.allowAttach = false;
+    }
+    // 분기(표시 조건): 앞선 객관식/드롭다운 질문의 특정 답변일 때만 표시 (구역은 항상 표시)
     const si = q.showIf;
-    if (si && typeof si === 'object' && typeof si.qid === 'string' && priorChoice[si.qid]
+    if (type !== 'section' && si && typeof si === 'object' && typeof si.qid === 'string' && priorChoice[si.qid]
       && priorChoice[si.qid].options.includes(String(si.value))) {
       question.showIf = { qid: si.qid, value: String(si.value) };
     }
@@ -76,7 +89,7 @@ function sanitizeForm(input) {
         align: ['left', 'center', 'right'].includes(m.align) ? m.align : 'center',
       }));
     out.questions.push(question);
-    if (type === 'select' || type === 'checkbox') priorChoice[question.id] = question;
+    if (CHOICE_TYPES.includes(type)) priorChoice[question.id] = question;
   }
   if (!out.questions.length) out.questions = def.questions;
   // 구버전 호환: 전체 첨부 섹션을 쓰던 양식이면 마지막 질문에 첨부를 붙인다
@@ -235,17 +248,23 @@ function buildSubmissionData(form, body) {
 
   // 1차: 값 정리 (분기 판단용)
   const raw = {};
+  // 기타(직접 입력) 허용 시 "기타" 또는 "기타: ..." 형태의 값을 인정
+  const okChoice = (q, x) => q.options.includes(x) || (q.allowOther && /^기타(: .*)?$/.test(x));
   for (const q of form.questions) {
+    if (q.type === 'section') continue;
     let v = answersIn[q.id];
     if (q.type === 'checkbox') {
-      v = Array.isArray(v) ? v.map((x) => String(x)).filter((x) => q.options.includes(x)) : [];
+      v = Array.isArray(v) ? v.map((x) => String(x).slice(0, 300)).filter((x) => okChoice(q, x)) : [];
       if (v.length) raw[q.id] = v;
     } else if (q.type === 'rating') {
       const n = parseInt(v, 10);
       if (n >= 1 && n <= 5) raw[q.id] = String(n);
+    } else if (q.type === 'scale') {
+      const n = parseInt(v, 10);
+      if (n >= 1 && n <= (q.scaleMax || 5)) raw[q.id] = String(n);
     } else {
       v = typeof v === 'string' ? v.trim().slice(0, 4000) : '';
-      if (q.type === 'select' && v && !q.options.includes(v)) v = '';
+      if ((q.type === 'select' || q.type === 'dropdown') && v && !okChoice(q, v)) v = '';
       if (v) raw[q.id] = v;
     }
   }
@@ -254,10 +273,10 @@ function buildSubmissionData(form, body) {
   const visible = computeVisibility(form.questions, raw);
   const answers = {};
   for (const q of form.questions) {
-    if (!visible[q.id]) continue;
+    if (q.type === 'section' || !visible[q.id]) continue;
     const v = raw[q.id];
     if (q.required && (v === undefined || (Array.isArray(v) && !v.length))) {
-      const verb = ['select', 'checkbox', 'rating'].includes(q.type) ? '선택' : '입력';
+      const verb = ['select', 'checkbox', 'dropdown', 'rating', 'scale'].includes(q.type) ? '선택' : '입력';
       return { error: `"${q.label}" 항목을 ${verb}해 주세요` };
     }
     if (v !== undefined) answers[q.id] = v;
@@ -726,6 +745,47 @@ app.post('/api/admin/campaigns', needAdmin(async (c) => {
     .run();
   await markMediaAttachments(c.env, form);
   return c.json({ ok: true, slug });
+}));
+
+// 설문 복제: 질문 구성 그대로 새 설문 생성 (자료 파일은 딥카피해 원본 삭제와 무관하게 유지)
+app.post('/api/admin/campaigns/:id/duplicate', needAdmin(async (c) => {
+  const { campaign, errorRes } = await getManagedCampaign(c, c.req.param('id'));
+  if (errorRes) return errorRes;
+  const form = parseForm(campaign.fields);
+  const email = c.get('user').email;
+
+  const copyMedia = async (id) => {
+    const a = await c.env.DB.prepare('SELECT * FROM attachments WHERE id = ?').bind(id).first();
+    if (!a) return null;
+    const newId = crypto.randomUUID();
+    const newKey = `uploads/${newId}/${a.filename}`;
+    const obj = await c.env.BUCKET.get(a.r2_key);
+    if (!obj) return null;
+    await c.env.BUCKET.put(newKey, obj.body, { httpMetadata: { contentType: a.content_type || 'application/octet-stream' } });
+    await c.env.DB
+      .prepare("INSERT INTO attachments (id, uploader_email, kind, filename, content_type, size, r2_key, question_id) VALUES (?,?,?,?,?,?,?,'media')")
+      .bind(newId, email, a.kind, a.filename, a.content_type, a.size, newKey)
+      .run();
+    return newId;
+  };
+  for (const q of form.questions) {
+    for (const m of (q.media || [])) {
+      const nid = await copyMedia(m.id);
+      if (nid) m.id = nid;
+    }
+  }
+  if (form.bg) {
+    const nid = await copyMedia(form.bg.id);
+    if (nid) form.bg.id = nid; else form.bg = undefined;
+  }
+
+  const slug = randomSlug();
+  const title = `${campaign.title} (사본)`.slice(0, 200);
+  await c.env.DB
+    .prepare('INSERT INTO campaigns (slug, title, description, fields, closes_at, created_by) VALUES (?,?,?,?,?,?)')
+    .bind(slug, title, campaign.description || '', JSON.stringify(form), campaign.closes_at || null, email)
+    .run();
+  return c.json({ ok: true, slug, title });
 }));
 
 app.patch('/api/admin/campaigns/:id', needAdmin(async (c) => {

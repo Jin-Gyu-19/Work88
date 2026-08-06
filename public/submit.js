@@ -42,6 +42,10 @@ async function init() {
   }
   $('c-title').textContent = campaign.title;
   $('c-desc').textContent = campaign.description || '';
+  // 문항 수 + 예상 소요 시간 안내
+  const answerable = FORM.questions.filter((q) => q.type !== 'section');
+  const est = Math.max(1, Math.ceil(answerable.reduce((m, q) => m + (q.type === 'textarea' ? 1 : 0.3), 0)));
+  $('c-meta').textContent = `📝 ${answerable.length}문항 · 예상 소요 약 ${est}분`;
   if (campaign.closes_at) $('c-deadline').textContent = `⏰ 마감일: ${campaign.closes_at} (당일까지 제출 가능)`;
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
@@ -57,6 +61,8 @@ async function init() {
   $('form').addEventListener('submit', onSubmit);
   $('btn-cancel-edit').onclick = cancelEdit;
   $('btn-draft').onclick = saveDraft;
+  $('btn-prev').onclick = () => goToPage(curPage - 1);
+  $('btn-next').onclick = () => goToPage(curPage + 1, { validate: true });
   const closeView = () => $('view-modal').classList.add('hidden');
   $('v-close').onclick = closeView;
   $('v-close-x').onclick = closeView;
@@ -87,8 +93,26 @@ function applyOneSubmissionState() {
 
 // ---------- 설문 질문 렌더링 ----------
 
+// 구역(section) 기준으로 질문을 페이지로 나눈다
+let pages = [[]]; // 각 페이지에 속한 질문 id 목록
+let curPage = 0;
+
+function buildPages() {
+  pages = [[]];
+  for (const q of FORM.questions) {
+    if (q.type === 'section' && pages[pages.length - 1].length) pages.push([]);
+    pages[pages.length - 1].push(q.id);
+  }
+  if (curPage >= pages.length) curPage = 0;
+}
+
+function pageOf(qid) {
+  return Math.max(0, pages.findIndex((p) => p.includes(qid)));
+}
+
 function renderQuestions() {
   const box = $('questions');
+  buildPages();
   box.innerHTML = FORM.questions.map((q) => {
     const req = q.required ? ' <span class="req-chip">필수</span>' : '';
     const num = '<span class="q-num"></span>';
@@ -102,17 +126,42 @@ function renderQuestions() {
         return `<img src="/files/${m.id}" style="width:${m.w || 60}%;${al}" alt="${esc(m.filename)}">`;
       }).join('')
     }</div>` : '';
+    if (q.type === 'section') {
+      return `<div class="q-section" data-secid="${q.id}">
+        <h2>${esc(q.label)}</h2>
+        ${q.help ? `<p class="muted" style="margin:4px 0 0;">${esc(q.help)}</p>` : ''}
+        ${media}
+      </div>`;
+    }
+    // 기타(직접 입력) 선택지
+    const otherRow = (type) => (q.allowOther ? `
+      <label class="choice choice-other"><input type="${type}" name="${q.id}" value="__other__"> 기타:
+        <input type="text" class="other-input" data-otherfor="${q.id}" maxlength="200" placeholder="직접 입력"></label>` : '');
     let inner;
     if (q.type === 'textarea') {
       inner = `<label>${num}${esc(q.label)}${req}${help}${media}<textarea data-q="${q.id}" rows="7"></textarea></label>`;
     } else if (q.type === 'select') {
       inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req}</legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="radio" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
-      }</fieldset>`;
+      }${otherRow('radio')}</fieldset>`;
     } else if (q.type === 'checkbox') {
       inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req} <span class="muted">(복수 선택)</span></legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
-      }</fieldset>`;
+      }${otherRow('checkbox')}</fieldset>`;
+    } else if (q.type === 'dropdown') {
+      inner = `<label>${num}${esc(q.label)}${req}${help}${media}
+        <select data-q="${q.id}"><option value="">선택하세요</option>${
+          q.options.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('')
+        }</select></label>`;
+    } else if (q.type === 'scale') {
+      const max = q.scaleMax === 10 ? 10 : 5;
+      inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req}</legend>${helpP}${media}
+        <div class="scale" data-q="${q.id}" data-v="">
+          ${q.minLabel ? `<span class="scale-lab">${esc(q.minLabel)}</span>` : ''}
+          <span class="scale-btns">${Array.from({ length: max }, (_, n) => `<button type="button" class="scale-btn" data-v="${n + 1}">${n + 1}</button>`).join('')}</span>
+          ${q.maxLabel ? `<span class="scale-lab">${esc(q.maxLabel)}</span>` : ''}
+        </div>
+      </fieldset>`;
     } else if (q.type === 'rating') {
       inner = `<fieldset class="q-choice"><legend>${num}${esc(q.label)}${req}</legend>${helpP}${media}
         <div class="stars" data-q="${q.id}" data-v="">${
@@ -165,11 +214,71 @@ function renderQuestions() {
       btn.onclick = () => setStars(st, btn.dataset.v);
     });
   });
+  // 배율 클릭
+  box.querySelectorAll('.scale').forEach((sc) => {
+    sc.querySelectorAll('.scale-btn').forEach((btn) => {
+      btn.onclick = () => setScale(sc, btn.dataset.v);
+    });
+  });
+  // 기타 직접 입력칸에 입력하면 해당 선택지도 자동 체크
+  box.querySelectorAll('.other-input').forEach((inp) => {
+    inp.oninput = () => {
+      const other = document.querySelector(`input[name="${inp.dataset.otherfor}"][value="__other__"]`);
+      if (other && inp.value.trim()) other.checked = true;
+      onFormChanged();
+    };
+  });
   // 답변 변경 시 분기 표시/현재 문항 강조 갱신
   box.oninput = onFormChanged;
   box.onchange = onFormChanged;
   renderAttachments();
+  applyPage();
   onFormChanged();
+}
+
+function setScale(container, value) {
+  container.dataset.v = String(value);
+  container.querySelectorAll('.scale-btn').forEach((b) => {
+    b.classList.toggle('on', b.dataset.v === String(value));
+  });
+  onFormChanged();
+}
+
+// 현재 페이지의 질문/구역만 표시하고 하단 버튼을 갱신
+function applyPage() {
+  const multi = pages.length > 1;
+  const ids = new Set(pages[curPage]);
+  document.querySelectorAll('#questions .q-item').forEach((el) => {
+    el.classList.toggle('page-hidden', !ids.has(el.dataset.qid));
+  });
+  document.querySelectorAll('#questions .q-section').forEach((el) => {
+    el.classList.toggle('page-hidden', !ids.has(el.dataset.secid));
+  });
+  const last = curPage === pages.length - 1;
+  $('btn-prev').classList.toggle('hidden', !multi || curPage === 0);
+  $('btn-next').classList.toggle('hidden', !multi || last);
+  $('btn-submit').classList.toggle('hidden', multi && !last);
+}
+
+// 현재 페이지의 필수 문항 검증 후 페이지 이동
+function goToPage(n, { validate = false } = {}) {
+  if (validate) {
+    const raw = gatherAnswersRaw();
+    const vis = computeVis(raw);
+    for (const q of FORM.questions) {
+      if (q.type === 'section' || !pages[curPage].includes(q.id)) continue;
+      if (!vis[q.id] || !q.required) continue;
+      const v = raw[q.id];
+      if (v === undefined || (Array.isArray(v) && !v.length)) {
+        toast(`"${q.label}" 항목을 ${['select', 'checkbox', 'dropdown', 'rating', 'scale'].includes(q.type) ? '선택' : '입력'}해 주세요`, true);
+        return;
+      }
+    }
+  }
+  curPage = Math.max(0, Math.min(pages.length - 1, n));
+  applyPage();
+  onFormChanged();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function setStars(container, value) {
@@ -185,16 +294,26 @@ function setStars(container, value) {
 // 모든 질문의 현재 입력값 읽기 (분기 판단용, 표시 여부 무관)
 function gatherAnswersRaw() {
   const answers = {};
+  // "__other__" 선택을 "기타: 입력값" 형태로 변환
+  const otherVal = (qid) => {
+    const t = document.querySelector(`.other-input[data-otherfor="${qid}"]`);
+    const txt = t ? t.value.trim().slice(0, 200) : '';
+    return txt ? `기타: ${txt}` : '기타';
+  };
   for (const q of FORM.questions) {
+    if (q.type === 'section') continue;
     if (q.type === 'select') {
       const el = document.querySelector(`input[name="${q.id}"]:checked`);
-      if (el) answers[q.id] = el.value;
+      if (el) answers[q.id] = el.value === '__other__' ? otherVal(q.id) : el.value;
     } else if (q.type === 'checkbox') {
       const els = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)];
-      if (els.length) answers[q.id] = els.map((e) => e.value);
+      if (els.length) answers[q.id] = els.map((e) => (e.value === '__other__' ? otherVal(q.id) : e.value));
     } else if (q.type === 'rating') {
       const st = document.querySelector(`.stars[data-q="${q.id}"]`);
       if (st && st.dataset.v) answers[q.id] = st.dataset.v;
+    } else if (q.type === 'scale') {
+      const sc = document.querySelector(`.scale[data-q="${q.id}"]`);
+      if (sc && sc.dataset.v) answers[q.id] = sc.dataset.v;
     } else {
       const el = document.querySelector(`[data-q="${q.id}"]`);
       if (el && el.value.trim()) answers[q.id] = el.value.trim();
@@ -232,26 +351,34 @@ function gatherAnswers() {
 function validateAnswers(answers) {
   const vis = computeVis(gatherAnswersRaw());
   for (const q of FORM.questions) {
-    if (!vis[q.id] || !q.required) continue;
+    if (q.type === 'section' || !vis[q.id] || !q.required) continue;
     const v = answers[q.id];
     if (v === undefined || (Array.isArray(v) && !v.length)) {
-      toast(`"${q.label}" 항목을 ${['select', 'checkbox', 'rating'].includes(q.type) ? '선택' : '입력'}해 주세요`, true);
+      toast(`"${q.label}" 항목을 ${['select', 'checkbox', 'dropdown', 'rating', 'scale'].includes(q.type) ? '선택' : '입력'}해 주세요`, true);
+      if (pageOf(q.id) !== curPage) goToPage(pageOf(q.id)); // 미작성 문항이 있는 페이지로 이동
       return false;
     }
   }
   return true;
 }
 
-// 분기 표시/숨김 + 현재 작성할 문항 강조
+// 분기 표시/숨김 + 문항 번호 + 현재 작성할 문항 강조
 function onFormChanged() {
   if (!FORM) return;
   const raw = gatherAnswersRaw();
   const vis = computeVis(raw);
   let currentId = null;
+  let num = 0;
   for (const q of FORM.questions) {
+    if (q.type === 'section') continue;
     const el = document.querySelector(`.q-item[data-qid="${q.id}"]`);
     if (el) el.classList.toggle('hidden', !vis[q.id]);
-    if (!currentId && vis[q.id]) {
+    if (vis[q.id]) {
+      num += 1;
+      el?.querySelector('.q-num') && (el.querySelector('.q-num').textContent = num);
+    }
+    // 현재 문항 강조는 지금 보고 있는 페이지 안에서
+    if (!currentId && vis[q.id] && pages[curPage].includes(q.id)) {
       const v = raw[q.id];
       if (v === undefined || (Array.isArray(v) && !v.length)) currentId = q.id;
     }
@@ -260,8 +387,9 @@ function onFormChanged() {
     el.classList.toggle('q-current', el.dataset.qid === currentId);
   });
 
-  // 진행률
-  const shown = FORM.questions.filter((q) => vis[q.id]);
+  // 진행률 (전체 페이지 기준)
+  const answerable = FORM.questions.filter((q) => q.type !== 'section');
+  const shown = answerable.filter((q) => vis[q.id]);
   const done = shown.filter((q) => {
     const v = raw[q.id];
     return v !== undefined && !(Array.isArray(v) && !v.length);
@@ -272,9 +400,10 @@ function onFormChanged() {
   if (fill) {
     fill.style.width = pct + '%';
     fill.classList.toggle('done', done === shown.length && shown.length > 0);
-    text.textContent = done === shown.length && shown.length
+    const pageInfo = pages.length > 1 ? ` · ${curPage + 1}/${pages.length}쪽` : '';
+    text.textContent = (done === shown.length && shown.length
       ? `모든 문항 작성 완료 (${shown.length}/${shown.length})`
-      : `${done} / ${shown.length} 문항 작성`;
+      : `${done} / ${shown.length} 문항 작성`) + pageInfo;
   }
 }
 
@@ -734,20 +863,30 @@ function setEditUi(on) {
 
 // 저장된 답변을 폼에 복원 (수정 모드/임시저장 공용)
 function restoreAnswers(answers) {
+  // "기타: ..." 값이면 기타 선택지 체크 + 입력칸 복원
+  const restoreChoice = (qid, val) => {
+    const s = String(val);
+    let el = document.querySelector(`input[name="${qid}"][value="${CSS.escape(s)}"]`);
+    if (!el && /^기타(: .*)?$/.test(s)) {
+      el = document.querySelector(`input[name="${qid}"][value="__other__"]`);
+      const t = document.querySelector(`.other-input[data-otherfor="${qid}"]`);
+      if (t) t.value = s.startsWith('기타: ') ? s.slice(4) : '';
+    }
+    if (el) el.checked = true;
+  };
   for (const q of FORM.questions) {
     const v = answers[q.id];
     if (v === undefined) continue;
     if (q.type === 'select') {
-      const el = document.querySelector(`input[name="${q.id}"][value="${CSS.escape(String(v))}"]`);
-      if (el) el.checked = true;
+      restoreChoice(q.id, v);
     } else if (q.type === 'checkbox') {
-      (Array.isArray(v) ? v : [v]).forEach((o) => {
-        const el = document.querySelector(`input[name="${q.id}"][value="${CSS.escape(String(o))}"]`);
-        if (el) el.checked = true;
-      });
+      (Array.isArray(v) ? v : [v]).forEach((o) => restoreChoice(q.id, o));
     } else if (q.type === 'rating') {
       const st = document.querySelector(`.stars[data-q="${q.id}"]`);
       if (st) setStars(st, String(v));
+    } else if (q.type === 'scale') {
+      const sc = document.querySelector(`.scale[data-q="${q.id}"]`);
+      if (sc) setScale(sc, String(v));
     } else {
       const el = document.querySelector(`[data-q="${q.id}"]`);
       if (el) el.value = Array.isArray(v) ? v.join(', ') : v;
@@ -776,6 +915,7 @@ function restoreAttachmentList(list) {
 
 function startEdit(s) {
   editingId = s.id;
+  curPage = 0;
   applyOneSubmissionState();
   setEditUi(true);
 
@@ -905,12 +1045,14 @@ function openView(s) {
   }</div>` : '');
 
   const parts = FORM.questions.map((q) => {
+    if (q.type === 'section') return '';
     const v = answers[q.id];
     const qa = atts.filter((a) => a.question_id === q.id);
     const empty = v === undefined || v === '' || (Array.isArray(v) && !v.length);
     if (empty && !qa.length) return '';
     let val;
     if (q.type === 'rating' && !empty) val = `${'★'.repeat(Number(v) || 0)} (${v}점)`;
+    else if (q.type === 'scale' && !empty) val = `${v}점 (1~${q.scaleMax === 10 ? 10 : 5})`;
     else val = Array.isArray(v) ? v.join(', ') : (v ?? '');
     return `<div style="margin-bottom:15px;">
       <div style="font-weight:700; font-size:13.5px; margin-bottom:5px;">${esc(q.label)}</div>

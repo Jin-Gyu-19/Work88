@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=40">
+  <link rel="stylesheet" href="/styles.css?v=41">
 </head>
 <body>
   <header class="topbar">
@@ -34,11 +34,14 @@
       <!-- 설문 관리 -->
       <div id="tab-campaigns">
         <div class="card">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-            <div>
-              <h2 style="margin:0;">설문 목록</h2>
-              
-            </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">설문 목록</h2>
+            <input id="camp-search" type="search" placeholder="🔍 설문 검색" style="max-width:210px; margin:0 0 0 auto; padding:8px 13px;">
+            <select id="camp-status" style="width:auto; margin:0; padding:8px 10px;">
+              <option value="">전체</option>
+              <option value="open">진행 중</option>
+              <option value="closed">마감</option>
+            </select>
             <button class="primary" id="btn-new">➕ 새 설문 만들기</button>
           </div>
         </div>
@@ -134,7 +137,10 @@
       <h3 style="margin-top:18px;">설문 질문 구성</h3>
       <p class="hint" style="margin-top:-6px;">이름·부서는 자동 입력됩니다. 분기가 필요하면 해당 질문의 <b>🔀 분기</b> 버튼을 켜세요.</p>
       <div id="b-questions"></div>
-      <button type="button" id="b-add" style="margin-top:4px;">➕ 질문 추가</button>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button type="button" id="b-add">➕ 질문 추가</button>
+        <button type="button" id="b-add-sec" title="여기부터 새 페이지가 시작됩니다 (긴 설문을 나눌 때)">📄 구역 추가</button>
+      </div>
 
       <div class="modal-actions">
         <button class="primary" id="b-save">저장</button>
@@ -194,7 +200,7 @@
   <input type="file" id="bq-file" multiple hidden>
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=40"></script>
-  <script src="/admin.js?v=40"></script>
+  <script src="/common.js?v=41"></script>
+  <script src="/admin.js?v=41"></script>
 </body>
 </html>

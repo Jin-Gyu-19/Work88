@@ -11,7 +11,10 @@ const TYPE_LABELS = {
   text: '단답형',
   textarea: '장문형',
   choice: '객관식',
+  dropdown: '드롭다운',
+  scale: '배율 (1~N)',
   rating: '별점 (1~5점)',
+  section: '구역 (페이지 나누기)',
 };
 let templates = [];
 let statsVisible = false;
@@ -50,13 +53,22 @@ async function init() {
     $('b-opts-toggle').setAttribute('aria-pressed', String(!hidden));
   };
   ['b-close', 'b-one', 'b-noedit'].forEach((id) => { $(id).onchange = updateOptsSum; });
+  $('camp-search').oninput = renderCampaignList;
+  $('camp-status').onchange = renderCampaignList;
   $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
   $('bq-file').onchange = onBuilderFilesPicked;
   $('b-bg-add').onclick = () => $('b-bg-file').click();
   $('b-bg-file').onchange = onBgFilePicked;
   $('b-bg-del').onclick = () => { bBg = null; renderBgPreview(); };
   $('b-save').onclick = saveBuilder;
-  const closeBuilder = () => $('builder-modal').classList.add('hidden');
+  $('b-add-sec').onclick = () => {
+    const s = newQuestion();
+    s.type = 'section';
+    bQuestions.push(s);
+    renderBuilder();
+    const rows = document.querySelectorAll('#b-questions .q-row');
+    rows[rows.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
   $('b-cancel').onclick = closeBuilder;
   $('b-close-x').onclick = closeBuilder;
   $('b-preview').onclick = showPreview;
@@ -91,7 +103,9 @@ async function init() {
     for (const id of ['lightbox', 'preview-modal', 'detail-modal', 'del-modal', 'builder-modal']) {
       const el = $(id);
       if (el && !el.classList.contains('hidden')) {
-        if (id === 'lightbox') closeLightbox(); else el.classList.add('hidden');
+        if (id === 'lightbox') closeLightbox();
+        else if (id === 'builder-modal') closeBuilder(); // 저장 안 된 변경 확인
+        else el.classList.add('hidden');
         return;
       }
     }
@@ -112,20 +126,52 @@ async function loadCampaigns() {
     toast(e.message, true);
     return;
   }
+  renderCampaignList();
+
+  // 제출 현황 탭의 설문 선택 목록도 갱신
+  const sel = $('sel-campaign');
+  const prev = sel.value;
+  sel.innerHTML = campaigns.map((ca) => `<option value="${ca.id}">${esc(ca.title)} (${ca.submission_count}건)</option>`).join('');
+  if (prev && campaigns.some((ca) => String(ca.id) === prev)) sel.value = prev;
+}
+
+// 마감일까지 남은 일수 (KST 기준, 마감일 지남/미설정이면 null)
+function daysToClose(ca) {
+  if (!ca.closes_at || !ca.open_now) return null;
+  const today = new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }));
+  const d = Math.round((new Date(ca.closes_at) - today) / 86400000);
+  return d >= 0 ? d : null;
+}
+
+function renderCampaignList() {
   const box = $('campaigns');
+  const text = $('camp-search').value.trim().toLowerCase();
+  const status = $('camp-status').value;
+  const list = campaigns.filter((ca) => {
+    if (text && !ca.title.toLowerCase().includes(text)) return false;
+    if (status === 'open' && !ca.open_now) return false;
+    if (status === 'closed' && ca.open_now) return false;
+    return true;
+  });
   if (!campaigns.length) {
     box.innerHTML = '<div class="empty"><span class="icon">📋</span>아직 설문이 없습니다.<br>오른쪽 위 <b>새 설문 만들기</b>로 시작하세요.</div>';
+  } else if (!list.length) {
+    box.innerHTML = '<div class="empty"><span class="icon">🔍</span>조건에 맞는 설문이 없습니다.</div>';
   } else {
-    box.innerHTML = campaigns.map((ca) => `
+    box.innerHTML = list.map((ca) => {
+      const dLeft = daysToClose(ca);
+      const qCount = ca.form.questions.filter((q) => q.type !== 'section').length;
+      return `
       <div class="campaign-item">
         <div>
           <div class="ci-title-row"><span class="campaign-title">${esc(ca.title)}</span>
             <span class="stag ${ca.open_now ? 'on' : 'off'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
+            ${dLeft !== null && dLeft <= 3 ? `<span class="stag warn">마감 ${dLeft === 0 ? 'D-DAY' : `D-${dLeft}`}</span>` : ''}
             ${ca.form.oneSubmission ? '<span class="stag">1인 1회</span>' : ''}
             ${ca.form.noEdit ? '<span class="stag">수정 금지</span>' : ''}</div>
           <div class="ci-meta">
             <button type="button" class="ci-count" data-act="subs" data-id="${ca.id}" title="클릭하면 이 설문의 제출 현황으로 이동합니다">제출 <b>${ca.submission_count}</b>건</button>
-            <span class="sep">·</span><span>질문 <b>${ca.form.questions.length}</b>개</span>
+            <span class="sep">·</span><span>질문 <b>${qCount}</b>개</span>
             <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
           </div>
         </div>
@@ -138,21 +184,17 @@ async function loadCampaigns() {
             </div>
           </div>
           <button class="small" data-act="edit" data-id="${ca.id}">✏️ 설문 편집</button>
+          <button class="small" data-act="dup" data-id="${ca.id}" title="질문 구성을 그대로 복사한 새 설문을 만듭니다">⧉ 복제</button>
           <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
           <button class="small ghost" data-act="delete" data-id="${ca.id}">삭제</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   box.querySelectorAll('button[data-act]').forEach((b) => {
     const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
     b.onclick = () => onCampaignAction(b.dataset.act, ca);
   });
-
-  // 제출 현황 탭의 설문 선택 목록도 갱신
-  const sel = $('sel-campaign');
-  const prev = sel.value;
-  sel.innerHTML = campaigns.map((ca) => `<option value="${ca.id}">${esc(ca.title)} (${ca.submission_count}건)</option>`).join('');
-  if (prev && campaigns.some((ca) => String(ca.id) === prev)) sel.value = prev;
 }
 
 function closeAllMenus() {
@@ -222,6 +264,17 @@ async function onCampaignAction(act, ca) {
   }
   if (act === 'edit') {
     openBuilder(ca);
+    return;
+  }
+  if (act === 'dup') {
+    if (!confirm(`"${ca.title}" 설문을 복제할까요?\n질문 구성과 설정만 복사되고 제출 내역은 복사되지 않습니다.`)) return;
+    try {
+      const res = await api(`/api/admin/campaigns/${ca.id}/duplicate`, { method: 'POST' });
+      toast(`"${res.title}" 사본이 만들어졌습니다`);
+      loadCampaigns();
+    } catch (e) {
+      toast(e.message, true);
+    }
     return;
   }
   if (act === 'toggle') {
@@ -359,6 +412,10 @@ function cloneQuestions(qs) {
     multiple: q.type === 'checkbox',
     options: q.options ? [...q.options] : [],
     allowAttach: !!q.allowAttach,
+    allowOther: !!q.allowOther,
+    scaleMax: q.scaleMax === 10 ? 10 : 5,
+    minLabel: q.minLabel || '',
+    maxLabel: q.maxLabel || '',
     help: q.help || '',
     showIf: q.showIf ? { ...q.showIf } : null,
     media: (q.media || []).map((m) => ({ ...m })),
@@ -375,6 +432,26 @@ function toServerQuestions(qs) {
       showIf: (q.showIf && q.showIf.qid && q.showIf.value) ? q.showIf : undefined,
     };
   });
+}
+
+// 빌더에서 분기 조건의 기준이 될 수 있는 유형 (선택지가 있는 질문)
+function isBranchSource(q) {
+  return q.type === 'choice' || q.type === 'dropdown';
+}
+
+// 빌더의 현재 편집 상태 (닫을 때 저장 안 된 변경 감지용)
+let builderSnapshot = '';
+function builderState() {
+  return JSON.stringify({
+    t: $('b-name').value, d: $('b-desc').value, c: $('b-close').value,
+    o: $('b-one').checked, n: $('b-noedit').checked, q: bQuestions, bg: bBg,
+  });
+}
+
+function closeBuilder() {
+  if (builderState() !== builderSnapshot
+    && !confirm('저장하지 않은 변경이 있습니다. 저장 없이 닫을까요?')) return;
+  $('builder-modal').classList.add('hidden');
 }
 
 function openBuilder(ca) {
@@ -407,6 +484,7 @@ function openBuilder(ca) {
   renderBgPreview();
   loadTemplates();
   renderBuilder();
+  builderSnapshot = builderState();
   $('builder-modal').classList.remove('hidden');
 }
 
@@ -485,27 +563,39 @@ function renderBuilder() {
   box.innerHTML = '';
   bQuestions.forEach((q, i) => {
     const row = document.createElement('div');
-    row.className = 'q-row';
+    const isSection = q.type === 'section';
+    row.className = 'q-row' + (isSection ? ' q-row-sec' : '');
     const isChoice = q.type === 'choice';
+    const hasOpts = isChoice || q.type === 'dropdown';
+    const isScale = q.type === 'scale';
     row.innerHTML = `
       <div class="q-head">
-        <span class="q-index">${i + 1}</span>
-        <input class="q-label" placeholder="질문을 입력하세요" value="${esc(q.label)}">
+        <span class="q-index">${isSection ? '§' : qNo(i)}</span>
+        <input class="q-label" placeholder="${isSection ? '구역 제목 (예: 2부. 활용 현황)' : '질문을 입력하세요'}" value="${esc(q.label)}">
         <select class="q-type" aria-label="질문 유형">
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
-      <input class="q-help" placeholder="설명문 (선택)" value="${esc(q.help || '')}">
-      <div class="q-opts-box ${isChoice ? '' : 'hidden'}">
+      <input class="q-help" placeholder="${isSection ? '구역 설명 (선택) — 참여 화면에서 이 위치부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">
+      <div class="q-opts-box ${hasOpts ? '' : 'hidden'}">
         <div class="opt-rows"></div>
         <div class="opt-foot">
           <button type="button" class="small opt-add">＋ 선택지 추가</button>
-          <label class="opt-multi"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용</label>
+          <label class="opt-multi ${isChoice ? '' : 'hidden'}"><input type="checkbox" class="q-multi" ${q.multiple ? 'checked' : ''}> 복수 선택 허용</label>
+          <label class="opt-multi q-other-wrap ${isChoice ? '' : 'hidden'}"><input type="checkbox" class="q-other" ${q.allowOther ? 'checked' : ''}> 기타(직접 입력) 허용</label>
         </div>
+      </div>
+      <div class="q-scale-box ${isScale ? '' : 'hidden'}">
+        <select class="q-scale-max" aria-label="배율 범위" style="width:auto; margin:0;">
+          <option value="5" ${q.scaleMax !== 10 ? 'selected' : ''}>1 ~ 5</option>
+          <option value="10" ${q.scaleMax === 10 ? 'selected' : ''}>1 ~ 10</option>
+        </select>
+        <input class="q-scale-min" placeholder="왼쪽 라벨 (예: 전혀 아니다)" maxlength="40" value="${esc(q.minLabel || '')}" style="margin:0;">
+        <input class="q-scale-maxl" placeholder="오른쪽 라벨 (예: 매우 그렇다)" maxlength="40" value="${esc(q.maxLabel || '')}" style="margin:0;">
       </div>
       <div class="q-media-list"></div>
       <div class="q-toolbar">
-        <div class="q-toggles">
+        <div class="q-toggles" ${isSection ? 'style="visibility:hidden;"' : ''}>
           <button type="button" class="toggle q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
           <button type="button" class="toggle q-att" aria-pressed="${q.allowAttach ? 'true' : 'false'}" title="참여자가 파일을 첨부할 수 있게 합니다">📎 첨부 허용</button>
           <button type="button" class="small q-media-add" title="질문에 보여줄 이미지·파일 (끌어다 놓기 가능)">🖼 자료 추가</button>
@@ -515,6 +605,7 @@ function renderBuilder() {
         <div class="q-icons">
           <button type="button" class="icon-btn q-up" ${i === 0 ? 'disabled' : ''} title="위로" aria-label="위로 이동">↑</button>
           <button type="button" class="icon-btn q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''} title="아래로" aria-label="아래로 이동">↓</button>
+          <button type="button" class="icon-btn q-dup" title="질문 복제" aria-label="질문 복제">⧉</button>
           <button type="button" class="icon-btn del q-del" title="질문 삭제" aria-label="질문 삭제">✕</button>
         </div>
       </div>
@@ -552,7 +643,7 @@ function renderBuilder() {
         inputs[inputs.length - 1]?.focus();
       }
     };
-    if (isChoice) renderOpts();
+    if (hasOpts) renderOpts();
 
     // 질문 자료(이미지/파일) 목록 — 이미지는 모서리 핸들로 크기 조절 + 정렬 선택
     const renderMedia = () => {
@@ -642,12 +733,13 @@ function renderBuilder() {
     row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); };
     row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; };
     row.querySelector('.q-multi').onchange = (e) => { q.multiple = e.target.checked; };
+    row.querySelector('.q-other').onchange = (e) => { q.allowOther = e.target.checked; };
+    row.querySelector('.q-scale-max').onchange = (e) => { q.scaleMax = Number(e.target.value); };
+    row.querySelector('.q-scale-min').oninput = (e) => { q.minLabel = e.target.value; };
+    row.querySelector('.q-scale-maxl').oninput = (e) => { q.maxLabel = e.target.value; };
     row.querySelector('.q-type').onchange = (e) => {
       q.type = e.target.value;
-      const choice = q.type === 'choice';
-      row.querySelector('.q-opts-box').classList.toggle('hidden', !choice);
-      if (choice) renderOpts();
-      refreshBranches();
+      renderBuilder(); // 유형별로 보이는 편집 요소가 달라 전체 다시 그림
     };
     row.querySelector('.q-cond-q').onchange = (e) => {
       q.showIf = e.target.value ? { qid: e.target.value, value: '' } : null;
@@ -682,6 +774,18 @@ function renderBuilder() {
       [bQuestions[i + 1], bQuestions[i]] = [bQuestions[i], bQuestions[i + 1]];
       renderBuilder();
     };
+    row.querySelector('.q-dup').onclick = () => {
+      const copy = {
+        ...q,
+        id: 'q' + Math.random().toString(36).slice(2, 10),
+        options: [...(q.options || [])],
+        showIf: q.showIf ? { ...q.showIf } : null,
+        media: (q.media || []).map((m) => ({ ...m })),
+      };
+      bQuestions.splice(i + 1, 0, copy);
+      renderBuilder();
+      toast('질문을 복제했습니다');
+    };
     row.querySelector('.q-del').onclick = () => {
       bQuestions.splice(i, 1);
       renderBuilder();
@@ -694,16 +798,22 @@ function renderBuilder() {
   refreshBranches();
 }
 
+// 참여 화면 기준 문항 번호 (구역 제외)
+function qNo(i) {
+  return bQuestions.slice(0, i + 1).filter((q) => q.type !== 'section').length;
+}
+
 // 분기(표시 조건) 드롭다운을 현재 질문 구성에 맞춰 실시간 갱신
 function refreshBranches() {
   // 1) 더 이상 유효하지 않은 분기 조건은 자동 해제
   bQuestions.forEach((q, i) => {
+    if (q.type === 'section') { q.showIf = null; return; }
     if (!q.showIf) return;
     const src = bQuestions.find((p) => p.id === q.showIf.qid);
     const srcIdx = src ? bQuestions.indexOf(src) : -1;
     const opts = (src?.options || []).map((o) => o.trim()).filter(Boolean);
     // 조건 질문 자체가 무효해진 경우만 해제하고, 답변만 비어 있으면 첫 선택지로 채운다
-    if (!src || src.type !== 'choice' || srcIdx >= i || !opts.length) {
+    if (!src || !isBranchSource(src) || srcIdx >= i || !opts.length) {
       q.showIf = null;
     } else if (!opts.includes(q.showIf.value)) {
       q.showIf.value = opts[0];
@@ -727,12 +837,12 @@ function refreshBranches() {
 
     // ── 이 질문의 표시 조건 (질문마다 직접 설정) ──
     const prior = bQuestions.slice(0, i).filter(
-      (p) => p.type === 'choice' && p.label.trim() && (p.options || []).some((o) => o.trim()),
+      (p) => isBranchSource(p) && p.label.trim() && (p.options || []).some((o) => o.trim()),
     );
     const curQid = q.showIf?.qid && prior.some((p) => p.id === q.showIf.qid) ? q.showIf.qid : '';
     condQ.innerHTML = '<option value="">항상 표시</option>'
       + prior.map((p) => {
-        const no = bQuestions.indexOf(p) + 1;
+        const no = qNo(bQuestions.indexOf(p));
         return `<option value="${p.id}" ${curQid === p.id ? 'selected' : ''}>${no}번 "${esc(p.label.slice(0, 18))}"에서</option>`;
       }).join('');
     condQ.disabled = !prior.length;
@@ -760,7 +870,7 @@ function refreshBranches() {
       const parts = [];
       if (q.showIf) {
         const src = bQuestions.find((p) => p.id === q.showIf.qid);
-        parts.push(`${bQuestions.indexOf(src) + 1}번 "${q.showIf.value}"일 때만 표시`);
+        parts.push(`${qNo(bQuestions.indexOf(src))}번 "${q.showIf.value}"일 때만 표시`);
       }
       const n = bQuestions.filter((p, k) => k > i && p.showIf?.qid === q.id).length;
       if (n) parts.push(`${n}개 질문 분기`);
@@ -769,13 +879,13 @@ function refreshBranches() {
       brSum.textContent = '';
     }
 
-    // 분기점 패널은 객관식 질문에만 표시
-    const isChoice = q.type === 'choice';
-    panel.classList.toggle('hidden', !isChoice);
-    if (!isChoice) return;
+    // 분기점 패널은 선택지가 있는 질문(객관식/드롭다운)에만 표시
+    const srcOk = isBranchSource(q);
+    panel.classList.toggle('hidden', !srcOk);
+    if (!srcOk) return;
 
     const opts = (q.options || []).map((o) => o.trim()).filter(Boolean);
-    const following = bQuestions.slice(i + 1);
+    const following = bQuestions.slice(i + 1).filter((fq) => fq.type !== 'section');
     if (!opts.length) {
       body.innerHTML = '<p class="hint" style="margin:0;">선택지를 입력하면 분기를 설정할 수 있어요</p>';
       return;
@@ -787,8 +897,8 @@ function refreshBranches() {
       + opts.map((o) => `
         <div class="br-line">
           <span class="br-opt">"${esc(o)}" →</span>
-          <span class="br-chips">${following.map((fq, k) => {
-            const no = i + k + 2;
+          <span class="br-chips">${following.map((fq) => {
+            const no = qNo(bQuestions.indexOf(fq));
             const on = fq.showIf?.qid === q.id && fq.showIf.value === o;
             const byOther = fq.showIf && fq.showIf.qid !== q.id;
             const label = fq.label.trim() || '(제목 없음)';
@@ -858,20 +968,41 @@ function showPreview() {
       }).join('')
     }</div>` : '';
     let inner;
+    if (q.type === 'section') {
+      return `<div class="q-section">
+        <h2>${esc(q.label)}</h2>
+        ${q.help ? `<span class="q-help-text" style="margin-left:0;">${esc(q.help)}</span>` : ''}
+        ${media}
+        <span class="hint">📄 참여 화면에서는 여기부터 새 페이지가 시작됩니다</span>
+      </div>`;
+    }
     if (q.type === 'textarea') {
       inner = `<label>${esc(q.label)}${req}${help}${media}<textarea rows="5" placeholder="답변 입력"></textarea></label>`;
     } else if (q.type === 'rating') {
       inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}
         <div class="stars">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star" data-v="${n}">★</button>`).join('')}</div>
       </fieldset>`;
+    } else if (q.type === 'scale') {
+      const max = q.scaleMax === 10 ? 10 : 5;
+      inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}
+        <div class="scale">
+          ${q.minLabel ? `<span class="scale-lab">${esc(q.minLabel)}</span>` : ''}
+          ${Array.from({ length: max }, (_, n) => `<button type="button" class="scale-btn">${n + 1}</button>`).join('')}
+          ${q.maxLabel ? `<span class="scale-lab">${esc(q.maxLabel)}</span>` : ''}
+        </div>
+      </fieldset>`;
+    } else if (q.type === 'dropdown') {
+      inner = `<label>${esc(q.label)}${req}${help}${media}
+        <select name="pv_${q.id}"><option value="">선택하세요</option>${q.options.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select>
+      </label>`;
     } else if (q.type === 'select') {
       inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req}</legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="radio" name="pv_${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
-      }</fieldset>`;
+      }${q.allowOther ? `<label class="choice choice-other"><input type="radio" name="pv_${q.id}" value="기타"> 기타: <input type="text" class="other-input" placeholder="직접 입력"></label>` : ''}</fieldset>`;
     } else if (q.type === 'checkbox') {
       inner = `<fieldset class="q-choice"><legend>${esc(q.label)}${req} <span class="muted">(복수 선택 가능)</span></legend>${helpP}${media}${
         q.options.map((o) => `<label class="choice"><input type="checkbox" name="pv_${q.id}" value="${esc(o)}"> ${esc(o)}</label>`).join('')
-      }</fieldset>`;
+      }${q.allowOther ? `<label class="choice choice-other"><input type="checkbox" name="pv_${q.id}" value="기타"> 기타: <input type="text" class="other-input" placeholder="직접 입력"></label>` : ''}</fieldset>`;
     } else {
       inner = `<label>${esc(q.label)}${req}${help}${media}<input placeholder="답변 입력"></label>`;
     }
@@ -913,6 +1044,9 @@ function applyPreviewBranching(qs) {
       if (q.type === 'select') {
         const el = body.querySelector(`input[name="pv_${q.id}"]:checked`);
         if (el) raw[q.id] = el.value;
+      } else if (q.type === 'dropdown') {
+        const el = body.querySelector(`select[name="pv_${q.id}"]`);
+        if (el && el.value) raw[q.id] = el.value;
       } else if (q.type === 'checkbox') {
         const els = [...body.querySelectorAll(`input[name="pv_${q.id}"]:checked`)];
         if (els.length) raw[q.id] = els.map((e) => e.value);
@@ -943,9 +1077,9 @@ async function saveBuilder() {
       .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
       .filter((q) => q.label.trim()),
   );
-  if (!cleaned.length) { toast('질문을 1개 이상 만들어 주세요', true); return; }
+  if (!cleaned.filter((q) => q.type !== 'section').length) { toast('질문을 1개 이상 만들어 주세요', true); return; }
   for (const q of cleaned) {
-    if ((q.type === 'select' || q.type === 'checkbox') && !q.options.length) {
+    if (['select', 'checkbox', 'dropdown'].includes(q.type) && !q.options.length) {
       toast(`"${q.label}" 질문의 선택지를 입력해 주세요`, true);
       return;
     }
@@ -984,8 +1118,12 @@ async function saveBuilder() {
 
 // ---------- 제출 현황 ----------
 
+let statsDept = ''; // 통계 부서 필터 ('' = 전체)
+let statsCampaignId = null;
+
 async function loadSubs() {
   const id = $('sel-campaign').value;
+  if (id !== statsCampaignId) { statsDept = ''; statsCampaignId = id; }
   const tbody = $('sub-rows');
   if (!id) {
     tbody.innerHTML = '';
@@ -1062,7 +1200,11 @@ function renderStats() {
   const box = $('stats-box');
   const ca = campaigns.find((x) => String(x.id) === $('sel-campaign').value);
   if (!ca) { box.innerHTML = '<div class="empty"><span class="icon">📈</span>설문을 선택해 주세요.</div>'; return; }
-  const subs = currentSubs;
+
+  // 부서 필터 (선택 목록은 전체 제출 기준으로 유지)
+  const allDepts = [...new Set(currentSubs.map((s) => s.user_department || '(부서 미상)'))].sort();
+  if (statsDept && !allDepts.includes(statsDept)) statsDept = '';
+  const subs = statsDept ? currentSubs.filter((s) => (s.user_department || '(부서 미상)') === statsDept) : currentSubs;
   const answersList = subs.map((s) => {
     try { return s.answers ? JSON.parse(s.answers) : {}; } catch { return {}; }
   });
@@ -1081,7 +1223,13 @@ function renderStats() {
   let html = `
     <div class="stats-head">
       <h2 style="margin:0;">📈 ${esc(ca.title)}</h2>
-      <button class="small" id="stats-view">${statsTable ? '📊 그래프로 보기' : '📋 표로 보기'}</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="stats-dept" style="width:auto; margin:0; padding:6px 10px; font-size:12.5px;">
+          <option value="">전체 부서</option>
+          ${allDepts.map((d) => `<option value="${esc(d)}" ${statsDept === d ? 'selected' : ''}>${esc(d)}</option>`).join('')}
+        </select>
+        <button class="small" id="stats-view">${statsTable ? '📊 그래프로 보기' : '📋 표로 보기'}</button>
+      </div>
     </div>
     <div class="kpi-row">
       <div class="kpi-hero">
@@ -1093,44 +1241,57 @@ function renderStats() {
       <div class="stat-tile"><div class="kpi-label">첨부파일</div><b>${attCount}</b></div>
     </div>`;
 
+  const bindStatsControls = () => {
+    $('stats-view').onclick = toggleStatsView;
+    $('stats-dept').onchange = (e) => { statsDept = e.target.value; renderStats(); };
+  };
+
   if (!subs.length) {
     box.innerHTML = html + '<div class="empty"><span class="icon">📭</span>아직 응답이 없습니다.</div>';
-    $('stats-view').onclick = toggleStatsView;
+    bindStatsControls();
     return;
   }
 
-  html += `<section class="stat-q"><h3>부서별 제출</h3>${barChart(deptRows, subs.length)}</section>`;
+  if (!statsDept) html += `<section class="stat-q"><h3>부서별 제출</h3>${barChart(deptRows, subs.length)}</section>`;
 
   for (const q of ca.form.questions) {
-    if (q.type === 'select' || q.type === 'checkbox') {
+    if (q.type === 'select' || q.type === 'checkbox' || q.type === 'dropdown') {
       const counts = Object.fromEntries(q.options.map((o) => [o, 0]));
+      let other = 0;
       let answered = 0;
       answersList.forEach((ans) => {
         const v = ans[q.id];
         if (v === undefined) return;
         answered++;
-        (Array.isArray(v) ? v : [v]).forEach((o) => { if (o in counts) counts[o]++; });
+        (Array.isArray(v) ? v : [v]).forEach((o) => {
+          if (o in counts) counts[o]++;
+          else other++; // "기타: ..." 직접 입력 값
+        });
       });
       const rows = q.options.map((o) => ({ label: o, n: counts[o] }));
+      if (q.allowOther && (other || answered)) rows.push({ label: '기타(직접 입력)', n: other });
       html += `<section class="stat-q"><h3>${esc(q.label)} <span class="stat-sub">응답 ${answered}건</span></h3>${barChart(rows, answered)}</section>`;
-    } else if (q.type === 'rating') {
-      const counts = [0, 0, 0, 0, 0];
+    } else if (q.type === 'rating' || q.type === 'scale') {
+      const max = q.type === 'scale' ? (q.scaleMax === 10 ? 10 : 5) : 5;
+      const counts = new Array(max).fill(0);
       let sum = 0;
       let answered = 0;
       answersList.forEach((ans) => {
         const n = parseInt(ans[q.id], 10);
-        if (n >= 1 && n <= 5) { counts[n - 1]++; sum += n; answered++; }
+        if (n >= 1 && n <= max) { counts[n - 1]++; sum += n; answered++; }
       });
       const avg = answered ? (sum / answered).toFixed(1) : '-';
       const rows = counts.map((n, i) => ({ label: `${i + 1}점`, n }));
+      // 순서형 램프: 10단계는 5색 램프를 2칸씩 사용해 명도 단조 유지
+      const ramp = rows.map((_, i) => RATING_RAMP[Math.min(4, Math.floor((i * 5) / max))]);
       html += `<section class="stat-q">
         <h3>${esc(q.label)} <span class="stat-sub">평균 ${avg} · 응답 ${answered}건</span></h3>
-        ${barChart(rows, answered, { ramp: RATING_RAMP })}
+        ${barChart(rows, answered, { ramp })}
       </section>`;
     }
   }
   box.innerHTML = html;
-  $('stats-view').onclick = toggleStatsView;
+  bindStatsControls();
 }
 
 function toggleStatsView() {
