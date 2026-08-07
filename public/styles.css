@@ -80,15 +80,14 @@ body.has-bg .card { box-shadow: var(--shadow-md); }
 /* public/logo.png 가 있으면 로고 이미지를, 없으면 BDO 워드마크를 표시 */
 .topbar .brand-logo { height: 28px; width: auto; display: block; }
 .topbar .brand.has-logo b { display: none; }
+/* 실제 BDO 로고와 같은 결: 빨간 볼드 'BDO' 워드마크 (public/logo.png 없을 때 대체) */
 .topbar .brand b {
-  color: var(--bdo-blue);
+  color: var(--bdo-red);
   font-weight: 900;
-  font-size: 19px;
-  letter-spacing: -0.02em;
-  padding: 1px 0 3px 8px;
-  border-left: 5px solid var(--bdo-red);
-  border-bottom: 3px solid var(--bdo-red);
-  line-height: 1.1;
+  font-size: 21px;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  font-family: 'Arial Black', 'Pretendard', system-ui, sans-serif;
 }
 .topbar .brand span { color: var(--text); }
 .topbar .who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
