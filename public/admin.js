@@ -285,7 +285,8 @@ async function onCampaignAction(act, ca) {
       prev,
     );
     if (toRaw === null) return; // 취소
-    const to = toRaw.split(/[,;\s]+/).filter(Boolean).join(';');
+    // 주소는 mailto에 원문으로 들어가야 아웃룩이 인식한다 (이메일에 쓰는 문자만 남김)
+    const to = toRaw.split(/[,;\s]+/).map((s) => s.replace(/[^\w.@+-]/g, '')).filter(Boolean).join(';');
     localStorage.setItem(toKey, to);
     const url = `${location.origin}/c/${ca.slug}`;
     const subject = ca.title;
@@ -307,7 +308,7 @@ async function onCampaignAction(act, ca) {
       '여러분의 응답 하나하나가 큰 도움이 됩니다.',
       '많은 참여 부탁드립니다. 감사합니다.',
     ].join('\n');
-    location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     return;
   }
   if (act === 'copy') {
