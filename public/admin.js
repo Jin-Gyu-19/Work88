@@ -640,10 +640,16 @@ function renderBuilder() {
     row.innerHTML = `
       <div class="q-toolbar">
         <div class="q-toggles" ${isSection ? 'style="visibility:hidden;"' : ''}>
-          <button type="button" class="toggle q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
-          <button type="button" class="toggle q-att" aria-pressed="${q.allowAttach ? 'true' : 'false'}" title="참여자가 답변에 파일·캡쳐·동영상을 첨부할 수 있게 합니다">📎 파일 받기</button>
-          <button type="button" class="small q-media-add" title="질문에 함께 보여줄 이미지·파일을 넣습니다 (끌어다 놓기 가능)">🖼 이미지 넣기</button>
-          <button type="button" class="toggle q-branch-toggle" aria-pressed="false" title="이 질문의 표시 조건과 분기를 설정합니다">🔀 분기</button>
+          <button type="button" class="tbtn q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
+          <span class="tsep"></span>
+          <div class="dropdown">
+            <button type="button" class="tbtn q-opt-btn" title="이 질문의 부가 기능을 켜고 끕니다">⚙️ 옵션<span class="tcnt hidden"></span> <span class="tarrow">▾</span></button>
+            <div class="dropdown-menu q-opt-menu hidden">
+              <div class="dd-row dd-att"><div><div class="t">📎 파일 받기</div><div class="d">참여자가 답변에 파일·캡쳐·동영상을 첨부할 수 있어요</div></div><span class="dd-sw"></span></div>
+              <div class="dd-row dd-branch"><div><div class="t">🔀 분기</div><div class="d">답변에 따라 다음 질문을 다르게 보여줘요</div></div><span class="dd-sw"></span></div>
+              <div class="dd-row action dd-media"><div><div class="t">🖼 이미지 넣기</div><div class="d">질문에 함께 보여줄 이미지·파일을 넣어요</div></div><span class="dd-more">›</span></div>
+            </div>
+          </div>
           <span class="q-branch-sum muted"></span>
         </div>
         <div class="q-icons">
@@ -775,9 +781,41 @@ function renderBuilder() {
         };
         listBox.appendChild(item);
       });
+      row.syncOptUi?.(); // 이미지 개수 변화를 옵션 배지에 반영
     };
     renderMedia();
-    row.querySelector('.q-media-add').onclick = () => {
+
+    // ── 옵션 드롭다운: 켜진 개수 배지 + 스위치 상태 동기화 ──
+    const syncOptUi = () => {
+      const hasBranch = !!q.showIf || bQuestions.some((p) => p.showIf?.qid === q.id) || branchOpen.has(q.id);
+      const n = (q.allowAttach ? 1 : 0) + (hasBranch ? 1 : 0) + ((q.media || []).length ? 1 : 0);
+      const cnt = row.querySelector('.tcnt');
+      cnt.textContent = n || '';
+      cnt.classList.toggle('hidden', !n);
+      row.querySelector('.dd-att').classList.toggle('on', !!q.allowAttach);
+      row.querySelector('.dd-branch').classList.toggle('on', branchOpen.has(q.id));
+    };
+    row.syncOptUi = syncOptUi; // refreshBranches에서 재사용
+    syncOptUi();
+
+    row.querySelector('.q-opt-btn').onclick = (e) => {
+      e.stopPropagation();
+      const menu = row.querySelector('.q-opt-menu');
+      const wasHidden = menu.classList.contains('hidden');
+      closeAllMenus();
+      if (wasHidden) menu.classList.remove('hidden');
+    };
+    row.querySelector('.dd-att').onclick = () => {
+      q.allowAttach = !q.allowAttach;
+      syncOptUi();
+    };
+    row.querySelector('.dd-branch').onclick = () => {
+      if (branchOpen.has(q.id)) branchOpen.delete(q.id); else branchOpen.add(q.id);
+      refreshBranches();
+      syncOptUi();
+    };
+    row.querySelector('.dd-media').onclick = () => {
+      closeAllMenus();
       activeMediaQ = q;
       activeMediaRender = renderMedia;
       $('bq-file').click();
@@ -819,21 +857,10 @@ function renderBuilder() {
       refreshBranches();
     };
 
-    const brBtn = row.querySelector('.q-branch-toggle');
-    brBtn.onclick = () => {
-      if (branchOpen.has(q.id)) branchOpen.delete(q.id); else branchOpen.add(q.id);
-      refreshBranches();
-    };
-
     const reqBtn = row.querySelector('.q-req');
     reqBtn.onclick = () => {
       q.required = !q.required;
       reqBtn.setAttribute('aria-pressed', q.required ? 'true' : 'false');
-    };
-    const attBtn = row.querySelector('.q-att');
-    attBtn.onclick = () => {
-      q.allowAttach = !q.allowAttach;
-      attBtn.setAttribute('aria-pressed', q.allowAttach ? 'true' : 'false');
     };
     row.querySelector('.q-up').onclick = () => {
       [bQuestions[i - 1], bQuestions[i]] = [bQuestions[i], bQuestions[i - 1]];
@@ -896,7 +923,6 @@ function refreshBranches() {
     const panel = row.querySelector('.q-branch-src');
     const body = row.querySelector('.q-branch-body');
     const wrap = row.querySelector('.q-branch-wrap');
-    const brBtn = row.querySelector('.q-branch-toggle');
     const brSum = row.querySelector('.q-branch-sum');
     const condQ = row.querySelector('.q-cond-q');
     const condV = row.querySelector('.q-cond-v');
@@ -934,7 +960,7 @@ function refreshBranches() {
     // ── 접기/펼치기: 설정이 있으면 자동으로 펼침 ──
     const open = branchOpen.has(q.id);
     wrap.classList.toggle('hidden', !open);
-    brBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    if (row.syncOptUi) row.syncOptUi();
     if (!open) {
       const parts = [];
       if (q.showIf) {

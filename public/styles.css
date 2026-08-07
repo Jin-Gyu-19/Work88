@@ -503,13 +503,57 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 .opt-multi { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 400; font-size: 12.5px; color: var(--muted); }
 .opt-multi input { width: auto; margin: 0; accent-color: var(--primary); }
 
-/* 질문 카드 상단 툴바 */
+/* 질문 카드 상단 툴바 — 잉크 미니멀: 배경 없는 텍스트 버튼, 켜지면 ✓ + 빨간 밑줄 */
 .q-toolbar {
   display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-  margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(231, 233, 240, .8);
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(231, 233, 240, .8);
 }
-.q-toggles { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.q-icons { display: flex; align-items: center; gap: 4px; }
+.q-toggles { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; position: relative; }
+.q-icons { display: flex; align-items: center; gap: 1px; }
+
+.tbtn {
+  background: transparent; border: none; box-shadow: none;
+  color: var(--muted); font-size: 12.5px; font-weight: 600;
+  padding: 7px 11px; border-radius: 9px;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.tbtn:hover { background: rgba(27, 30, 40, .05); border: none; color: var(--text); }
+.tbtn[aria-pressed="true"] {
+  color: var(--primary); font-weight: 800; background: transparent;
+  box-shadow: inset 0 -2.5px 0 var(--bdo-red); border-radius: 9px 9px 0 0;
+}
+.tbtn[aria-pressed="true"]::before { content: '✓'; font-size: 11px; }
+.tsep { width: 1px; height: 16px; background: #e2e4ec; margin: 0 8px; }
+.tarrow { font-size: 10px; color: #9a9fae; }
+.tcnt {
+  min-width: 16px; height: 16px; border-radius: 8px; background: var(--bdo-red); color: #fff;
+  font-size: 9.5px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+
+/* 옵션 드롭다운 (스위치 + 설명) */
+.q-opt-menu {
+  left: 0; right: auto; width: 330px; border-radius: 14px;
+  border: 1px solid #eceef2; box-shadow: 0 16px 40px rgba(27, 30, 40, .14);
+}
+.dd-row { display: flex; align-items: flex-start; gap: 11px; padding: 11px 15px; cursor: pointer; }
+.dd-row > div:first-child { flex: 1; }
+.dd-row:hover { background: rgba(27, 30, 40, .03); }
+.dd-row + .dd-row { border-top: 1px solid #f4f5f8; }
+.dd-row .t { font-size: 13px; font-weight: 700; color: var(--text); }
+.dd-row .d { font-size: 11px; color: #9a9fae; margin-top: 1px; line-height: 1.45; }
+.dd-sw {
+  width: 32px; height: 18px; border-radius: 10px; background: #cfd3de;
+  position: relative; flex: none; margin: 3px 0 0 auto; transition: background .15s;
+}
+.dd-sw::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: left .15s;
+}
+.dd-row.on .dd-sw { background: var(--ink, #1b1e28); }
+.dd-row.on .dd-sw::after { left: 16px; }
+.dd-row.on .t { color: var(--primary); }
+.dd-more { margin: 3px 0 0 auto; color: #9a9fae; font-size: 14px; }
 
 .toggle {
   padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
