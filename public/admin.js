@@ -38,10 +38,12 @@ async function init() {
   }
   $('admin-box').classList.remove('hidden');
 
-  // 전체 설문·관리자 관리 탭은 마스터 관리자에게만 표시
+  // 전체 설문·관리자 관리 탭은 마스터 관리자에게만 표시 + 상단 배지도 '마스터'로
   if (me.isMaster) {
     $('tab-btn-all').classList.remove('hidden');
     $('tab-btn-users').classList.remove('hidden');
+    const badge = document.querySelector('.topbar .brand .badge.admin');
+    if (badge) badge.textContent = '마스터';
   }
 
   document.querySelectorAll('.tabs button').forEach((b) => {
@@ -618,6 +620,11 @@ async function deleteTemplate() {
   }
 }
 
+// 질문 카드 아이콘 (굵은 선 SVG)
+const SVG_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4M5 11l7-7 7 7"/></svg>';
+const SVG_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 13l7 7 7-7"/></svg>';
+const SVG_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg>';
+
 function renderBuilder() {
   const box = $('b-questions');
   box.innerHTML = '';
@@ -636,6 +643,7 @@ function renderBuilder() {
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
+      <div class="q-media-list"></div>
       <input class="q-help" placeholder="${isSection ? '구역 설명 (선택) — 참여 화면에서 이 위치부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">
       <div class="q-opts-box ${hasOpts ? '' : 'hidden'}">
         <div class="opt-rows"></div>
@@ -653,19 +661,18 @@ function renderBuilder() {
         <input class="q-scale-min" placeholder="왼쪽 라벨 (예: 전혀 아니다)" maxlength="40" value="${esc(q.minLabel || '')}" style="margin:0;">
         <input class="q-scale-maxl" placeholder="오른쪽 라벨 (예: 매우 그렇다)" maxlength="40" value="${esc(q.maxLabel || '')}" style="margin:0;">
       </div>
-      <div class="q-media-list"></div>
       <div class="q-toolbar">
         <div class="q-toggles" ${isSection ? 'style="visibility:hidden;"' : ''}>
           <button type="button" class="toggle q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
-          <button type="button" class="toggle q-att" aria-pressed="${q.allowAttach ? 'true' : 'false'}" title="참여자가 파일을 첨부할 수 있게 합니다">📎 첨부 허용</button>
-          <button type="button" class="small q-media-add" title="질문에 보여줄 이미지·파일 (끌어다 놓기 가능)">🖼 자료 추가</button>
+          <button type="button" class="toggle q-att" aria-pressed="${q.allowAttach ? 'true' : 'false'}" title="참여자가 답변에 파일·캡쳐·동영상을 첨부할 수 있게 합니다">📎 파일 받기</button>
+          <button type="button" class="small q-media-add" title="질문에 함께 보여줄 이미지·파일을 넣습니다 (끌어다 놓기 가능)">🖼 이미지 넣기</button>
           <button type="button" class="toggle q-branch-toggle" aria-pressed="false" title="이 질문의 표시 조건과 분기를 설정합니다">🔀 분기</button>
           <span class="q-branch-sum muted"></span>
         </div>
         <div class="q-icons">
-          <button type="button" class="icon-btn q-up" ${i === 0 ? 'disabled' : ''} title="위로" aria-label="위로 이동">↑</button>
-          <button type="button" class="icon-btn q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''} title="아래로" aria-label="아래로 이동">↓</button>
-          <button type="button" class="icon-btn q-dup" title="질문 복제" aria-label="질문 복제">⧉</button>
+          <button type="button" class="icon-btn q-up" ${i === 0 ? 'disabled' : ''} title="위로 이동" aria-label="위로 이동">${SVG_UP}</button>
+          <button type="button" class="icon-btn q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''} title="아래로 이동" aria-label="아래로 이동">${SVG_DOWN}</button>
+          <button type="button" class="icon-btn q-dup" title="이 질문을 복사해 바로 아래에 추가" aria-label="질문 복사">${SVG_COPY}</button>
           <button type="button" class="icon-btn del q-del" title="질문 삭제" aria-label="질문 삭제">✕</button>
         </div>
       </div>
