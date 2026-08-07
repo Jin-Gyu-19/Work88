@@ -38,12 +38,19 @@ async function init() {
   }
   $('admin-box').classList.remove('hidden');
 
+  // 전체 설문·관리자 관리 탭은 마스터 관리자에게만 표시
+  if (me.isMaster) {
+    $('tab-btn-all').classList.remove('hidden');
+    $('tab-btn-users').classList.remove('hidden');
+  }
+
   document.querySelectorAll('.tabs button').forEach((b) => {
     b.onclick = () => {
       document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('active', x === b));
-      ['campaigns', 'submissions', 'users'].forEach((t) => $(`tab-${t}`).classList.toggle('hidden', t !== b.dataset.tab));
+      ['campaigns', 'submissions', 'all', 'users'].forEach((t) => $(`tab-${t}`).classList.toggle('hidden', t !== b.dataset.tab));
       if (b.dataset.tab === 'users') loadAdmins();
       if (b.dataset.tab === 'submissions') loadSubs();
+      if (b.dataset.tab === 'all') renderAllCampaignList();
     };
   });
 
@@ -55,6 +62,7 @@ async function init() {
   ['b-close', 'b-one', 'b-noedit'].forEach((id) => { $(id).onchange = updateOptsSum; });
   $('camp-search').oninput = renderCampaignList;
   $('camp-status').onchange = renderCampaignList;
+  $('all-search').oninput = renderAllCampaignList;
   $('b-add').onclick = () => { bQuestions.push(newQuestion()); renderBuilder(); };
   $('bq-file').onchange = onBuilderFilesPicked;
   $('b-bg-add').onclick = () => $('b-bg-file').click();
@@ -127,11 +135,16 @@ async function loadCampaigns() {
     return;
   }
   renderCampaignList();
+  if (adminMe?.isMaster) renderAllCampaignList();
 
-  // 제출 현황 탭의 설문 선택 목록도 갱신
+  // 제출 현황 탭의 설문 선택 목록도 갱신 (마스터는 만든 관리자 표시)
   const sel = $('sel-campaign');
   const prev = sel.value;
-  sel.innerHTML = campaigns.map((ca) => `<option value="${ca.id}">${esc(ca.title)} (${ca.submission_count}건)</option>`).join('');
+  sel.innerHTML = campaigns.map((ca) => {
+    const who = adminMe?.isMaster && ca.created_by !== adminMe.email
+      ? ` — ${ca.creator_name || ca.created_by || '관리자 미상'}` : '';
+    return `<option value="${ca.id}">${esc(ca.title)} (${ca.submission_count}건)${esc(who)}</option>`;
+  }).join('');
   if (prev && campaigns.some((ca) => String(ca.id) === prev)) sel.value = prev;
 }
 
@@ -147,13 +160,15 @@ function renderCampaignList() {
   const box = $('campaigns');
   const text = $('camp-search').value.trim().toLowerCase();
   const status = $('camp-status').value;
-  const list = campaigns.filter((ca) => {
+  // 마스터는 서버에서 전체를 받으므로, 설문 관리 탭에는 본인 것만 보여준다
+  const mine = adminMe?.isMaster ? campaigns.filter((ca) => ca.created_by === adminMe.email) : campaigns;
+  const list = mine.filter((ca) => {
     if (text && !ca.title.toLowerCase().includes(text)) return false;
     if (status === 'open' && !ca.open_now) return false;
     if (status === 'closed' && ca.open_now) return false;
     return true;
   });
-  if (!campaigns.length) {
+  if (!mine.length) {
     box.innerHTML = '<div class="empty"><span class="icon">📋</span>아직 설문이 없습니다.<br>오른쪽 위 <b>새 설문 만들기</b>로 시작하세요.</div>';
   } else if (!list.length) {
     box.innerHTML = '<div class="empty"><span class="icon">🔍</span>조건에 맞는 설문이 없습니다.</div>';
@@ -191,6 +206,50 @@ function renderCampaignList() {
       </div>`;
     }).join('');
   }
+  box.querySelectorAll('button[data-act]').forEach((b) => {
+    const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
+    b.onclick = () => onCampaignAction(b.dataset.act, ca);
+  });
+}
+
+// 전체 설문 (마스터 관리자): 모든 관리자의 설문을 만든이와 함께 표시
+function renderAllCampaignList() {
+  const box = $('all-campaigns');
+  if (!box || !adminMe?.isMaster) return;
+  const text = $('all-search').value.trim().toLowerCase();
+  const list = campaigns.filter((ca) => {
+    if (!text) return true;
+    const who = `${ca.creator_name || ''} ${ca.created_by || ''}`.toLowerCase();
+    return ca.title.toLowerCase().includes(text) || who.includes(text);
+  });
+  if (!list.length) {
+    box.innerHTML = `<div class="empty"><span class="icon">🗂️</span>${campaigns.length ? '조건에 맞는 설문이 없습니다.' : '아직 등록된 설문이 없습니다.'}</div>`;
+    return;
+  }
+  box.innerHTML = list.map((ca) => {
+    const isMine = ca.created_by === adminMe.email;
+    const who = isMine ? '나' : (ca.creator_name || ca.created_by || '관리자 미상');
+    const qCount = ca.form.questions.filter((q) => q.type !== 'section').length;
+    return `
+      <div class="campaign-item">
+        <div>
+          <div class="ci-title-row"><span class="campaign-title">${esc(ca.title)}</span>
+            <span class="stag ${ca.open_now ? 'on' : 'off'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
+            <span class="stag ${isMine ? '' : 'who'}">👤 ${esc(who)}</span></div>
+          <div class="ci-meta">
+            <button type="button" class="ci-count" data-act="subs" data-id="${ca.id}" title="클릭하면 이 설문의 제출 현황으로 이동합니다">제출 <b>${ca.submission_count}</b>건</button>
+            <span class="sep">·</span><span>질문 <b>${qCount}</b>개</span>
+            <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="small" data-act="edit" data-id="${ca.id}">✏️ 설문 편집</button>
+          <button class="small" data-act="dup" data-id="${ca.id}">⧉ 복제</button>
+          <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
+          <button class="small ghost" data-act="delete" data-id="${ca.id}">삭제</button>
+        </div>
+      </div>`;
+  }).join('');
   box.querySelectorAll('button[data-act]').forEach((b) => {
     const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
     b.onclick = () => onCampaignAction(b.dataset.act, ca);

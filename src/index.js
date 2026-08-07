@@ -180,6 +180,14 @@ const needAdmin = (handler) => needAuth(async (c) => {
   return handler(c);
 });
 
+// 마스터 관리자(환경설정 ADMIN_EMAILS 지정) 전용
+const needMaster = (handler) => needAuth(async (c) => {
+  if (!isFixedAdmin(c.env, c.get('user').email)) {
+    return c.json({ error: '마스터 관리자만 사용할 수 있습니다' }, 403);
+  }
+  return handler(c);
+});
+
 function sanitizeName(name) {
   const s = String(name || '').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').trim();
   return s.slice(-120) || 'file';
@@ -510,6 +518,7 @@ app.get('/api/me', needAuth(async (c) => {
     name: u.name,
     department: u.department,
     isAdmin: await isAdmin(c, u.email),
+    isMaster: isFixedAdmin(c.env, u.email),
   });
 }));
 
@@ -717,10 +726,12 @@ app.delete('/api/submissions/:id', needAuth(async (c) => {
 app.get('/api/admin/campaigns', needAdmin(async (c) => {
   const email = c.get('user').email;
   const fixed = isFixedAdmin(c.env, email);
+  // 마스터 관리자는 전체 설문(만든 관리자 이름 포함), 일반 관리자는 본인 설문만
   const { results } = fixed
     ? await c.env.DB.prepare(`
-        SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
-        FROM campaigns ca ORDER BY ca.id DESC`).all()
+        SELECT ca.*, u.name AS creator_name,
+          (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
+        FROM campaigns ca LEFT JOIN users u ON u.email = ca.created_by ORDER BY ca.id DESC`).all()
     : await c.env.DB.prepare(`
         SELECT ca.*, (SELECT COUNT(*) FROM submissions s WHERE s.campaign_id = ca.id) AS submission_count
         FROM campaigns ca WHERE ca.created_by = ? ORDER BY ca.id DESC`).bind(email).all();
@@ -971,7 +982,7 @@ app.get('/api/admin/campaigns/:id/export.zip', needAdmin(async (c) => {
 }));
 
 // 관리자 지정/해제 (테넌트 구성원은 로그인 시 자동으로 일반 권한)
-app.get('/api/admin/admins', needAdmin(async (c) => {
+app.get('/api/admin/admins', needMaster(async (c) => {
   const { results } = await c.env.DB
     .prepare("SELECT id, email, name, department, last_login FROM users WHERE role = 'admin' ORDER BY name, email")
     .all();
@@ -986,7 +997,7 @@ app.get('/api/admin/admins', needAdmin(async (c) => {
   return c.json(list);
 }));
 
-app.post('/api/admin/admins', needAdmin(async (c) => {
+app.post('/api/admin/admins', needMaster(async (c) => {
   const body = await c.req.json();
   const email = (body.email || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: '올바른 이메일 주소를 입력해 주세요' }, 400);
@@ -997,7 +1008,7 @@ app.post('/api/admin/admins', needAdmin(async (c) => {
   return c.json({ ok: true });
 }));
 
-app.delete('/api/admin/admins/:id', needAdmin(async (c) => {
+app.delete('/api/admin/admins/:id', needMaster(async (c) => {
   const target = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(c.req.param('id')).first();
   if (!target) return c.json({ error: '사용자를 찾을 수 없습니다' }, 404);
   if (target.email === c.get('user').email) return c.json({ error: '본인의 관리자 권한은 해제할 수 없습니다' }, 400);

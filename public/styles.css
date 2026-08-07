@@ -686,6 +686,7 @@ button:focus-visible { outline-offset: 2px; }
 .stag.on::before { content: '●'; font-size: 6.5px; vertical-align: 2px; margin-right: 4px; }
 .stag.off { color: #a04040; border-color: #ecd2d2; background: #faeeee; }
 .stag.warn { color: #8a5a00; border-color: #f0dcb0; background: #fdf5e3; }
+.stag.who { color: var(--primary); border-color: rgba(43, 61, 145, .28); background: #eef0fa; }
 .ci-meta {
   display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
   font-size: 12.5px; color: var(--muted); margin-top: 5px;

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=41">
+  <link rel="stylesheet" href="/styles.css?v=42">
 </head>
 <body>
   <header class="topbar">
@@ -28,7 +28,8 @@
       <div class="tabs">
         <button data-tab="campaigns" class="active">설문 관리</button>
         <button data-tab="submissions">제출 현황</button>
-        <button data-tab="users">관리자 관리</button>
+        <button data-tab="all" id="tab-btn-all" class="hidden">전체 설문</button>
+        <button data-tab="users" id="tab-btn-users" class="hidden">관리자 관리</button>
       </div>
 
       <!-- 설문 관리 -->
@@ -73,11 +74,26 @@
         </div>
       </div>
 
-      <!-- 관리자 관리 -->
+      <!-- 전체 설문 (마스터 관리자 전용) -->
+      <div id="tab-all" class="hidden">
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">전체 설문</h2>
+            <span class="badge admin">마스터</span>
+            <input id="all-search" type="search" placeholder="🔍 설문·관리자 검색" style="max-width:230px; margin:0 0 0 auto; padding:8px 13px;">
+          </div>
+          <p class="hint">모든 관리자의 설문을 보고 수정할 수 있습니다. 내가 만든 설문은 <b>설문 관리</b> 탭에 있습니다.</p>
+        </div>
+        <div class="card">
+          <div id="all-campaigns"></div>
+        </div>
+      </div>
+
+      <!-- 관리자 관리 (마스터 관리자 전용) -->
       <div id="tab-users" class="hidden">
         <div class="card">
           <h2>관리자 관리</h2>
-          <p class="hint">구성원은 로그인 시 자동으로 일반 권한입니다. 관리자만 여기서 지정하세요.</p>
+          <p class="hint">구성원은 로그인 시 자동으로 일반 권한입니다. 마스터 관리자가 테넌트 구성원의 이메일로 관리자를 지정합니다.</p>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0;">
             <input id="new-admin-email" type="email" placeholder="이메일 주소" style="max-width:340px; margin:0;">
             <button class="primary" id="btn-add-admin">➕ 지정</button>
@@ -200,7 +216,7 @@
   <input type="file" id="bq-file" multiple hidden>
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=41"></script>
-  <script src="/admin.js?v=41"></script>
+  <script src="/common.js?v=42"></script>
+  <script src="/admin.js?v=42"></script>
 </body>
 </html>
