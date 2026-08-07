@@ -531,7 +531,7 @@ function openBuilder(ca) {
     bQuestions = [
       { id: 'content', label: '내용', type: 'textarea', required: true, options: [], allowAttach: true, help: '' },
     ];
-    $('b-one').checked = false;
+    $('b-one').checked = true; // 새 설문은 1인 1회가 기본
     $('b-noedit').checked = false;
     bBg = null;
   }
@@ -550,11 +550,13 @@ function openBuilder(ca) {
   $('builder-modal').classList.remove('hidden');
 }
 
-// 옵션 버튼 옆에 현재 설정 요약을 표시
+// 옵션 버튼 옆에 현재 설정 요약을 표시 (꺼진 옵션도 상태가 보이게)
 function updateOptsSum() {
-  const parts = [$('b-close').value ? `마감 ${$('b-close').value}` : '기한 없음'];
-  if ($('b-one').checked) parts.push('1인 1회');
-  if ($('b-noedit').checked) parts.push('수정 금지');
+  const parts = [
+    $('b-close').value ? `마감 ${$('b-close').value}` : '기한 없음',
+    $('b-one').checked ? '1인 1회 제출' : '1인 다회 제출 가능',
+    $('b-noedit').checked ? '제출 후 수정 금지' : '제출 후 수정 가능',
+  ];
   $('b-opts-sum').textContent = parts.join(' · ');
 }
 
