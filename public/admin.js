@@ -403,6 +403,7 @@ let activeMediaQ = null;
 let activeMediaRender = null;
 let bBg = null; // 설문 배경 이미지 { id }
 const branchOpen = new Set(); // 분기 설정을 펼쳐 둔 질문 id
+const helpOpen = new Set(); // 설명문 입력칸을 켜 둔 질문 id
 
 function renderBgPreview() {
   $('b-bg-preview').innerHTML = bBg ? `<img src="/files/${bBg.id}" alt="배경 이미지">` : '';
@@ -538,6 +539,7 @@ function openBuilder(ca) {
   $('b-opts-toggle').setAttribute('aria-pressed', 'false');
   updateOptsSum();
   branchOpen.clear();
+  helpOpen.clear();
   // 이미 분기 설정이 있는 질문은 펼친 상태로 시작
   bQuestions.forEach((q, i) => {
     if (q.showIf || bQuestions.some((p, k) => k > i && p.showIf?.qid === q.id)) branchOpen.add(q.id);
@@ -644,6 +646,7 @@ function renderBuilder() {
           <div class="dropdown">
             <button type="button" class="tbtn q-opt-btn" title="이 질문의 부가 기능을 켜고 끕니다">⚙️ 옵션<span class="tcnt hidden"></span> <span class="tarrow">▾</span></button>
             <div class="dropdown-menu q-opt-menu hidden">
+              <div class="dd-row dd-help"><div><div class="t">📝 설명문</div><div class="d">질문 아래에 도움말 한 줄을 보여줘요</div></div><span class="dd-sw"></span></div>
               <div class="dd-row dd-att"><div><div class="t">📎 파일 받기</div><div class="d">참여자가 답변에 파일·캡쳐·동영상을 첨부할 수 있어요</div></div><span class="dd-sw"></span></div>
               <div class="dd-row dd-branch"><div><div class="t">🔀 분기</div><div class="d">답변에 따라 다음 질문을 다르게 보여줘요</div></div><span class="dd-sw"></span></div>
               <div class="dd-row action dd-media"><div><div class="t">🖼 이미지 넣기</div><div class="d">질문에 함께 보여줄 이미지·파일을 넣어요</div></div><span class="dd-more">›</span></div>
@@ -665,7 +668,7 @@ function renderBuilder() {
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
-      <input class="q-help" placeholder="${isSection ? '구역 설명 (선택) — 참여 화면에서 이 위치부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">
+      <input class="q-help ${(!isSection && !q.help && !helpOpen.has(q.id)) ? 'hidden' : ''}" placeholder="${isSection ? '구역 설명 (선택) — 참여 화면에서 이 위치부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">
       <div class="q-opts-box ${hasOpts ? '' : 'hidden'}">
         <div class="opt-rows"></div>
         <div class="opt-foot">
@@ -787,10 +790,12 @@ function renderBuilder() {
     // ── 옵션 드롭다운: 켜진 개수 배지 + 스위치 상태 동기화 ──
     const syncOptUi = () => {
       const hasBranch = !!q.showIf || bQuestions.some((p) => p.showIf?.qid === q.id) || branchOpen.has(q.id);
-      const n = (q.allowAttach ? 1 : 0) + (hasBranch ? 1 : 0) + ((q.media || []).length ? 1 : 0);
+      const hasHelp = !!(q.help || '').trim();
+      const n = (q.allowAttach ? 1 : 0) + (hasBranch ? 1 : 0) + ((q.media || []).length ? 1 : 0) + (hasHelp ? 1 : 0);
       const cnt = row.querySelector('.tcnt');
       cnt.textContent = n || '';
       cnt.classList.toggle('hidden', !n);
+      row.querySelector('.dd-help').classList.toggle('on', hasHelp || helpOpen.has(q.id));
       row.querySelector('.dd-att').classList.toggle('on', !!q.allowAttach);
       row.querySelector('.dd-branch').classList.toggle('on', branchOpen.has(q.id));
     };
@@ -803,6 +808,21 @@ function renderBuilder() {
       const wasHidden = menu.classList.contains('hidden');
       closeAllMenus();
       if (wasHidden) menu.classList.remove('hidden');
+    };
+    row.querySelector('.dd-help').onclick = () => {
+      const inp = row.querySelector('.q-help');
+      if (helpOpen.has(q.id) || (q.help || '').trim()) {
+        // 끄면 입력칸을 숨기고 내용도 지운다
+        helpOpen.delete(q.id);
+        q.help = '';
+        inp.value = '';
+        inp.classList.add('hidden');
+      } else {
+        helpOpen.add(q.id);
+        inp.classList.remove('hidden');
+        inp.focus();
+      }
+      syncOptUi();
     };
     row.querySelector('.dd-att').onclick = () => {
       q.allowAttach = !q.allowAttach;
@@ -837,7 +857,7 @@ function renderBuilder() {
 
     row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
     row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); };
-    row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; };
+    row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; syncOptUi(); };
     row.querySelector('.q-multi').onchange = (e) => { q.multiple = e.target.checked; };
     row.querySelector('.q-other').onchange = (e) => { q.allowOther = e.target.checked; };
     row.querySelector('.q-scale-max').onchange = (e) => { q.scaleMax = Number(e.target.value); };
