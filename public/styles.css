@@ -226,7 +226,26 @@ tr.clickable:hover { background: rgba(43, 61, 145, .04); }
   background: rgba(255, 255, 255, .96); border-radius: 22px; padding: 24px 26px;
   width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
   box-shadow: var(--shadow-md);
+  scrollbar-width: thin; scrollbar-color: rgba(27, 30, 40, .22) transparent;
 }
+/* 스크롤바가 모달의 둥근 모서리를 가리지 않게 */
+.modal-body::-webkit-scrollbar { width: 8px; }
+.modal-body::-webkit-scrollbar-thumb { background: rgba(27, 30, 40, .2); border-radius: 8px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; margin: 22px 0; }
+
+/* 빌더 상단 고정 바: 저장·미리보기·취소·닫기 항상 표시 */
+.b-topbar {
+  position: sticky; top: -24px; z-index: 6;
+  display: flex; align-items: center; gap: 10px;
+  margin: -24px -26px 16px; padding: 14px 20px 12px 26px;
+  background: rgba(255, 255, 255, .94);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  border-radius: 22px 22px 0 0;
+}
+.b-topbar h3 { margin: 0; flex: 1; }
+.b-top-actions { display: flex; align-items: center; gap: 8px; }
+.b-top-actions .modal-x { position: static; float: none; margin-left: 2px; }
 .modal-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .modal-x {
   position: sticky; top: 0; float: right; z-index: 5;
@@ -518,11 +537,16 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
   display: inline-flex; align-items: center; gap: 5px;
 }
 .tbtn:hover { background: rgba(27, 30, 40, .05); border: none; color: var(--text); }
-.tbtn[aria-pressed="true"] {
-  color: var(--primary); font-weight: 800; background: transparent;
-  box-shadow: inset 0 -2.5px 0 var(--bdo-red); border-radius: 9px 9px 0 0;
+.tbtn[aria-pressed="true"] { color: var(--primary); font-weight: 800; background: transparent; }
+
+/* 필수: 꺼져 있어도 ✓·글자·밑줄이 회색으로 보이고, 켜면 네이비 글자 + 빨간 밑줄 */
+.tbtn.q-req { position: relative; }
+.tbtn.q-req::before { content: '✓'; font-size: 11px; }
+.tbtn.q-req::after {
+  content: ''; position: absolute; left: 11px; right: 11px; bottom: 3px;
+  height: 2.5px; border-radius: 2px; background: #d0d4de; transition: background .15s;
 }
-.tbtn[aria-pressed="true"]::before { content: '✓'; font-size: 11px; }
+.tbtn.q-req[aria-pressed="true"]::after { background: var(--bdo-red); }
 .tsep { width: 1px; height: 16px; background: #e2e4ec; margin: 0 8px; }
 .tarrow { font-size: 10px; color: #9a9fae; }
 .tcnt {
@@ -759,6 +783,9 @@ button:focus-visible { outline-offset: 2px; }
   .campaign-item { flex-direction: column; align-items: stretch; gap: 10px; }
   .modal { padding: 8px; }
   .modal-body { padding: 18px 16px; max-height: 94vh; border-radius: 18px; }
+  .b-topbar { top: -18px; margin: -18px -16px 14px; padding: 11px 13px 10px 16px; border-radius: 18px 18px 0 0; }
+  .b-topbar h3 { font-size: 15px; }
+  .b-top-actions button { padding: 7px 11px; font-size: 12.5px; }
   .attach-buttons button { flex: 1; }
   .stat-tile { flex: 1; min-width: 44%; }
   .bar-label { min-width: 78px; max-width: 110px; }
