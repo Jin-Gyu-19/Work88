@@ -79,7 +79,6 @@ async function init() {
     const rows = document.querySelectorAll('#b-questions .q-row');
     rows[rows.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
-  $('b-cancel').onclick = closeBuilder;
   $('b-close-x').onclick = closeBuilder;
   $('b-preview').onclick = showPreview;
   $('pv-close').onclick = () => $('preview-modal').classList.add('hidden');
