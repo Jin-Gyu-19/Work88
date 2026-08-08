@@ -428,7 +428,7 @@ function updateToc(raw, vis, currentId) {
     num += 1;
     const v = raw[q.id];
     const done = v !== undefined && !(Array.isArray(v) && !v.length);
-    items.push(`<a class="${q.id === currentId ? 'cur' : ''}${done ? ' done' : ''}" data-t="${q.id}" title="${esc(q.label)}">
+    items.push(`<a class="${q.id === currentId ? 'cur' : ''}${done ? ' done' : ''}${q.showIf ? ' br' : ''}" data-t="${q.id}" title="${esc(q.label)}${q.showIf ? ' (분기 문항)' : ''}">
       <b>${num}</b><span>${esc(q.label)}</span>${done ? '<i>✓</i>' : ''}</a>`);
   }
   toc.innerHTML = '<p class="toc-h">문항 목차</p>' + items.join('');

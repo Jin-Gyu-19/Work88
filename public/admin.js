@@ -925,7 +925,14 @@ function renderBuilderToc() {
     if (q.type === 'section') {
       return `<a class="sec" data-i="${i}" title="${esc(q.label)}">📄 <span>${esc(q.label.trim() || '(페이지 제목)')}</span></a>`;
     }
-    return `<a data-i="${i}" title="${esc(q.label)}"><b>${qNo(i)}</b><span>${esc(q.label.trim() || '(질문 없음)')}</span></a>`;
+    // 분기(표시 조건)가 걸린 질문은 ↳ 로 들여쓰고 조건을 툴팁으로
+    let brTitle = '';
+    if (q.showIf) {
+      const src = bQuestions.find((p) => p.id === q.showIf.qid);
+      if (src) brTitle = ` — ${qNo(bQuestions.indexOf(src))}번 "${q.showIf.value}"일 때만 표시`;
+    }
+    return `<a class="${q.showIf ? 'br' : ''}" data-i="${i}" title="${esc(q.label)}${esc(brTitle)}">
+      <b>${qNo(i)}</b><span>${esc(q.label.trim() || '(질문 없음)')}</span></a>`;
   });
   toc.innerHTML = '<p class="bt-h">질문 목차</p>' + (items.join('') || '<p class="hint" style="margin-left:8px;">질문이 없습니다</p>');
   toc.querySelectorAll('a').forEach((a) => {
