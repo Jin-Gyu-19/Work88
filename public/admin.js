@@ -854,7 +854,7 @@ function renderBuilder() {
     });
 
     row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
-    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); renderBuilderToc(); };
+    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); };
     row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; syncOptUi(); };
     row.querySelector('.q-multi').onchange = (e) => { q.multiple = e.target.checked; };
     row.querySelector('.q-other').onchange = (e) => { q.allowOther = e.target.checked; };
@@ -878,6 +878,7 @@ function renderBuilder() {
     reqBtn.onclick = () => {
       q.required = !q.required;
       reqBtn.setAttribute('aria-pressed', q.required ? 'true' : 'false');
+      renderBuilderToc(); // 목차의 필수(*) 표시 즉시 갱신
     };
     row.querySelector('.q-up').onclick = () => {
       [bQuestions[i - 1], bQuestions[i]] = [bQuestions[i], bQuestions[i - 1]];
@@ -909,7 +910,6 @@ function renderBuilder() {
     box.innerHTML = '<p class="muted">질문이 없습니다. "질문 추가"를 눌러 주세요.</p>';
   }
   refreshBranches();
-  renderBuilderToc();
 }
 
 // 참여 화면 기준 문항 번호 (구역 제외)
@@ -1084,6 +1084,7 @@ function refreshBranches() {
       };
     });
   });
+  renderBuilderToc(); // 분기·제목 변경을 목차에 즉시 반영
 }
 
 // ---------- 설문 미리보기 ----------
