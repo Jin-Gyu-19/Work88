@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=55">
+  <link rel="stylesheet" href="/styles.css?v=56">
 </head>
 <body>
   <header class="topbar">
@@ -111,7 +111,7 @@
 
   <!-- 설문/설문지 편집 모달 -->
   <div id="builder-modal" class="modal hidden">
-    <div class="modal-body" style="max-width:760px;">
+    <div class="modal-body" style="max-width:1000px;">
       <div class="b-topbar">
         <h3 id="b-heading">새 설문</h3>
         <div class="b-top-actions">
@@ -121,6 +121,9 @@
           <button type="button" class="modal-x" id="b-close-x" title="닫기" aria-label="닫기">✕</button>
         </div>
       </div>
+      <div class="b-layout">
+      <nav id="b-toc" aria-label="질문 목차"></nav>
+      <div class="b-main">
       <div class="tpl-bar hidden">
         <span class="muted" style="font-size:12.5px;">📋 템플릿</span>
         <select id="b-tpl" style="width:auto; margin:0; max-width:240px;"></select>
@@ -160,6 +163,8 @@
       <div style="display:flex; gap:8px; margin-top:4px;">
         <button type="button" id="b-add">➕ 질문 추가</button>
         <button type="button" id="b-add-sec" title="여기부터 새 페이지가 시작됩니다 (긴 설문을 나눌 때)">📄 페이지 나누기</button>
+      </div>
+      </div>
       </div>
 
     </div>
@@ -215,7 +220,7 @@
   <input type="file" id="bq-file" multiple hidden>
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=55"></script>
-  <script src="/admin.js?v=55"></script>
+  <script src="/common.js?v=56"></script>
+  <script src="/admin.js?v=56"></script>
 </body>
 </html>

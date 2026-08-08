@@ -387,6 +387,8 @@ function onFormChanged() {
     el.classList.toggle('q-current', el.dataset.qid === currentId);
   });
 
+  updateToc(raw, vis, currentId);
+
   // 진행률 (전체 페이지 기준)
   const answerable = FORM.questions.filter((q) => q.type !== 'section');
   const shown = answerable.filter((q) => vis[q.id]);
@@ -405,6 +407,42 @@ function onFormChanged() {
       ? `모든 문항 작성 완료 (${shown.length}/${shown.length})`
       : `${done} / ${shown.length} 문항 작성`) + pageInfo;
   }
+}
+
+// 왼쪽 문항 목차: 번호·제목·작성 여부 표시, 클릭하면 해당 문항으로 이동
+function updateToc(raw, vis, currentId) {
+  const toc = $('toc');
+  if (!toc) return;
+  const answerable = FORM.questions.filter((q) => q.type !== 'section');
+  if (answerable.length < 4) { toc.classList.add('hidden'); return; } // 짧은 설문은 목차 불필요
+  toc.classList.remove('hidden');
+
+  const items = [];
+  let num = 0;
+  for (const q of FORM.questions) {
+    if (q.type === 'section') {
+      items.push(`<a class="sec" data-t="${q.id}" title="${esc(q.label)}">📄 <span>${esc(q.label)}</span></a>`);
+      continue;
+    }
+    if (!vis[q.id]) continue;
+    num += 1;
+    const v = raw[q.id];
+    const done = v !== undefined && !(Array.isArray(v) && !v.length);
+    items.push(`<a class="${q.id === currentId ? 'cur' : ''}${done ? ' done' : ''}" data-t="${q.id}" title="${esc(q.label)}">
+      <b>${num}</b><span>${esc(q.label)}</span>${done ? '<i>✓</i>' : ''}</a>`);
+  }
+  toc.innerHTML = '<p class="toc-h">문항 목차</p>' + items.join('');
+  toc.querySelectorAll('a').forEach((a) => {
+    a.onclick = () => {
+      const id = a.dataset.t;
+      const pg = pageOf(id);
+      if (pg !== curPage) { curPage = pg; applyPage(); onFormChanged(); }
+      setTimeout(() => {
+        document.querySelector(`.q-item[data-qid="${id}"], .q-section[data-secid="${id}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 60);
+    };
+  });
 }
 
 // ---------- 첨부 공통 ----------

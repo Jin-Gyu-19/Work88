@@ -854,7 +854,7 @@ function renderBuilder() {
     });
 
     row.querySelector('.opt-add').onclick = () => { q.options.push(''); renderOpts(true); };
-    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); };
+    row.querySelector('.q-label').oninput = (e) => { q.label = e.target.value; refreshBranches(); renderBuilderToc(); };
     row.querySelector('.q-help').oninput = (e) => { q.help = e.target.value; syncOptUi(); };
     row.querySelector('.q-multi').onchange = (e) => { q.multiple = e.target.checked; };
     row.querySelector('.q-other').onchange = (e) => { q.allowOther = e.target.checked; };
@@ -909,11 +909,33 @@ function renderBuilder() {
     box.innerHTML = '<p class="muted">질문이 없습니다. "질문 추가"를 눌러 주세요.</p>';
   }
   refreshBranches();
+  renderBuilderToc();
 }
 
 // 참여 화면 기준 문항 번호 (구역 제외)
 function qNo(i) {
   return bQuestions.slice(0, i + 1).filter((q) => q.type !== 'section').length;
+}
+
+// 왼쪽 질문 목차 (클릭하면 해당 질문으로 이동)
+function renderBuilderToc() {
+  const toc = $('b-toc');
+  if (!toc) return;
+  const items = bQuestions.map((q, i) => {
+    if (q.type === 'section') {
+      return `<a class="sec" data-i="${i}" title="${esc(q.label)}">📄 <span>${esc(q.label.trim() || '(페이지 제목)')}</span></a>`;
+    }
+    return `<a data-i="${i}" title="${esc(q.label)}"><b>${qNo(i)}</b><span>${esc(q.label.trim() || '(질문 없음)')}</span></a>`;
+  });
+  toc.innerHTML = '<p class="bt-h">질문 목차</p>' + (items.join('') || '<p class="hint" style="margin-left:8px;">질문이 없습니다</p>');
+  toc.querySelectorAll('a').forEach((a) => {
+    a.onclick = () => {
+      const row = document.querySelectorAll('#b-questions .q-row')[Number(a.dataset.i)];
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.querySelector('.q-label')?.focus({ preventScroll: true });
+    };
+  });
 }
 
 // 분기(표시 조건) 드롭다운을 현재 질문 구성에 맞춰 실시간 갱신
