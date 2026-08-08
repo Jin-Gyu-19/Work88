@@ -14,7 +14,7 @@ const TYPE_LABELS = {
   dropdown: '드롭다운',
   scale: '배율 (1~N)',
   rating: '별점 (1~5점)',
-  section: '구역 (페이지 나누기)',
+  section: '페이지 나누기',
 };
 let templates = [];
 let statsVisible = false;
@@ -663,12 +663,12 @@ function renderBuilder() {
       </div>
       <div class="q-head">
         <span class="q-index">${isSection ? '§' : qNo(i)}</span>
-        <input class="q-label" placeholder="${isSection ? '구역 제목 (예: 2부. 활용 현황)' : '질문을 입력하세요'}" value="${esc(q.label)}">
+        <input class="q-label" placeholder="${isSection ? '새 페이지 제목 (예: 2부. 활용 현황)' : '질문을 입력하세요'}" value="${esc(q.label)}">
         <select class="q-type" aria-label="질문 유형">
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
-      <input class="q-help ${(!isSection && !q.help && !helpOpen.has(q.id)) ? 'hidden' : ''}" placeholder="${isSection ? '구역 설명 (선택) — 참여 화면에서 이 위치부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">
+      <input class="q-help ${(!isSection && !q.help && !helpOpen.has(q.id)) ? 'hidden' : ''}" placeholder="${isSection ? '페이지 설명 (선택) — 참여 화면에서 여기부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">
       <div class="q-opts-box ${hasOpts ? '' : 'hidden'}">
         <div class="opt-rows"></div>
         <div class="opt-foot">
