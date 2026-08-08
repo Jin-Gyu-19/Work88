@@ -11,7 +11,6 @@ const TYPE_LABELS = {
   text: '단답형',
   textarea: '장문형',
   choice: '객관식',
-  dropdown: '드롭다운',
   scale: '배율 (1~N)',
   rating: '별점 (1~5점)',
   section: '페이지 나누기',
@@ -666,6 +665,7 @@ function renderBuilder() {
         <input class="q-label" placeholder="${isSection ? '새 페이지 제목 (예: 2부. 활용 현황)' : '질문을 입력하세요'}" value="${esc(q.label)}">
         <select class="q-type" aria-label="질문 유형">
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
+          ${q.type === 'dropdown' ? '<option value="dropdown" selected>드롭다운 (구버전)</option>' : ''}
         </select>
       </div>
       <input class="q-help ${(!isSection && !q.help && !helpOpen.has(q.id)) ? 'hidden' : ''}" placeholder="${isSection ? '페이지 설명 (선택) — 참여 화면에서 여기부터 새 페이지가 시작됩니다' : '설명문 (선택)'}" value="${esc(q.help || '')}">

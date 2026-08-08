@@ -627,6 +627,15 @@ function bindCropper() {
   });
 }
 
+// 캡쳐/녹화 저장 이름 입력 (취소하거나 비우면 기본 이름 사용)
+function askFileName(defaultBase, ext) {
+  const input = prompt('저장할 파일 이름을 입력하세요 (비워두면 기본 이름 사용):', defaultBase);
+  let base = (input === null ? defaultBase : input).trim() || defaultBase;
+  base = base.replace(new RegExp(`\\.${ext}$`, 'i'), ''); // 확장자를 직접 쓴 경우 중복 방지
+  base = base.replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);
+  return `${base}.${ext}`;
+}
+
 async function attachCapture(useSelection) {
   if (!cropCanvas) return;
   let canvas = cropCanvas;
@@ -644,8 +653,9 @@ async function attachCapture(useSelection) {
   const qid = cropQid;
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   closeCropper();
-  await uploadBlob(blob, `캡쳐_${ts()}.png`, 'image', qid).catch(() => {});
-  toast('화면 캡쳐가 첨부되었습니다');
+  const filename = askFileName(`캡쳐_${ts()}`, 'png');
+  await uploadBlob(blob, filename, 'image', qid).catch(() => {});
+  toast(`"${filename}" 캡쳐가 첨부되었습니다`);
 }
 
 // ---------- 전역 첨부 핸들러 (파일 선택 / 붙여넣기 / 앱 파일) ----------
@@ -723,12 +733,13 @@ function bindRecorder() {
     const blob = recBlob;
     const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
     const qid = recQid;
+    const filename = askFileName(`녹화_${ts()}`, ext);
     recClose();
     toast(`동영상 업로드 중… (${fmtSize(blob.size)}) 첨부 목록에서 진행률을 확인하세요`);
     const target = document.querySelector(`[data-attlist="${qid}"]`);
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    await uploadBlob(blob, `녹화_${ts()}.${ext}`, 'video', qid)
-      .then(() => toast('동영상 첨부가 완료되었습니다 🎬'))
+    await uploadBlob(blob, filename, 'video', qid)
+      .then(() => toast(`"${filename}" 첨부가 완료되었습니다 🎬`))
       .catch(() => {});
   };
 }
