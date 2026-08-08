@@ -745,6 +745,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 .toc a b, #b-toc a b { font-size: 11px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; flex: none; min-width: 14px; }
 .toc a span, #b-toc a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .toc a i { font-style: normal; font-size: 10.5px; color: #2e9e5b; flex: none; }
+.toc a em, #b-toc a em { font-style: normal; font-weight: 800; color: var(--bdo-red); flex: none; margin-left: -2px; }
 .toc a.cur { color: var(--primary); font-weight: 800; background: var(--primary-soft); }
 .toc a.done { color: #9aa0ad; }
 .toc a.sec, #b-toc a.sec { font-weight: 800; color: var(--text); margin-top: 5px; font-size: 12px; }
