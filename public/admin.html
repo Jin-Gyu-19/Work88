@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>관리자 | BDO Survey System</title>
-  <link rel="stylesheet" href="/styles.css?v=51">
+  <link rel="stylesheet" href="/styles.css?v=52">
 </head>
 <body>
   <header class="topbar">
@@ -117,6 +117,7 @@
         <div class="b-top-actions">
           <button class="primary" id="b-save">저장</button>
           <button id="b-preview">👁 미리보기</button>
+          <button type="button" class="toggle" id="b-opts-toggle" aria-pressed="false" title="마감일·1인 1회·수정 금지 설정">⚙️ 설문 옵션</button>
           <button type="button" class="modal-x" id="b-close-x" title="닫기" aria-label="닫기">✕</button>
         </div>
       </div>
@@ -134,11 +135,8 @@
         <textarea id="b-desc" rows="2" placeholder="참여자에게 보여줄 안내"></textarea>
       </label>
       <div style="margin:2px 0 16px;">
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-          <button type="button" class="toggle" id="b-opts-toggle" aria-pressed="false">⚙️ 설문 옵션</button>
-          <span class="muted" id="b-opts-sum"></span>
-        </div>
-        <div id="b-opts" class="q-branch-wrap hidden" style="margin-top:8px;">
+        <p class="hint" id="b-opts-sum" style="margin:0 0 6px 2px;"></p>
+        <div id="b-opts" class="q-branch-wrap hidden">
           <label style="max-width:240px;">마감일 <span class="muted" style="font-weight:400;">(비워두면 기한 없음)</span>
             <input type="date" id="b-close">
           </label>
@@ -157,7 +155,7 @@
       </div>
 
       <h3 style="margin-top:18px;">설문 질문 구성</h3>
-      <p class="hint" style="margin-top:-6px;">이름·부서는 자동 입력됩니다. 분기가 필요하면 해당 질문의 <b>🔀 분기</b> 버튼을 켜세요.</p>
+      <p class="hint" style="margin-top:-6px;">이름·부서는 자동 입력됩니다. 설명문·파일 받기·분기는 질문의 <b>⚙️ 옵션</b>에서 켜세요.</p>
       <div id="b-questions"></div>
       <div style="display:flex; gap:8px; margin-top:4px;">
         <button type="button" id="b-add">➕ 질문 추가</button>
@@ -217,7 +215,7 @@
   <input type="file" id="bq-file" multiple hidden>
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
-  <script src="/common.js?v=51"></script>
-  <script src="/admin.js?v=51"></script>
+  <script src="/common.js?v=52"></script>
+  <script src="/admin.js?v=52"></script>
 </body>
 </html>
