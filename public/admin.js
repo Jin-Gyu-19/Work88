@@ -37,12 +37,10 @@ async function init() {
   }
   $('admin-box').classList.remove('hidden');
 
-  // 전체 설문·관리자 관리 탭은 마스터 관리자에게만 표시 + 상단 배지도 '마스터'로
+  // 전체 설문·관리자 관리 탭은 마스터 관리자에게만 표시
   if (me.isMaster) {
     $('tab-btn-all').classList.remove('hidden');
     $('tab-btn-users').classList.remove('hidden');
-    const badge = document.querySelector('.topbar .brand .badge.admin');
-    if (badge) badge.textContent = '마스터';
   }
 
   document.querySelectorAll('.tabs button').forEach((b) => {

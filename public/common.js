@@ -65,6 +65,6 @@ function renderWho(me) {
   if (!me) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <span>${esc(me.name)}${me.department ? ' · ' + esc(me.department) : ''}</span>
-    ${me.isAdmin ? '<a href="/admin"><button class="small">관리자</button></a>' : ''}
+    ${me.isAdmin ? `<a href="/admin" title="관리자 페이지로 이동"><span class="badge admin">${me.isMaster ? '마스터' : '관리자'}</span></a>` : ''}
     <button class="small ghost" onclick="logout()">로그아웃</button>`;
 }
