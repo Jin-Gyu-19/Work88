@@ -539,9 +539,16 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 .tbtn:hover { background: rgba(27, 30, 40, .05); border: none; color: var(--text); }
 .tbtn[aria-pressed="true"] { color: var(--primary); font-weight: 800; background: transparent; }
 
-/* 필수: 꺼지면 회색 ✓+글자, 켜면 네이비로 더 굵게 */
-.tbtn.q-req::before { content: '✓'; font-size: 11px; }
-.tbtn.q-req[aria-pressed="true"] { font-weight: 900; letter-spacing: -0.01em; }
+/* 필수: 꺼지면 회색 ✓+글자, 켜면 연한 네이비 칠 + 빨간 ✓ + 진한 볼드 */
+.tbtn.q-req::before { content: '✓'; font-size: 11px; font-weight: 900; }
+.tbtn.q-req[aria-pressed="true"] {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  border-radius: 9px;
+}
+.tbtn.q-req[aria-pressed="true"]::before { color: var(--bdo-red); }
 .tsep { width: 1px; height: 16px; background: #e2e4ec; margin: 0 8px; }
 .tarrow { font-size: 10px; color: #9a9fae; }
 .tcnt {
