@@ -921,31 +921,57 @@ html[data-design="swiss"] .tabs button.active { box-shadow: none; border: 1px so
 html[data-design="swiss"] .modal-body { border-radius: 14px; }
 html[data-design="swiss"] .badge.admin { background: #fff; }
 
-/* ---------- 5번 · 오로라 글래스 (Aurora) ---------- */
+/* ---------- 5번 · 오로라 베일 (Aurora) ---------- */
 html[data-design="aurora"] {
   --bg: #e9ecfb;
-  --card: rgba(255, 255, 255, .52);
+  --card: rgba(255, 255, 255, .5);
   --card-border: rgba(255, 255, 255, .95);
-  --line: rgba(112, 118, 165, .18);
-  --primary-soft: rgba(255, 255, 255, .55);
-  --shadow-sm: 0 8px 32px rgba(110, 100, 190, .13);
-  --shadow-md: 0 16px 44px rgba(110, 100, 190, .22);
+  --text: #242c58;
+  --muted: #6a719c;
+  --line: rgba(112, 118, 165, .22);
+  --primary-soft: rgba(43, 61, 145, .10);
+  --shadow-sm: 0 10px 36px rgba(110, 100, 190, .16);
+  --shadow-md: 0 18px 48px rgba(110, 100, 190, .26);
   --primary-grad: linear-gradient(135deg, #2b3d91, #5a5fd0);
   --accent-grad: linear-gradient(140deg, #2b3d91, #5a5fd0);
+  --soft-grad: rgba(43, 61, 145, .10);
   --progress-grad: linear-gradient(90deg, #2b3d91, #7a6ae0);
 }
 html[data-design="aurora"] body {
   background:
-    radial-gradient(1000px 700px at 88% -10%, rgba(122, 141, 255, .42), transparent 60%),
-    radial-gradient(900px 660px at -12% 22%, rgba(206, 166, 255, .42), transparent 58%),
-    radial-gradient(820px 620px at 52% 112%, rgba(255, 168, 168, .30), transparent 55%),
+    radial-gradient(1000px 700px at 88% -10%, rgba(122, 141, 255, .5), transparent 60%),
+    radial-gradient(900px 660px at -12% 22%, rgba(206, 166, 255, .5), transparent 58%),
+    radial-gradient(820px 620px at 52% 112%, rgba(255, 168, 168, .36), transparent 55%),
     linear-gradient(135deg, #dfe6ff, #ebdfff 46%, #e6f3ff);
   background-attachment: fixed;
 }
 html[data-design="aurora"] .topbar {
   background: rgba(255, 255, 255, .34);
-  border-bottom: 1px solid rgba(255, 255, 255, .8);
+  border-bottom: 1px solid rgba(255, 255, 255, .85);
+  box-shadow: 0 8px 32px rgba(110, 100, 190, .10);
 }
+/* 딥 네이비 잉크 — 그라데이션 텍스트 대신 단색의 무게 */
+html[data-design="aurora"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: var(--text);
+}
+html[data-design="aurora"] h2, html[data-design="aurora"] h3 { color: var(--text); }
+/* 진행 중 질문 카드: 보랏빛 글로우로 시선 고정 */
+html[data-design="aurora"] .q-item.q-current {
+  border-color: rgba(122, 106, 224, .55);
+  box-shadow: 0 0 0 3px rgba(122, 106, 224, .16), 0 16px 44px rgba(110, 100, 190, .28);
+}
+html[data-design="aurora"] .q-item.q-current .q-num { box-shadow: 0 4px 12px rgba(90, 95, 208, .45); }
+/* 플로팅 제출 바: 유리 캡슐 */
+html[data-design="aurora"] .submit-bar {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(255, 255, 255, .95);
+  border-radius: 24px;
+  box-shadow: 0 16px 44px rgba(110, 100, 190, .30);
+}
+/* 별점: 금색 대신 오로라 바이올렛 글로우 */
+html[data-design="aurora"] .star { color: rgba(255, 255, 255, .95); text-shadow: 0 1px 2px rgba(110, 100, 190, .25); }
+html[data-design="aurora"] .star.on { color: #7a6ae0; text-shadow: 0 0 14px rgba(122, 106, 224, .5); }
 html[data-design="aurora"] .card { box-shadow: var(--shadow-sm); }
 /* 버튼: 알약형 유리 + 레드 CTA (시안 5) */
 html[data-design="aurora"] button {
@@ -968,6 +994,10 @@ html[data-design="aurora"] button.ghost { background: transparent; border-color:
 html[data-design="aurora"] button.ghost:hover { background: rgba(255, 255, 255, .5); }
 html[data-design="aurora"] input, html[data-design="aurora"] textarea, html[data-design="aurora"] select {
   background: rgba(255, 255, 255, .6); border-color: rgba(255, 255, 255, .95); border-radius: 16px;
+}
+html[data-design="aurora"] input:focus, html[data-design="aurora"] textarea:focus, html[data-design="aurora"] select:focus {
+  border-color: rgba(122, 106, 224, .6);
+  box-shadow: 0 0 0 3px rgba(122, 106, 224, .16);
 }
 html[data-design="aurora"] .tabs { background: rgba(255, 255, 255, .42); border-color: rgba(255, 255, 255, .85); }
 html[data-design="aurora"] .modal { background: rgba(52, 50, 90, .38); }
