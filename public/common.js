@@ -64,8 +64,9 @@ function toast(msg, isError, atTop) {
 // '' = 기본(글래스 세레니티) · swiss = 1번 화이트 미니멀 · aurora = 5번 오로라 글래스
 const DESIGNS = [
   ['', '기본 디자인'],
-  ['swiss', '디자인 1 · 화이트 미니멀'],
-  ['aurora', '디자인 5 · 오로라 글래스'],
+  ['swiss', '화이트 미니멀'],
+  ['aurora', '오로라 베일'],
+  ['legalpad', '리갈패드'],
 ];
 
 function applyDesign(v) {

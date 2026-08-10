@@ -984,3 +984,70 @@ html[data-design="aurora"] .choice:has(input:checked) {
   box-shadow: 0 0 0 3px rgba(122, 106, 224, .2), 0 6px 20px rgba(122, 106, 224, .3);
 }
 html[data-design="aurora"] .badge.admin { background: rgba(255, 255, 255, .6); }
+
+/* ---------- 12번 · 리갈패드 (Legal Pad) ---------- */
+html[data-design="legalpad"] {
+  --bg: #fbf3ae;
+  --card: rgba(255, 253, 240, .55);
+  --card-border: rgba(44, 40, 32, .16);
+  --text: #2c2820;
+  --muted: #6e6549;
+  --line: rgba(110, 101, 73, .28);
+  --primary: #2c2820;
+  --primary-dark: #191611;
+  --primary-grad: #2c2820;
+  --primary-soft: #f7efb8;
+  --radius: 10px;
+  --shadow-sm: none;
+  --shadow-md: 0 14px 34px rgba(90, 75, 30, .25);
+  --accent-grad: #2c2820;
+  --soft-grad: #f3e9a6;
+  --progress-grad: #b8342c;
+}
+html[data-design="legalpad"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* 노란 패드: 파란 괘선 34px 리듬 + 왼쪽 빨간 여백선 */
+html[data-design="legalpad"] body {
+  background:
+    linear-gradient(90deg, transparent 0 58px, rgba(184, 52, 44, .5) 58px 60px, transparent 60px),
+    repeating-linear-gradient(to bottom, transparent 0 33px, rgba(80, 140, 190, .28) 33px 34px),
+    var(--bg);
+  background-attachment: fixed;
+}
+html[data-design="legalpad"] .topbar { background: #f7efb8; border-bottom: 2px solid #e5d98f; }
+html[data-design="legalpad"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: var(--text);
+}
+html[data-design="legalpad"] .card { border: 1px solid var(--card-border); }
+html[data-design="legalpad"] button { background: #fffdf0; border: 1.5px solid #a99f77; border-radius: 8px; box-shadow: none; color: #4b4432; }
+html[data-design="legalpad"] button.primary { background: #2c2820; border-color: #2c2820; color: #fbf3ae; box-shadow: none; }
+html[data-design="legalpad"] button.primary:hover { background: #191611; box-shadow: none; }
+html[data-design="legalpad"] button.danger { background: #b8342c; border-color: #b8342c; box-shadow: none; }
+html[data-design="legalpad"] button.danger:hover { background: #9c2b24; }
+html[data-design="legalpad"] button.ghost { background: transparent; border-color: transparent; }
+html[data-design="legalpad"] input, html[data-design="legalpad"] textarea, html[data-design="legalpad"] select {
+  background: #fffdf0; border-color: #c9bd8a; border-radius: 8px;
+}
+html[data-design="legalpad"] input:focus, html[data-design="legalpad"] textarea:focus, html[data-design="legalpad"] select:focus {
+  border-color: #b8342c; box-shadow: 0 0 0 3px rgba(184, 52, 44, .12);
+}
+html[data-design="legalpad"] .tabs { background: #f7efb8; border: 1px solid #e5d98f; box-shadow: none; }
+html[data-design="legalpad"] .tabs button.active { background: #fffdf0; color: #2c2820; box-shadow: none; }
+html[data-design="legalpad"] .badge.admin { background: #fdf6c9; border-color: #d9c86a; color: #8a6d00; }
+html[data-design="legalpad"] .modal-body { background: #fffdf0; }
+/* 선택지: 고르면 빨간 펜 동그라미 */
+html[data-design="legalpad"] .choice { position: relative; background: rgba(255, 253, 240, .5); border: 1px solid rgba(110, 101, 73, .25); border-radius: 8px; }
+html[data-design="legalpad"] .choice:hover { background: #fffdf0; }
+html[data-design="legalpad"] .choice input { accent-color: #b8342c; }
+html[data-design="legalpad"] .choice:has(input:checked) {
+  background: #fffdf0; border-color: rgba(184, 52, 44, .45); color: #2c2820; box-shadow: none;
+}
+html[data-design="legalpad"] .choice:has(input:checked)::after {
+  content: ''; position: absolute; left: -7px; right: 28%; top: -4px; bottom: -4px;
+  border: 2.5px solid rgba(184, 52, 44, .6);
+  border-radius: 52% 48% 55% 45% / 58% 62% 38% 42%;
+  pointer-events: none;
+}
