@@ -67,6 +67,8 @@ const DESIGNS = [
   ['swiss', '화이트 미니멀'],
   ['aurora', '오로라 베일'],
   ['legalpad', '리갈패드'],
+  ['noir', '누아르 골드'],
+  ['porcelain', '포슬린'],
 ];
 
 function applyDesign(v) {

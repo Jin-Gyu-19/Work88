@@ -1081,3 +1081,151 @@ html[data-design="legalpad"] .choice:has(input:checked)::after {
   border-radius: 52% 48% 55% 45% / 58% 62% 38% 42%;
   pointer-events: none;
 }
+
+/* ---------- 16번 · 누아르 골드 (Noir Gold) ---------- */
+html[data-design="noir"] {
+  --bg: #151310;
+  --card: #1c1915;
+  --card-border: rgba(201, 168, 106, .24);
+  --text: #ece5d6;
+  --muted: #9c8f70;
+  --line: rgba(201, 168, 106, .18);
+  --primary: #c9a86a;
+  --primary-dark: #b3924e;
+  --primary-grad: linear-gradient(120deg, #e0c890, #c9a86a 60%, #b3924e);
+  --primary-soft: rgba(201, 168, 106, .12);
+  --radius: 10px;
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, .45);
+  --shadow-md: 0 20px 50px rgba(0, 0, 0, .6);
+  --accent-grad: linear-gradient(120deg, #e0c890, #c9a86a 60%, #b3924e);
+  --soft-grad: rgba(201, 168, 106, .12);
+  --progress-grad: linear-gradient(90deg, #a8853f, #e0c890);
+}
+html[data-design="noir"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-design="noir"] body {
+  background:
+    radial-gradient(1000px 720px at 82% -8%, rgba(201, 168, 106, .10), transparent 60%),
+    radial-gradient(760px 560px at -6% 104%, rgba(201, 168, 106, .07), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+html[data-design="noir"] .topbar { background: #171512; border-bottom: 1px solid rgba(201, 168, 106, .25); box-shadow: none; }
+html[data-design="noir"] .topbar .brand span { color: var(--text); }
+html[data-design="noir"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: #f0e8d8;
+}
+html[data-design="noir"] h2, html[data-design="noir"] h3 { color: #f0e8d8; }
+/* 다크 표면들 */
+html[data-design="noir"] input, html[data-design="noir"] textarea, html[data-design="noir"] select {
+  background: #221e19; border-color: rgba(201, 168, 106, .28); border-radius: 8px; color: var(--text);
+}
+html[data-design="noir"] input:disabled { background: #1b1815; color: var(--muted); }
+html[data-design="noir"] input:focus, html[data-design="noir"] textarea:focus, html[data-design="noir"] select:focus {
+  background: #262119; border-color: #c9a86a; box-shadow: 0 0 0 3px rgba(201, 168, 106, .15);
+}
+html[data-design="noir"] button {
+  background: #221e19; border: 1px solid rgba(201, 168, 106, .32); border-radius: 6px; color: #c9b98d; box-shadow: none;
+}
+html[data-design="noir"] button:hover { background: #2a251e; border-color: rgba(201, 168, 106, .5); }
+html[data-design="noir"] button.primary { background: var(--primary-grad); border-color: transparent; color: #1b1608; box-shadow: 0 8px 24px rgba(201, 168, 106, .22); }
+html[data-design="noir"] button.primary:hover { background: linear-gradient(120deg, #d4ba7e, #bd9c5c 60%, #a8873f); color: #1b1608; box-shadow: 0 10px 28px rgba(201, 168, 106, .3); }
+html[data-design="noir"] button.danger { background: #8e1f30; border-color: transparent; color: #ffd9de; box-shadow: none; }
+html[data-design="noir"] button.danger:hover { background: #7a1a29; }
+html[data-design="noir"] button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+html[data-design="noir"] button.ghost:hover { background: rgba(201, 168, 106, .08); }
+html[data-design="noir"] .tabs { background: #1c1915; border: 1px solid rgba(201, 168, 106, .2); box-shadow: none; }
+html[data-design="noir"] .tabs button { color: var(--muted); }
+html[data-design="noir"] .tabs button:hover { background: rgba(201, 168, 106, .08); }
+html[data-design="noir"] .tabs button.active { background: #2a251e; color: #e0c890; box-shadow: none; }
+html[data-design="noir"] .choice { background: rgba(255, 255, 255, .025); border: 1px solid rgba(201, 168, 106, .16); border-radius: 6px; color: #bdb094; }
+html[data-design="noir"] .choice:hover { background: rgba(201, 168, 106, .06); }
+html[data-design="noir"] .choice input { accent-color: #c9a86a; }
+html[data-design="noir"] .choice:has(input:checked) {
+  background: rgba(201, 168, 106, .10); border-color: #c9a86a; color: #f0e8d8;
+  box-shadow: 0 0 24px rgba(201, 168, 106, .12);
+}
+html[data-design="noir"] .badge.open { background: rgba(46, 158, 91, .16); color: #6fd096; }
+html[data-design="noir"] .badge.closed { background: rgba(228, 0, 43, .14); color: #ff8b9c; }
+html[data-design="noir"] .badge.admin { background: transparent; border-color: rgba(201, 168, 106, .5); color: #c9a86a; }
+html[data-design="noir"] tr.clickable:hover { background: rgba(201, 168, 106, .05); }
+html[data-design="noir"] .campaign-item:hover { background: rgba(201, 168, 106, .05); }
+html[data-design="noir"] .modal { background: rgba(8, 6, 4, .7); }
+html[data-design="noir"] .modal-body { background: #1e1b17; }
+html[data-design="noir"] .attach-list li { background: #1e1b17; border-color: rgba(201, 168, 106, .2); }
+html[data-design="noir"] .progress { background: rgba(255, 255, 255, .08); }
+html[data-design="noir"] .progress-track { background: rgba(255, 255, 255, .08); }
+html[data-design="noir"] .submit-bar { background: rgba(23, 21, 17, .92); border: 1px solid rgba(201, 168, 106, .25); box-shadow: 0 14px 40px rgba(0, 0, 0, .5); }
+html[data-design="noir"] .star { color: #3a352b; }
+html[data-design="noir"] .star.on { color: #c9a86a; text-shadow: 0 0 14px rgba(201, 168, 106, .4); }
+html[data-design="noir"] .q-item.q-current { border-color: rgba(201, 168, 106, .55); box-shadow: 0 0 0 3px rgba(201, 168, 106, .12), 0 16px 40px rgba(0, 0, 0, .5); }
+html[data-design="noir"] .chip { background: #221e19; border-color: rgba(201, 168, 106, .3); color: #c9b98d; }
+html[data-design="noir"] .chip.on { background: var(--accent-grad); color: #1b1608; }
+html[data-design="noir"] .toggle { background: #221e19; border-color: rgba(201, 168, 106, .3); color: var(--muted); }
+html[data-design="noir"] .toggle[aria-pressed="true"] { background: var(--accent-grad); color: #1b1608; }
+html[data-design="noir"] .q-num { color: #c9a86a; }
+html[data-design="noir"] .q-item.q-current .q-num, html[data-design="noir"] .q-row-sec .q-index { color: #1b1608; }
+
+/* ---------- 19번 · 포슬린 (Porcelain) ---------- */
+html[data-design="porcelain"] {
+  --bg: #f7f7f5;
+  --card: #ffffff;
+  --card-border: #ececee;
+  --text: #23262e;
+  --muted: #878c98;
+  --line: #ececee;
+  --primary: #23262e;
+  --primary-dark: #0f1116;
+  --primary-grad: #23262e;
+  --primary-soft: #f0f1f2;
+  --radius: 16px;
+  --shadow-sm: 0 1px 2px rgba(60, 66, 80, .04), 0 12px 34px rgba(60, 66, 80, .05);
+  --shadow-md: 0 18px 44px rgba(60, 66, 80, .12);
+  --accent-grad: #23262e;
+  --soft-grad: #f0f1f2;
+  --progress-grad: #23262e;
+}
+html[data-design="porcelain"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-design="porcelain"] body {
+  background: radial-gradient(1000px 760px at 50% -10%, rgba(160, 168, 182, .12), transparent 62%), var(--bg);
+  background-attachment: fixed;
+}
+html[data-design="porcelain"] .topbar { background: #fff; border-bottom: 1px solid #ececee; box-shadow: none; }
+html[data-design="porcelain"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: var(--text);
+}
+html[data-design="porcelain"] .card { background: linear-gradient(180deg, #ffffff, #fbfbfa); }
+html[data-design="porcelain"] button { background: #f4f4f3; border: 1px solid transparent; border-radius: 999px; color: #5a5f6b; box-shadow: none; }
+html[data-design="porcelain"] button:hover { background: #ececeb; border-color: transparent; }
+html[data-design="porcelain"] button.primary { background: #23262e; border-color: #23262e; color: #fff; box-shadow: none; }
+html[data-design="porcelain"] button.primary:hover { background: #0f1116; box-shadow: none; }
+html[data-design="porcelain"] button.danger { background: #b04057; border-color: transparent; box-shadow: none; }
+html[data-design="porcelain"] button.danger:hover { background: #9a3549; }
+html[data-design="porcelain"] button.ghost { background: transparent; color: var(--muted); }
+html[data-design="porcelain"] input, html[data-design="porcelain"] textarea, html[data-design="porcelain"] select {
+  background: #fff; border-color: #e3e4e7; border-radius: 12px;
+}
+html[data-design="porcelain"] input:focus, html[data-design="porcelain"] textarea:focus, html[data-design="porcelain"] select:focus {
+  border-color: #9aa0ad; box-shadow: 0 0 0 3px rgba(154, 160, 173, .16);
+}
+html[data-design="porcelain"] .tabs { background: #f0f1f2; border: 1px solid #ececee; box-shadow: none; border-radius: 999px; }
+html[data-design="porcelain"] .tabs button.active { background: #fff; color: #23262e; box-shadow: 0 2px 8px rgba(60, 66, 80, .08); }
+html[data-design="porcelain"] .choice { background: #f7f7f6; border: 1px solid #ececee; border-radius: 12px; color: #5a5f6b; }
+html[data-design="porcelain"] .choice:hover { background: #fff; }
+html[data-design="porcelain"] .choice input { accent-color: #23262e; }
+html[data-design="porcelain"] .choice:has(input:checked) {
+  background: #fff; border-color: #9aa0ad; color: #23262e;
+  box-shadow: 0 6px 18px rgba(60, 66, 80, .10);
+}
+html[data-design="porcelain"] .badge.admin { background: #fff; border-color: #d8dade; color: #5a5f6b; }
+html[data-design="porcelain"] .submit-bar { background: #fff; border: 1px solid #ececee; border-radius: 999px; box-shadow: 0 12px 30px rgba(60, 66, 80, .08); }
+html[data-design="porcelain"] .star.on { color: #5a5f6b; }
+html[data-design="porcelain"] .q-item.q-current { border-color: #9aa0ad; box-shadow: 0 14px 38px rgba(60, 66, 80, .12); }
+html[data-design="porcelain"] .modal-body { border-radius: 18px; }
