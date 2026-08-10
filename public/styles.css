@@ -1229,3 +1229,164 @@ html[data-design="porcelain"] .submit-bar { background: #fff; border: 1px solid 
 html[data-design="porcelain"] .star.on { color: #5a5f6b; }
 html[data-design="porcelain"] .q-item.q-current { border-color: #9aa0ad; box-shadow: 0 14px 38px rgba(60, 66, 80, .12); }
 html[data-design="porcelain"] .modal-body { border-radius: 18px; }
+
+/* ---------- 21번 · 샴페인 마블 (Champagne Marble) ---------- */
+html[data-design="marble"] {
+  --bg: #f3efe8;
+  --card: #fffefb;
+  --card-border: #eae3d3;
+  --text: #2b2620;
+  --muted: #8d8270;
+  --line: #eae3d3;
+  --primary: #96741f;
+  --primary-dark: #7c5f15;
+  --primary-grad: linear-gradient(120deg, #d3b264, #b08d3e 60%, #96741f);
+  --primary-soft: rgba(176, 141, 62, .12);
+  --radius: 10px;
+  --shadow-sm: 0 2px 6px rgba(80, 68, 40, .04), 0 14px 34px rgba(80, 68, 40, .06);
+  --shadow-md: 0 18px 44px rgba(80, 68, 40, .14);
+  --accent-grad: linear-gradient(120deg, #d3b264, #b08d3e 60%, #96741f);
+  --soft-grad: rgba(176, 141, 62, .12);
+  --progress-grad: linear-gradient(90deg, #96741f, #d3b264);
+}
+html[data-design="marble"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* 대리석 결: 사선 골드 베인 */
+html[data-design="marble"] body {
+  background:
+    radial-gradient(1200px 900px at 68% -12%, rgba(255, 255, 255, .85), transparent 58%),
+    linear-gradient(105deg, transparent 0 37.6%, rgba(176, 141, 62, .08) 39%, transparent 41.5%),
+    linear-gradient(72deg, transparent 0 61.5%, rgba(130, 118, 98, .07) 63%, transparent 65%),
+    linear-gradient(118deg, transparent 0 79%, rgba(176, 141, 62, .06) 80.5%, transparent 83%),
+    linear-gradient(95deg, transparent 0 14%, rgba(130, 118, 98, .05) 15.5%, transparent 17.5%),
+    var(--bg);
+  background-attachment: fixed;
+}
+html[data-design="marble"] .topbar { background: #f8f4ec; border-bottom: 1px solid rgba(176, 141, 62, .4); box-shadow: none; }
+html[data-design="marble"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: var(--text);
+}
+html[data-design="marble"] .card {
+  background:
+    linear-gradient(112deg, transparent 0 68%, rgba(176, 141, 62, .05) 70%, transparent 73%),
+    linear-gradient(175deg, #fffefb, #faf7f0);
+}
+html[data-design="marble"] button { background: #fff; border: 1px solid #d8cfb8; border-radius: 7px; box-shadow: none; color: #57503f; }
+html[data-design="marble"] button:hover { background: #faf7f0; border-color: #b08d3e; }
+html[data-design="marble"] button.primary { background: var(--primary-grad); border-color: transparent; color: #241c05; box-shadow: 0 8px 22px rgba(176, 141, 62, .26); }
+html[data-design="marble"] button.primary:hover { background: linear-gradient(120deg, #c7a557, #a48136 60%, #8a6a1a); color: #241c05; box-shadow: 0 10px 26px rgba(176, 141, 62, .34); }
+html[data-design="marble"] button.danger { background: #c0092a; border-color: transparent; box-shadow: none; }
+html[data-design="marble"] button.danger:hover { background: #a30724; }
+html[data-design="marble"] button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+html[data-design="marble"] input, html[data-design="marble"] textarea, html[data-design="marble"] select {
+  background: #fff; border-color: #ddd4bf; border-radius: 8px;
+}
+html[data-design="marble"] input:focus, html[data-design="marble"] textarea:focus, html[data-design="marble"] select:focus {
+  border-color: #b08d3e; box-shadow: 0 0 0 3px rgba(176, 141, 62, .14);
+}
+html[data-design="marble"] .tabs { background: #f2ecdf; border: 1px solid #eae3d3; box-shadow: none; }
+html[data-design="marble"] .tabs button.active { background: #fff; color: #96741f; box-shadow: none; border: 1px solid #e0d6bf; }
+html[data-design="marble"] .choice { background: #faf7f0; border: 1px solid #eae3d3; border-radius: 8px; color: #57503f; }
+html[data-design="marble"] .choice:hover { background: #fff; }
+html[data-design="marble"] .choice input { accent-color: #b08d3e; }
+html[data-design="marble"] .choice:has(input:checked) {
+  background: #fff; border-color: #b08d3e; color: #2b2620;
+  box-shadow: 0 8px 22px rgba(176, 141, 62, .16);
+}
+html[data-design="marble"] .badge.admin { background: transparent; border-color: rgba(176, 141, 62, .5); color: #96741f; }
+html[data-design="marble"] .submit-bar { background: #fffefb; border: 1px solid #eae3d3; box-shadow: 0 12px 32px rgba(80, 68, 40, .10); }
+html[data-design="marble"] .star.on { color: #b08d3e; }
+html[data-design="marble"] .q-item.q-current { border-color: rgba(176, 141, 62, .55); box-shadow: 0 0 0 3px rgba(176, 141, 62, .12), 0 14px 36px rgba(80, 68, 40, .12); }
+html[data-design="marble"] .chip.on { color: #241c05; }
+html[data-design="marble"] .toggle[aria-pressed="true"] { color: #241c05; }
+html[data-design="marble"] .q-item.q-current .q-num, html[data-design="marble"] .q-row-sec .q-index { color: #241c05; }
+
+/* ---------- 22번 · 옵시디언 플래티넘 (Obsidian Platinum) ---------- */
+html[data-design="obsidian"] {
+  --bg: #0c0d10;
+  --card: #14161b;
+  --card-border: rgba(201, 206, 216, .2);
+  --text: #dde1e8;
+  --muted: #7d8494;
+  --line: rgba(201, 206, 216, .14);
+  --primary: #c9ced8;
+  --primary-dark: #a4abba;
+  --primary-grad: linear-gradient(120deg, #e8ebf0, #c9ced8 60%, #a4abba);
+  --primary-soft: rgba(201, 206, 216, .10);
+  --radius: 10px;
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, .5);
+  --shadow-md: 0 20px 50px rgba(0, 0, 0, .65);
+  --accent-grad: linear-gradient(120deg, #e8ebf0, #c9ced8 60%, #a4abba);
+  --soft-grad: rgba(201, 206, 216, .10);
+  --progress-grad: linear-gradient(90deg, #8f96a5, #e8ebf0);
+}
+html[data-design="obsidian"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-design="obsidian"] body {
+  background:
+    radial-gradient(1000px 720px at 84% -8%, rgba(201, 206, 216, .08), transparent 58%),
+    radial-gradient(760px 560px at -6% 104%, rgba(201, 206, 216, .05), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+html[data-design="obsidian"] .topbar { background: #0e1014; border-bottom: 1px solid rgba(201, 206, 216, .2); box-shadow: none; }
+html[data-design="obsidian"] .topbar .brand span { color: var(--text); }
+html[data-design="obsidian"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: #f2f4f8;
+}
+html[data-design="obsidian"] h2, html[data-design="obsidian"] h3 { color: #f2f4f8; }
+html[data-design="obsidian"] .card { background: linear-gradient(168deg, #171a20, #12141a); }
+html[data-design="obsidian"] input, html[data-design="obsidian"] textarea, html[data-design="obsidian"] select {
+  background: #171a20; border-color: rgba(201, 206, 216, .24); border-radius: 8px; color: var(--text);
+}
+html[data-design="obsidian"] input:disabled { background: #121419; color: var(--muted); }
+html[data-design="obsidian"] input:focus, html[data-design="obsidian"] textarea:focus, html[data-design="obsidian"] select:focus {
+  background: #1b1f26; border-color: #c9ced8; box-shadow: 0 0 0 3px rgba(201, 206, 216, .13);
+}
+html[data-design="obsidian"] button {
+  background: #171a20; border: 1px solid rgba(201, 206, 216, .28); border-radius: 7px; color: #aab1c0; box-shadow: none;
+}
+html[data-design="obsidian"] button:hover { background: #1e222a; border-color: rgba(201, 206, 216, .45); }
+html[data-design="obsidian"] button.primary { background: var(--primary-grad); border-color: transparent; color: #14161b; box-shadow: 0 8px 24px rgba(201, 206, 216, .16); }
+html[data-design="obsidian"] button.primary:hover { background: linear-gradient(120deg, #dde1e8, #bcc2ce 60%, #979eae); color: #14161b; box-shadow: 0 10px 28px rgba(201, 206, 216, .22); }
+html[data-design="obsidian"] button.danger { background: #a32332; border-color: transparent; color: #ffdade; box-shadow: none; }
+html[data-design="obsidian"] button.danger:hover { background: #8c1e2b; }
+html[data-design="obsidian"] button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+html[data-design="obsidian"] button.ghost:hover { background: rgba(201, 206, 216, .07); }
+html[data-design="obsidian"] .tabs { background: #14161b; border: 1px solid rgba(201, 206, 216, .16); box-shadow: none; }
+html[data-design="obsidian"] .tabs button { color: var(--muted); }
+html[data-design="obsidian"] .tabs button:hover { background: rgba(201, 206, 216, .07); }
+html[data-design="obsidian"] .tabs button.active { background: #1e222a; color: #e8ebf0; box-shadow: none; }
+html[data-design="obsidian"] .choice { background: rgba(255, 255, 255, .02); border: 1px solid rgba(201, 206, 216, .13); border-radius: 8px; color: #aab1c0; }
+html[data-design="obsidian"] .choice:hover { background: rgba(201, 206, 216, .05); }
+html[data-design="obsidian"] .choice input { accent-color: #c9ced8; }
+html[data-design="obsidian"] .choice:has(input:checked) {
+  background: rgba(201, 206, 216, .09); border-color: #c9ced8; color: #f5f7fa;
+  box-shadow: 0 0 22px rgba(201, 206, 216, .10);
+}
+html[data-design="obsidian"] .badge.open { background: rgba(46, 158, 91, .16); color: #6fd096; }
+html[data-design="obsidian"] .badge.closed { background: rgba(255, 100, 120, .13); color: #ff8b9a; }
+html[data-design="obsidian"] .badge.admin { background: transparent; border-color: rgba(201, 206, 216, .4); color: #c9ced8; }
+html[data-design="obsidian"] tr.clickable:hover { background: rgba(201, 206, 216, .04); }
+html[data-design="obsidian"] .campaign-item:hover { background: rgba(201, 206, 216, .04); }
+html[data-design="obsidian"] .modal { background: rgba(3, 4, 6, .75); }
+html[data-design="obsidian"] .modal-body { background: #171a20; }
+html[data-design="obsidian"] .attach-list li { background: #171a20; border-color: rgba(201, 206, 216, .18); }
+html[data-design="obsidian"] .progress { background: rgba(255, 255, 255, .08); }
+html[data-design="obsidian"] .progress-track { background: rgba(255, 255, 255, .08); }
+html[data-design="obsidian"] .submit-bar { background: rgba(12, 13, 16, .92); border: 1px solid rgba(201, 206, 216, .2); box-shadow: 0 14px 40px rgba(0, 0, 0, .55); }
+html[data-design="obsidian"] .star { color: #2a2e37; }
+html[data-design="obsidian"] .star.on { color: #c9ced8; text-shadow: 0 0 12px rgba(201, 206, 216, .35); }
+html[data-design="obsidian"] .q-item.q-current { border-color: rgba(201, 206, 216, .5); box-shadow: 0 0 0 3px rgba(201, 206, 216, .10), 0 16px 40px rgba(0, 0, 0, .55); }
+html[data-design="obsidian"] .chip { background: #171a20; border-color: rgba(201, 206, 216, .28); color: #aab1c0; }
+html[data-design="obsidian"] .chip.on { background: var(--accent-grad); color: #14161b; }
+html[data-design="obsidian"] .toggle { background: #171a20; border-color: rgba(201, 206, 216, .28); color: var(--muted); }
+html[data-design="obsidian"] .toggle[aria-pressed="true"] { background: var(--accent-grad); color: #14161b; }
+html[data-design="obsidian"] .q-num { color: #c9ced8; }
+html[data-design="obsidian"] .q-item.q-current .q-num, html[data-design="obsidian"] .q-row-sec .q-index { color: #14161b; }

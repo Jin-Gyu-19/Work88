@@ -69,6 +69,8 @@ const DESIGNS = [
   ['legalpad', '리갈패드'],
   ['noir', '누아르 골드'],
   ['porcelain', '포슬린'],
+  ['marble', '샴페인 마블'],
+  ['obsidian', '옵시디언 플래티넘'],
 ];
 
 function applyDesign(v) {
