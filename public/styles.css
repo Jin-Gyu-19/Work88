@@ -18,6 +18,9 @@
   --radius: 22px;
   --shadow-sm: 0 8px 28px rgba(27, 30, 40, .07);
   --shadow-md: 0 14px 38px rgba(27, 30, 40, .14);
+  --accent-grad: linear-gradient(140deg, #2b3d91, #4457b3);
+  --soft-grad: linear-gradient(140deg, #eef0f8, #e2e6f3);
+  --progress-grad: linear-gradient(90deg, #2b3d91, #5b6ecf);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -186,7 +189,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .attach-list .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .progress { height: 6px; background: rgba(27, 30, 40, .08); border-radius: 3px; overflow: hidden; flex: 1; }
-.progress > div { height: 100%; background: linear-gradient(90deg, #2b3d91, #5b6ecf); width: 0; transition: width .2s; }
+.progress > div { height: 100%; background: var(--progress-grad); width: 0; transition: width .2s; }
 
 .badge {
   display: inline-block; padding: 3px 11px; border-radius: 20px;
@@ -304,12 +307,12 @@ form#form.card {
   display: inline-flex; align-items: center; justify-content: center;
   width: 25px; height: 25px; margin-right: 9px; vertical-align: 1px;
   border-radius: 50%;
-  background: linear-gradient(140deg, #eef0f8, #e2e6f3); color: var(--primary);
+  background: var(--soft-grad); color: var(--primary);
   font-size: 11.5px; font-weight: 800; letter-spacing: 0;
   transition: background .2s, color .2s, box-shadow .2s;
 }
 .q-item.q-current .q-num {
-  background: linear-gradient(140deg, #2b3d91, #4457b3); color: #fff;
+  background: var(--accent-grad); color: #fff;
   box-shadow: 0 4px 10px rgba(43, 61, 145, .35);
 }
 
@@ -333,7 +336,7 @@ form#form.card {
 }
 .scale-btn:hover { background: #fff; border-color: rgba(43, 61, 145, .3); }
 .scale-btn.on {
-  background: linear-gradient(140deg, #2b3d91, #4457b3); color: #fff; border-color: transparent;
+  background: var(--accent-grad); color: #fff; border-color: transparent;
   box-shadow: 0 4px 12px rgba(43, 61, 145, .35);
 }
 .scale-lab { font-size: 11.5px; color: var(--muted); }
@@ -361,7 +364,7 @@ form#form.card {
 }
 .who-avatar {
   width: 38px; height: 38px; flex: none; border-radius: 50%;
-  background: linear-gradient(140deg, #2b3d91, #4457b3); color: #fff;
+  background: var(--accent-grad); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 16px;
   box-shadow: 0 4px 10px rgba(43, 61, 145, .3);
@@ -383,7 +386,7 @@ form#form.card {
 }
 .progress-head { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
 .progress-track { flex: 1; height: 5px; background: rgba(27, 30, 40, .08); border-radius: 3px; overflow: hidden; }
-.progress-track > div { height: 100%; width: 0; background: linear-gradient(90deg, #2b3d91, #5b6ecf); border-radius: 3px; transition: width .3s ease; }
+.progress-track > div { height: 100%; width: 0; background: var(--progress-grad); border-radius: 3px; transition: width .3s ease; }
 .progress-track > div.done { background: linear-gradient(90deg, #2e9e5b, #45b873); }
 #prog-text { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
 
@@ -492,14 +495,14 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 .q-row:focus-within { border-color: rgba(43, 61, 145, .35); box-shadow: 0 6px 20px rgba(43, 61, 145, .1); }
 .q-row.drag-over { border-color: var(--primary); border-style: dashed; background: var(--primary-soft); }
 .q-row-sec { border-left: 4px solid var(--primary); background: rgba(238, 240, 248, .75); }
-.q-row-sec .q-index { background: linear-gradient(140deg, #2b3d91, #4457b3); color: #fff; }
+.q-row-sec .q-index { background: var(--accent-grad); color: #fff; }
 .q-scale-box { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 0 35px; }
 .q-scale-box input { max-width: 220px; font-size: 13px; padding: 7px 11px; }
 
 .q-head { display: flex; align-items: center; gap: 10px; }
 .q-index {
   flex: none; width: 25px; height: 25px; border-radius: 50%;
-  background: linear-gradient(140deg, #eef0f8, #e2e6f3); color: var(--primary);
+  background: var(--soft-grad); color: var(--primary);
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 800;
 }
@@ -717,7 +720,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 .thanks-icon {
   width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(140deg, #2b3d91, #4457b3); color: #fff; font-size: 30px;
+  background: var(--accent-grad); color: #fff; font-size: 30px;
   box-shadow: 0 10px 26px rgba(43, 61, 145, .35);
   animation: thanks-pop .45s cubic-bezier(.34, 1.56, .64, 1);
 }
@@ -843,3 +846,110 @@ button:focus-visible { outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ===================================================================
+   디자인 테마 전환
+   상단바의 디자인 선택(localStorage 'bdoDesign')이 <html data-design>을 바꾼다.
+   속성 없음 = 기본(글래스 세레니티) · swiss = 1번 화이트 미니멀 · aurora = 5번 오로라 글래스
+   =================================================================== */
+
+.topbar select.design-select {
+  width: auto;
+  margin: 0 12px 0 auto;
+  padding: 6px 26px 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  border-radius: 10px;
+  cursor: pointer;
+}
+@media (max-width: 560px) {
+  .topbar select.design-select { padding: 5px 20px 5px 7px; font-size: 11px; margin-right: 8px; }
+}
+
+/* ---------- 1번 · 화이트 미니멀 (Swiss) ---------- */
+html[data-design="swiss"] {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --card-border: #e8eaef;
+  --text: #171b26;
+  --muted: #737a8c;
+  --line: #e8eaef;
+  --primary-soft: #f0f2f8;
+  --radius: 12px;
+  --shadow-sm: none;
+  --shadow-md: 0 12px 32px rgba(23, 27, 38, .10);
+  --primary-grad: var(--primary);
+  --accent-grad: var(--primary);
+  --soft-grad: #f0f2f8;
+  --progress-grad: var(--primary);
+}
+html[data-design="swiss"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-design="swiss"] body { background: var(--bg); }
+html[data-design="swiss"] .topbar { background: #fff; border-bottom: 1px solid var(--line); }
+html[data-design="swiss"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: var(--text);
+}
+/* 시그널 레드 포인트 도트 */
+html[data-design="swiss"] h1::after {
+  content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bdo-red); margin-left: 9px; vertical-align: middle;
+}
+html[data-design="swiss"] .card { border: 1px solid var(--line); }
+html[data-design="swiss"] button { background: #fff; border-color: #d9dce5; border-radius: 9px; box-shadow: none; }
+html[data-design="swiss"] button.small { border-radius: 8px; }
+html[data-design="swiss"] button.primary { background: var(--primary); border-color: transparent; box-shadow: none; }
+html[data-design="swiss"] button.primary:hover { background: var(--primary-dark); box-shadow: none; }
+html[data-design="swiss"] button.danger { background: var(--bdo-red); box-shadow: none; }
+html[data-design="swiss"] button.danger:hover { background: #c40025; }
+html[data-design="swiss"] button.ghost { background: transparent; border-color: transparent; }
+html[data-design="swiss"] input, html[data-design="swiss"] textarea, html[data-design="swiss"] select {
+  background: #fff; border-color: #d9dce5; border-radius: 9px;
+}
+html[data-design="swiss"] input:focus, html[data-design="swiss"] textarea:focus, html[data-design="swiss"] select:focus {
+  box-shadow: 0 0 0 3px rgba(43, 61, 145, .12);
+}
+html[data-design="swiss"] .tabs { background: #f3f4f8; border: 1px solid var(--line); box-shadow: none; }
+html[data-design="swiss"] .tabs button.active { box-shadow: none; border: 1px solid #e0e3ec; }
+html[data-design="swiss"] .modal-body { border-radius: 14px; }
+html[data-design="swiss"] .badge.admin { background: #fff; }
+
+/* ---------- 5번 · 오로라 글래스 (Aurora) ---------- */
+html[data-design="aurora"] {
+  --bg: #e9ecfb;
+  --card: rgba(255, 255, 255, .52);
+  --card-border: rgba(255, 255, 255, .95);
+  --line: rgba(112, 118, 165, .18);
+  --primary-soft: rgba(255, 255, 255, .55);
+  --shadow-sm: 0 8px 32px rgba(110, 100, 190, .13);
+  --shadow-md: 0 16px 44px rgba(110, 100, 190, .22);
+  --primary-grad: linear-gradient(135deg, #2b3d91, #5a5fd0);
+  --accent-grad: linear-gradient(140deg, #2b3d91, #5a5fd0);
+  --progress-grad: linear-gradient(90deg, #2b3d91, #7a6ae0);
+}
+html[data-design="aurora"] body {
+  background:
+    radial-gradient(1000px 700px at 88% -10%, rgba(122, 141, 255, .42), transparent 60%),
+    radial-gradient(900px 660px at -12% 22%, rgba(206, 166, 255, .42), transparent 58%),
+    radial-gradient(820px 620px at 52% 112%, rgba(255, 168, 168, .30), transparent 55%),
+    linear-gradient(135deg, #dfe6ff, #ebdfff 46%, #e6f3ff);
+  background-attachment: fixed;
+}
+html[data-design="aurora"] .topbar {
+  background: rgba(255, 255, 255, .34);
+  border-bottom: 1px solid rgba(255, 255, 255, .8);
+}
+html[data-design="aurora"] .card { box-shadow: var(--shadow-sm); }
+html[data-design="aurora"] button.primary { box-shadow: 0 8px 24px rgba(74, 82, 190, .38); }
+html[data-design="aurora"] button.primary:hover {
+  background: linear-gradient(135deg, #24347e, #4c50b8);
+  box-shadow: 0 10px 28px rgba(74, 82, 190, .48);
+}
+html[data-design="aurora"] .tabs { background: rgba(255, 255, 255, .42); border-color: rgba(255, 255, 255, .85); }
+html[data-design="aurora"] .modal { background: rgba(52, 50, 90, .38); }
+html[data-design="aurora"] .choice:hover { background: rgba(255, 255, 255, .78); }
+html[data-design="aurora"] .badge.admin { background: rgba(255, 255, 255, .6); }

@@ -59,6 +59,41 @@ function toast(msg, isError, atTop) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
 }
 
+// ===== 디자인 테마 전환 =====
+// 상단바의 선택이 <html data-design>을 바꾸고 localStorage 'bdoDesign'에 저장된다.
+// '' = 기본(글래스 세레니티) · swiss = 1번 화이트 미니멀 · aurora = 5번 오로라 글래스
+const DESIGNS = [
+  ['', '기본 디자인'],
+  ['swiss', '디자인 1 · 화이트 미니멀'],
+  ['aurora', '디자인 5 · 오로라 글래스'],
+];
+
+function applyDesign(v) {
+  if (v) document.documentElement.dataset.design = v;
+  else delete document.documentElement.dataset.design;
+}
+
+(function initDesign() {
+  let saved = '';
+  try { saved = localStorage.getItem('bdoDesign') || ''; } catch (e) {}
+  applyDesign(saved);
+  const mount = () => {
+    const bar = document.querySelector('.topbar');
+    if (!bar || bar.querySelector('.design-select')) return;
+    const sel = document.createElement('select');
+    sel.className = 'design-select';
+    sel.title = '디자인 선택';
+    sel.innerHTML = DESIGNS.map(([v, name]) => `<option value="${v}"${v === saved ? ' selected' : ''}>${name}</option>`).join('');
+    sel.onchange = () => {
+      applyDesign(sel.value);
+      try { localStorage.setItem('bdoDesign', sel.value); } catch (e) {}
+    };
+    bar.insertBefore(sel, bar.querySelector('.who'));
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+  else mount();
+})();
+
 function renderWho(me) {
   const el = document.getElementById('who');
   if (!el) return;
