@@ -528,7 +528,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 /* 질문 카드 상단 툴바 — 잉크 미니멀: 배경 없는 텍스트 버튼, 켜지면 ✓ + 빨간 밑줄 */
 .q-toolbar {
   display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(231, 233, 240, .8);
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
 }
 .q-toggles { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; position: relative; }
 .q-icons { display: flex; align-items: center; gap: 1px; }
@@ -552,7 +552,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
   border-radius: 9px;
 }
 .tbtn.q-req[aria-pressed="true"]::before { color: var(--bdo-red); }
-.tsep { width: 1px; height: 16px; background: #e2e4ec; margin: 0 8px; }
+.tsep { width: 1px; height: 16px; background: var(--line); margin: 0 8px; }
 .tarrow { font-size: 10px; color: #9a9fae; }
 .tcnt {
   min-width: 16px; height: 16px; border-radius: 8px; background: var(--bdo-red); color: #fff;
@@ -579,7 +579,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
   content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
   border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: left .15s;
 }
-.dd-row.on .dd-sw { background: var(--ink, #1b1e28); }
+.dd-row.on .dd-sw { background: var(--primary); }
 .dd-row.on .dd-sw::after { left: 16px; }
 .dd-row.on .t { color: var(--primary); }
 .dd-more { margin: 3px 0 0 auto; color: #9a9fae; font-size: 14px; }
@@ -1390,3 +1390,53 @@ html[data-design="obsidian"] .toggle { background: #171a20; border-color: rgba(2
 html[data-design="obsidian"] .toggle[aria-pressed="true"] { background: var(--accent-grad); color: #14161b; }
 html[data-design="obsidian"] .q-num { color: #c9ced8; }
 html[data-design="obsidian"] .q-item.q-current .q-num, html[data-design="obsidian"] .q-row-sec .q-index { color: #14161b; }
+
+/* ---------- 다크 테마 빌더(설문 편집) 표면 보정: 누아르 골드 ---------- */
+html[data-design="noir"] .b-topbar { background: rgba(28, 25, 21, .97); border-bottom: 1px solid rgba(201, 168, 106, .25); }
+html[data-design="noir"] .modal-x { background: #221e19; border-color: rgba(201, 168, 106, .3); color: #c9b98d; box-shadow: none; }
+html[data-design="noir"] .modal-x:hover { background: #2a251e; }
+html[data-design="noir"] .dropdown-menu { background: #1e1b17; border-color: rgba(201, 168, 106, .28); }
+html[data-design="noir"] .dropdown-menu button:hover { background: rgba(201, 168, 106, .08); }
+html[data-design="noir"] .q-row { background: #221e19; border-color: rgba(201, 168, 106, .22); box-shadow: none; }
+html[data-design="noir"] .q-row:focus-within { border-color: rgba(201, 168, 106, .5); box-shadow: 0 0 0 3px rgba(201, 168, 106, .10); }
+html[data-design="noir"] .q-row-sec { background: rgba(201, 168, 106, .08); }
+html[data-design="noir"] .q-help { background: #1b1815; border-color: rgba(201, 168, 106, .2); }
+html[data-design="noir"] .q-branch-wrap { background: #1b1815; border-color: rgba(201, 168, 106, .22); }
+html[data-design="noir"] .q-branch-src { border-top-color: rgba(201, 168, 106, .22); }
+html[data-design="noir"] .q-cond select:disabled { background: #1b1815; }
+html[data-design="noir"] .bq-media { background: #1e1b17; }
+html[data-design="noir"] .tbtn:hover { background: rgba(201, 168, 106, .08); color: #ece5d6; }
+html[data-design="noir"] .dd-sw { background: #3a352b; }
+html[data-design="noir"] .dd-row:hover { background: rgba(201, 168, 106, .06); }
+html[data-design="noir"] .dd-row + .dd-row { border-top-color: rgba(201, 168, 106, .12); }
+html[data-design="noir"] .icon-btn:hover { background: rgba(201, 168, 106, .1); color: #ece5d6; }
+html[data-design="noir"] .icon-btn.del:hover { background: rgba(228, 0, 43, .15); color: #ff8b9c; }
+html[data-design="noir"] .opt-dot { border-color: #6e6349; }
+
+/* ---------- 다크 테마 빌더(설문 편집) 표면 보정: 옵시디언 플래티넘 ---------- */
+html[data-design="obsidian"] .b-topbar { background: rgba(18, 20, 25, .97); border-bottom: 1px solid rgba(201, 206, 216, .2); }
+html[data-design="obsidian"] .modal-x { background: #171a20; border-color: rgba(201, 206, 216, .28); color: #aab1c0; box-shadow: none; }
+html[data-design="obsidian"] .modal-x:hover { background: #1e222a; }
+html[data-design="obsidian"] .dropdown-menu { background: #171a20; border-color: rgba(201, 206, 216, .24); }
+html[data-design="obsidian"] .dropdown-menu button:hover { background: rgba(201, 206, 216, .07); }
+html[data-design="obsidian"] .q-row { background: #171a20; border-color: rgba(201, 206, 216, .18); box-shadow: none; }
+html[data-design="obsidian"] .q-row:focus-within { border-color: rgba(201, 206, 216, .45); box-shadow: 0 0 0 3px rgba(201, 206, 216, .08); }
+html[data-design="obsidian"] .q-row-sec { background: rgba(201, 206, 216, .06); }
+html[data-design="obsidian"] .q-help { background: #121419; border-color: rgba(201, 206, 216, .16); }
+html[data-design="obsidian"] .q-branch-wrap { background: #121419; border-color: rgba(201, 206, 216, .18); }
+html[data-design="obsidian"] .q-branch-src { border-top-color: rgba(201, 206, 216, .18); }
+html[data-design="obsidian"] .q-cond select:disabled { background: #121419; }
+html[data-design="obsidian"] .bq-media { background: #171a20; }
+html[data-design="obsidian"] .tbtn:hover { background: rgba(201, 206, 216, .07); color: #dde1e8; }
+html[data-design="obsidian"] .dd-sw { background: #2a2e37; }
+html[data-design="obsidian"] .dd-row:hover { background: rgba(201, 206, 216, .05); }
+html[data-design="obsidian"] .dd-row + .dd-row { border-top-color: rgba(201, 206, 216, .1); }
+html[data-design="obsidian"] .icon-btn:hover { background: rgba(201, 206, 216, .08); color: #dde1e8; }
+html[data-design="obsidian"] .icon-btn.del:hover { background: rgba(255, 100, 120, .14); color: #ff8b9a; }
+html[data-design="obsidian"] .opt-dot { border-color: #464c59; }
+
+/* ---------- 라이트 테마 빌더 상단 바 톤 맞춤 ---------- */
+html[data-design="legalpad"] .b-topbar { background: rgba(255, 253, 240, .97); border-bottom: 1px solid #e5d98f; }
+html[data-design="marble"] .b-topbar { background: rgba(255, 254, 251, .97); border-bottom: 1px solid rgba(176, 141, 62, .35); }
+html[data-design="swiss"] .b-topbar { background: #ffffff; border-bottom: 1px solid var(--line); }
+html[data-design="porcelain"] .b-topbar { background: rgba(255, 255, 255, .97); border-bottom: 1px solid #ececee; }
