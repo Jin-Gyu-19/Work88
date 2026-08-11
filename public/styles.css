@@ -1956,3 +1956,65 @@ html[data-design="liquiddark"] .choice:has(input:checked) {
 html[data-design="liquiddark"] .q-row { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15); }
 html[data-design="liquiddark"] .progress > div, html[data-design="liquiddark"] .progress-track > div { background: #0a84ff; }
 html[data-design="liquiddark"] .toggle { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .25); box-shadow: none; }
+
+/* ---------- 리퀴드 글래스 v3: 버튼 정제 (링·글로우 제거, 굵기 완화) ---------- */
+/* 애플 채움 버튼에는 테두리도, 컬러 글로우도 없다 — 색면과 글자만 */
+html[data-design="liquid"] button.primary,
+html[data-design="liquiddark"] button.primary {
+  border: none;
+  box-shadow: 0 1px 2px rgba(10, 40, 90, .12);
+}
+html[data-design="liquid"] button.primary:hover { background: #218fff; box-shadow: 0 2px 6px rgba(10, 40, 90, .16); }
+html[data-design="liquiddark"] button.primary:hover { background: #2a93ff; box-shadow: 0 2px 8px rgba(0, 0, 10, .3); }
+html[data-design="liquid"] button.danger, html[data-design="liquiddark"] button.danger {
+  border: none;
+  box-shadow: 0 1px 2px rgba(90, 10, 10, .14);
+}
+
+/* 유리 버튼: 눈부신 흰 링 → 머리카락 굵기의 중성 경계 + 아주 옅은 그림자 */
+html[data-design="liquid"] button {
+  background: rgba(255, 255, 255, .58);
+  border: 1px solid rgba(60, 70, 100, .09);
+  box-shadow: 0 1px 2px rgba(40, 60, 120, .06);
+}
+html[data-design="liquid"] button:hover { background: rgba(255, 255, 255, .82); border-color: rgba(60, 70, 100, .14); }
+html[data-design="liquiddark"] button {
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: none;
+}
+html[data-design="liquiddark"] button:hover { background: rgba(255, 255, 255, .17); border-color: rgba(255, 255, 255, .26); }
+
+/* 글자: 한글 600은 작은 버튼에서 뭉툭하다 — 보조 500 / 주 600, 자간 0 */
+html[data-design="liquid"] button, html[data-design="liquiddark"] button {
+  font-weight: 500; font-size: 13px; letter-spacing: 0;
+}
+html[data-design="liquid"] button.primary, html[data-design="liquiddark"] button.primary,
+html[data-design="liquid"] button.danger, html[data-design="liquiddark"] button.danger { font-weight: 600; }
+html[data-design="liquid"] button.small, html[data-design="liquiddark"] button.small { font-size: 12.5px; padding: 7px 15px; }
+html[data-design="liquid"] .ci-actions button, html[data-design="liquiddark"] .ci-actions button { min-height: 32px; }
+/* 더보기(⋯)는 정사각 알약 — 글자 버튼과 폭을 구분 */
+html[data-design="liquid"] .more-btn, html[data-design="liquiddark"] .more-btn {
+  padding: 7px 12px; font-size: 15px; line-height: 1; letter-spacing: .05em;
+}
+/* ghost·아이콘 버튼은 완전 무지 */
+html[data-design="liquid"] button.ghost, html[data-design="liquiddark"] button.ghost,
+html[data-design="liquid"] .icon-btn, html[data-design="liquiddark"] .icon-btn,
+html[data-design="liquid"] .tbtn, html[data-design="liquiddark"] .tbtn {
+  border: none; box-shadow: none; background: transparent;
+}
+
+/* 드롭다운 화살표: 큰 ▾ 글리프 → 작고 옅은 기호 */
+.btn-chev { font-size: .78em; opacity: .65; margin-left: 3px; display: inline-block; transform: translateY(-.5px); }
+/* 라이트 테마는 iOS 라이트용 시스템 블루(#007AFF) — #0A84FF는 다크용이라 밝은 배경에서 형광처럼 뜬다 */
+html[data-design="liquid"] { --primary: #007aff; --progress-grad: #007aff; }
+html[data-design="liquid"] button.primary { background: #007aff; }
+html[data-design="liquid"] button.primary:hover { background: #1a88ff; }
+html[data-design="liquid"] .progress > div, html[data-design="liquid"] .progress-track > div { background: #007aff; }
+html[data-design="liquid"] .m-qnum, html[data-design="liquid"] .star.on { color: #007aff; }
+html[data-design="liquid"] .choice:has(input:checked) { background: rgba(0, 122, 255, .13); border-color: rgba(0, 122, 255, .45); }
+html[data-design="liquid"] .choice input { accent-color: #007aff; }
+/* 한글은 600부터 뭉툭해진다 — 채움 버튼도 500으로, 강조는 색면이 담당 */
+html[data-design="liquid"] button.primary, html[data-design="liquiddark"] button.primary,
+html[data-design="liquid"] button.danger, html[data-design="liquiddark"] button.danger { font-weight: 500; }
+.btn-chev { margin-left: 5px; }

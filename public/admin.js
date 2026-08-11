@@ -190,7 +190,7 @@ function renderCampaignList() {
         </div>
         <div class="ci-actions">
           <div class="dropdown">
-            <button class="small primary" data-act="send" data-id="${ca.id}">설문 보내기 ▾</button>
+            <button class="small primary" data-act="send" data-id="${ca.id}">설문 보내기<span class="btn-chev">▾</span></button>
             <div class="dropdown-menu hidden">
               <button class="small" data-act="mail" data-id="${ca.id}">메일로 보내기</button>
               <button class="small" data-act="copy" data-id="${ca.id}">링크 복사하기</button>
