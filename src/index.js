@@ -386,8 +386,16 @@ app.onError((err, c) => {
 
 // ---------- 인증 (Microsoft Entra ID SSO) ----------
 
+// 로그인 후 되돌아갈 경로 — 외부 사이트로 튕기지 않도록 같은 사이트의 절대경로만 허용
+function safeRedirect(raw) {
+  const r = String(raw || '/');
+  // '//evil.com' 이나 'https://evil.com' 같은 외부 주소, 역슬래시 우회를 모두 차단
+  if (!r.startsWith('/') || r.startsWith('//') || r.startsWith('/\\')) return '/';
+  return r;
+}
+
 app.get('/auth/login', async (c) => {
-  const redirect = c.req.query('redirect') || '/';
+  const redirect = safeRedirect(c.req.query('redirect'));
   if (c.env.DEV_MODE === '1' && !c.env.MS_CLIENT_ID) {
     return c.redirect(`/auth/dev?redirect=${encodeURIComponent(redirect)}`);
   }
@@ -442,7 +450,7 @@ app.get('/auth/callback', async (c) => {
   if (!email) return c.text('계정 이메일을 확인할 수 없습니다.', 400);
 
   await loginUser(c, { email, name: me.displayName || email, department: me.department || '' });
-  return c.redirect(st.r || '/');
+  return c.redirect(safeRedirect(st.r));
 });
 
 async function loginUser(c, { email, name, department }) {
@@ -501,7 +509,7 @@ document.getElementById('dv-admin').onchange = function () {
     name: c.req.query('name') || '테스트사용자',
     department: c.req.query('dept') || '테스트팀',
   });
-  return c.redirect(c.req.query('redirect') || '/');
+  return c.redirect(safeRedirect(c.req.query('redirect')));
 });
 
 app.post('/auth/logout', (c) => {
@@ -584,21 +592,29 @@ app.post('/api/campaigns/:slug/submissions', needAuth(async (c) => {
 
   const form = parseForm(campaign.fields);
   const u = c.get('user');
+  const DUP_MSG = '이미 제출하셨습니다. 기존 제출을 수정하거나 삭제 후 다시 제출해 주세요.';
   if (form.oneSubmission) {
     const dup = await c.env.DB
       .prepare('SELECT id FROM submissions WHERE campaign_id = ? AND user_email = ?')
       .bind(campaign.id, u.email).first();
-    if (dup) return c.json({ error: '이미 제출하셨습니다. 기존 제출을 수정하거나 삭제 후 다시 제출해 주세요.' }, 400);
+    if (dup) return c.json({ error: DUP_MSG }, 400);
   }
 
   const body = await c.req.json();
   const data = buildSubmissionData(form, body);
   if (data.error) return c.json({ error: data.error }, 400);
 
-  const res = await c.env.DB
-    .prepare('INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers) VALUES (?,?,?,?,?,?,?)')
-    .bind(campaign.id, u.email, u.name, u.department, data.title, data.content, JSON.stringify(data.answers))
-    .run();
+  // 1인 1회 설문은 조건부 INSERT로 원자 처리한다.
+  // 위 SELECT 검사만으로는 더블클릭·다중 탭에서 두 요청이 동시에 통과해 중복 저장될 수 있다.
+  const cols = 'INSERT INTO submissions (campaign_id, user_email, user_name, user_department, title, content, answers)';
+  const vals = [campaign.id, u.email, u.name, u.department, data.title, data.content, JSON.stringify(data.answers)];
+  const res = form.oneSubmission
+    ? await c.env.DB
+        .prepare(`${cols} SELECT ?,?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE campaign_id = ? AND user_email = ?)`)
+        .bind(...vals, campaign.id, u.email)
+        .run()
+    : await c.env.DB.prepare(`${cols} VALUES (?,?,?,?,?,?,?)`).bind(...vals).run();
+  if (form.oneSubmission && !res.meta.changes) return c.json({ error: DUP_MSG }, 400);
   const submissionId = res.meta.last_row_id;
   await claimAttachments(c.env, form, body, submissionId, u.email);
   await c.env.DB.prepare('DELETE FROM drafts WHERE campaign_id = ? AND user_email = ?').bind(campaign.id, u.email).run();
