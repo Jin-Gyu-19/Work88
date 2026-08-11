@@ -1723,3 +1723,121 @@ html[data-design="liquiddark"] .toggle { background: rgba(255, 255, 255, .08); b
 html[data-design="liquiddark"] .toggle[aria-pressed="true"] { background: var(--accent-grad); color: #fff; }
 html[data-design="liquiddark"] .opt-dot { border-color: #565e73; }
 html[data-design="liquiddark"] .req-chip { background: rgba(255, 69, 58, .22); color: #ff9d95; }
+
+/* ---------- 리퀴드 글래스 정밀 보정: 애플 곡률·이중 림 라이트·프레스 ---------- */
+/* 연속 곡률(스쿼클): 지원 브라우저에서 애플과 동일한 모서리 곡선 */
+html[data-design="liquid"] .card, html[data-design="liquid"] .q-item,
+html[data-design="liquid"] .modal-body, html[data-design="liquid"] .q-row,
+html[data-design="liquiddark"] .card, html[data-design="liquiddark"] .q-item,
+html[data-design="liquiddark"] .modal-body, html[data-design="liquiddark"] .q-row {
+  border-radius: 26px;
+  corner-shape: squircle;
+}
+html[data-design="liquid"] input, html[data-design="liquid"] textarea, html[data-design="liquid"] select,
+html[data-design="liquiddark"] input, html[data-design="liquiddark"] textarea, html[data-design="liquiddark"] select {
+  border-radius: 16px;
+  corner-shape: squircle;
+}
+
+/* 버튼: 애플 비율(높이 38px·여유 패딩·타이트한 자간) + 이중 림 + 프레스 스케일 */
+html[data-design="liquid"] button, html[data-design="liquiddark"] button {
+  min-height: 38px; padding: 9px 20px;
+  font-size: 13.5px; letter-spacing: -0.01em; font-weight: 600;
+  transition: background .15s, border-color .15s, box-shadow .15s, transform .12s cubic-bezier(.2,.7,.3,1.2);
+}
+html[data-design="liquid"] button.small, html[data-design="liquiddark"] button.small,
+html[data-design="liquid"] .icon-btn, html[data-design="liquiddark"] .icon-btn,
+html[data-design="liquid"] .tbtn, html[data-design="liquiddark"] .tbtn,
+html[data-design="liquid"] .star, html[data-design="liquiddark"] .star,
+html[data-design="liquid"] .chip, html[data-design="liquiddark"] .chip {
+  min-height: 0;
+}
+html[data-design="liquid"] button.small, html[data-design="liquiddark"] button.small { padding: 6px 14px; font-size: 12.5px; }
+html[data-design="liquid"] button:active, html[data-design="liquiddark"] button:active { transform: scale(.965); }
+html[data-design="liquid"] .star:active, html[data-design="liquiddark"] .star:active { transform: scale(1.12); }
+
+/* 라이트: 유리 버튼 이중 림 (위 밝음 + 아래 미세 어두움) */
+html[data-design="liquid"] button {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -1px 0 rgba(40, 60, 120, .07), 0 1px 3px rgba(40, 60, 120, .08);
+}
+html[data-design="liquid"] button.ghost, html[data-design="liquid"] .tbtn, html[data-design="liquid"] .icon-btn, html[data-design="liquid"] .star { box-shadow: none; }
+/* 라이트 CTA: 상단 글로스 + 하단 딥 블루 림 — 유리 알약의 볼륨 */
+html[data-design="liquid"] button.primary {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .38), rgba(255, 255, 255, .08) 46%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #3f9bff, #0a84ff 45%, #0771df);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -7px 14px rgba(2, 60, 140, .22), 0 8px 24px rgba(10, 132, 255, .4);
+}
+html[data-design="liquid"] button.primary:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, .06) 46%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #2f8fff, #0778ec 45%, #0665c7);
+}
+html[data-design="liquid"] button.danger {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .06) 46%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #ff6259, #ff3b30 50%, #e0332a);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -6px 12px rgba(150, 20, 15, .25), 0 6px 18px rgba(255, 59, 48, .35);
+}
+/* 포커스 링 (키보드 접근) */
+html[data-design="liquid"] button:focus-visible { outline: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 4px rgba(10, 132, 255, .3); }
+
+/* 다크: 유리 버튼 이중 림 */
+html[data-design="liquiddark"] button {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -1px 0 rgba(0, 0, 10, .3), 0 1px 3px rgba(0, 0, 10, .3);
+}
+html[data-design="liquiddark"] button.ghost, html[data-design="liquiddark"] .tbtn, html[data-design="liquiddark"] .icon-btn, html[data-design="liquiddark"] .star { box-shadow: none; }
+html[data-design="liquiddark"] button.primary {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .07) 46%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #4aa2ff, #0a84ff 45%, #0771df);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -7px 14px rgba(2, 50, 120, .3), 0 10px 28px rgba(10, 132, 255, .45);
+}
+html[data-design="liquiddark"] button.danger {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .05) 46%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #ff5a50, #ff453a 50%, #e03a30);
+}
+html[data-design="liquiddark"] button:focus-visible { outline: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 0 0 4px rgba(64, 156, 255, .35); }
+
+/* 카드: 아래쪽 미세 어두운 림 추가 — 유리 두께의 아랫면 */
+html[data-design="liquid"] .card, html[data-design="liquid"] .q-item {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -1px 0 rgba(40, 60, 120, .06), 0 10px 34px rgba(40, 60, 120, .13);
+}
+html[data-design="liquiddark"] .card, html[data-design="liquiddark"] .q-item {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -1px 0 rgba(0, 0, 10, .35), 0 12px 38px rgba(0, 0, 10, .4);
+}
+
+/* 진행바: 캡슐 트랙 + 트랙 안쪽 그림자 */
+html[data-design="liquid"] .progress, html[data-design="liquid"] .progress-track {
+  height: 6px; border-radius: 999px; background: rgba(60, 80, 140, .14);
+  box-shadow: inset 0 1px 2px rgba(40, 60, 120, .15);
+}
+html[data-design="liquiddark"] .progress, html[data-design="liquiddark"] .progress-track {
+  height: 6px; border-radius: 999px; background: rgba(255, 255, 255, .1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 10, .4);
+}
+html[data-design="liquid"] .progress > div, html[data-design="liquid"] .progress-track > div,
+html[data-design="liquiddark"] .progress > div, html[data-design="liquiddark"] .progress-track > div {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%), #0a84ff;
+}
+
+/* 선택지 프레스 + 라디오 애플화 */
+html[data-design="liquid"] .choice, html[data-design="liquiddark"] .choice { transition: background .15s, border-color .15s, box-shadow .15s, transform .12s; }
+html[data-design="liquid"] .choice:active, html[data-design="liquiddark"] .choice:active { transform: scale(.985); }
+html[data-design="liquid"] .choice input, html[data-design="liquiddark"] .choice input { width: 17px; height: 17px; }
+
+/* 탭: 세그먼트 컨트롤 느낌 (선택 조각이 떠 있는 유리) */
+html[data-design="liquid"] .tabs button.active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 2px 8px rgba(40, 60, 120, .18);
+}
+html[data-design="liquiddark"] .tabs button.active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 2px 8px rgba(0, 0, 10, .4);
+}
+/* 메타 칩(제출 N건)은 버튼 규격에서 제외 — 텍스트 링크처럼 */
+html[data-design="liquid"] .ci-count, html[data-design="liquiddark"] .ci-count {
+  min-height: 0; padding: 2px 8px; background: transparent; border: none; box-shadow: none; font-weight: 600;
+}
+html[data-design="liquid"] .ci-count:hover { background: rgba(10, 132, 255, .1); }
+html[data-design="liquiddark"] .ci-count:hover { background: rgba(64, 156, 255, .14); }
