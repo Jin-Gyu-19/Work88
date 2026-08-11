@@ -89,7 +89,7 @@ async function init() {
     rows[rows.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
   $('b-close-x').onclick = closeBuilder;
-  $('b-preview').onclick = showPreview;
+  $('b-preview').onclick = () => showPreview();
   $('pv-close').onclick = () => $('preview-modal').classList.add('hidden');
   $('b-tpl-load').onclick = loadTemplateIntoBuilder;
   $('b-tpl-save').onclick = saveTemplate;
@@ -189,7 +189,7 @@ function renderCampaignList() {
       return `
       <div class="campaign-item">
         <div>
-          <div class="ci-title-row"><span class="campaign-title">${esc(ca.title)}</span>
+          <div class="ci-title-row"><span class="campaign-title ci-title-link" role="button" tabindex="0" data-act="edit" data-id="${ca.id}" title="클릭하면 설문 편집 화면이 열립니다">${esc(ca.title)}</span>
             <span class="stag ${ca.open_now ? 'on' : 'off'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
             ${dLeft !== null && dLeft <= 3 ? `<span class="stag warn">마감 ${dLeft === 0 ? 'D-DAY' : `D-${dLeft}`}</span>` : ''}
             ${ca.form.oneSubmission ? '<span class="stag">1인 1회</span>' : ''}
@@ -212,6 +212,7 @@ function renderCampaignList() {
           <div class="dropdown">
             <button class="small more-btn" data-act="more" data-id="${ca.id}" title="더보기" aria-label="더보기">⋯</button>
             <div class="dropdown-menu hidden">
+              <button class="small" data-act="preview" data-id="${ca.id}">미리보기</button>
               <button class="small" data-act="dup" data-id="${ca.id}" title="질문 구성을 그대로 복사한 새 설문을 만듭니다">복제</button>
               <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
               <button class="small danger-item" data-act="delete" data-id="${ca.id}">삭제</button>
@@ -221,9 +222,14 @@ function renderCampaignList() {
       </div>`;
     }).join('');
   }
-  box.querySelectorAll('button[data-act]').forEach((b) => {
+  box.querySelectorAll('[data-act]').forEach((b) => {
     const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
     b.onclick = () => onCampaignAction(b.dataset.act, ca, b);
+    if (b.tagName !== 'BUTTON') {
+      b.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCampaignAction(b.dataset.act, ca, b); }
+      };
+    }
   });
 }
 
@@ -248,7 +254,7 @@ function renderAllCampaignList() {
     return `
       <div class="campaign-item">
         <div>
-          <div class="ci-title-row"><span class="campaign-title">${esc(ca.title)}</span>
+          <div class="ci-title-row"><span class="campaign-title ci-title-link" role="button" tabindex="0" data-act="edit" data-id="${ca.id}" title="클릭하면 설문 편집 화면이 열립니다">${esc(ca.title)}</span>
             <span class="stag ${ca.open_now ? 'on' : 'off'}">${ca.open_now ? '진행 중' : (ca.is_open && ca.closes_at ? '기한 마감' : '마감')}</span>
             <span class="stag ${isMine ? '' : 'who'}">👤 ${esc(who)}</span></div>
           <div class="ci-meta">
@@ -262,6 +268,7 @@ function renderAllCampaignList() {
           <div class="dropdown">
             <button class="small more-btn" data-act="more" data-id="${ca.id}" title="더보기" aria-label="더보기">⋯</button>
             <div class="dropdown-menu hidden">
+              <button class="small" data-act="preview" data-id="${ca.id}">미리보기</button>
               <button class="small" data-act="dup" data-id="${ca.id}">복제</button>
               <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
               <button class="small danger-item" data-act="delete" data-id="${ca.id}">삭제</button>
@@ -270,9 +277,14 @@ function renderAllCampaignList() {
         </div>
       </div>`;
   }).join('');
-  box.querySelectorAll('button[data-act]').forEach((b) => {
+  box.querySelectorAll('[data-act]').forEach((b) => {
     const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
     b.onclick = () => onCampaignAction(b.dataset.act, ca, b);
+    if (b.tagName !== 'BUTTON') {
+      b.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCampaignAction(b.dataset.act, ca, b); }
+      };
+    }
   });
 }
 
@@ -344,7 +356,13 @@ async function onCampaignAction(act, ca, btn) {
     return;
   }
   if (act === 'edit') {
+    closeAllMenus();
     openBuilder(ca);
+    return;
+  }
+  if (act === 'preview') {
+    closeAllMenus();
+    showPreview(ca);
     return;
   }
   if (act === 'dup') {
@@ -1125,14 +1143,17 @@ function refreshBranches() {
 
 // ---------- 설문 미리보기 ----------
 
-function showPreview() {
-  const qs = toServerQuestions(
-    bQuestions
-      .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
-      .filter((q) => q.label.trim()),
-  );
-  const title = $('b-name').value.trim() || '(설문 제목)';
-  const desc = $('b-desc').value.trim();
+// ca 를 넘기면 목록의 설문을, 없으면 편집 중인 내용을 미리본다
+function showPreview(ca) {
+  const qs = ca
+    ? (ca.form.questions || [])
+    : toServerQuestions(
+        bQuestions
+          .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
+          .filter((q) => q.label.trim()),
+      );
+  const title = ca ? ca.title : ($('b-name').value.trim() || '(설문 제목)');
+  const desc = ca ? (ca.description || '') : $('b-desc').value.trim();
 
   const qHtml = qs.length ? qs.map((q) => {
     const req = q.required ? ' <span style="color:var(--danger)">*</span>' : '';

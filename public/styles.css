@@ -2261,3 +2261,61 @@ html body .b-add-main { border-radius: 12px; height: 46px; }
 .b-opt-menu .dd-date .t { font-size: 13px; font-weight: 700; color: var(--text); }
 .b-opt-menu .dd-date .d { font-size: 11px; color: var(--muted); margin: 1px 0 8px; line-height: 1.45; }
 .b-opt-menu .dd-date input { margin: 0; }
+
+/* ═══════ 호버 음영 · 탭 전환 효과 ═══════ */
+:root {
+  --hover-shadow: 0 3px 10px rgba(27, 30, 40, .13);
+  --row-hover: rgba(27, 30, 40, .045);
+}
+/* 다크 계열은 검은 그림자가 안 보이므로 빛으로 대신한다 */
+html[data-design="noir"] { --hover-shadow: 0 3px 12px rgba(0, 0, 0, .5); --row-hover: rgba(201, 168, 106, .07); }
+html[data-design="obsidian"] { --hover-shadow: 0 3px 12px rgba(0, 0, 0, .55); --row-hover: rgba(201, 206, 216, .06); }
+html[data-design="liquiddark"] { --hover-shadow: 0 4px 14px rgba(0, 0, 8, .5); --row-hover: rgba(255, 255, 255, .07); }
+html[data-design="liquid"] { --hover-shadow: 0 4px 14px rgba(40, 55, 110, .16); --row-hover: rgba(255, 255, 255, .5); }
+html[data-design="legalpad"] { --row-hover: rgba(184, 52, 44, .06); }
+html[data-design="marble"] { --row-hover: rgba(176, 141, 62, .07); }
+
+/* 버튼: 올리면 살짝 떠오르고 그림자가 진다 */
+html body button:not(.star):not(.ci-count) {
+  transition: background .15s, border-color .15s, box-shadow .18s, transform .12s;
+}
+html body button:not(.star):not(.ci-count):not(:disabled):hover {
+  box-shadow: var(--hover-shadow);
+  transform: translateY(-1px);
+}
+html body button:not(.star):not(.ci-count):not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+/* 목록 안 항목형 버튼은 뜨지 않고 배경만 (줄이 흔들려 보이지 않게) */
+html body .dropdown-menu button:hover, html body .tabs button:hover {
+  transform: none; box-shadow: none;
+}
+
+/* 설문 목록 행: 올리면 은은한 음영 + 살짝 들림 */
+.campaign-item {
+  transition: background .16s, box-shadow .18s, transform .16s;
+}
+.campaign-item:hover {
+  background: var(--row-hover);
+  box-shadow: var(--hover-shadow);
+  transform: translateY(-1px);
+}
+/* 표 행도 동일한 결로 */
+tr.clickable { transition: background .15s; }
+
+/* 제목 클릭 → 편집 */
+.ci-title-link { cursor: pointer; text-decoration-color: transparent; }
+.ci-title-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+.ci-title-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+
+/* 탭 전환: 새 화면이 아래에서 부드럽게 올라오며 나타난다 */
+@keyframes tab-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+#tab-campaigns, #tab-submissions, #tab-all, #tab-users {
+  animation: tab-in .3s cubic-bezier(.22, .7, .3, 1) both;
+}
+/* 탭 버튼의 선택 표시도 같이 미끄러지듯 */
+.tabs button { transition: background .2s, color .2s, box-shadow .2s; }
