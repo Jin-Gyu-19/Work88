@@ -2018,3 +2018,195 @@ html[data-design="liquid"] .choice input { accent-color: #007aff; }
 html[data-design="liquid"] button.primary, html[data-design="liquiddark"] button.primary,
 html[data-design="liquid"] button.danger, html[data-design="liquiddark"] button.danger { font-weight: 500; }
 .btn-chev { margin-left: 5px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   리퀴드 글래스 v4 — iOS 26 재질 정본
+   유리의 정체는 ① 강한 블러 + 채도/명도 상승(루미넌스)
+                ② 테두리를 따라 밝기가 변하는 스펙큘러 림 (균일한 흰 선이 아님)
+                ③ 채움 대신 맑은 유리 + 액센트 글자 (채움은 주 동작 하나뿐)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── ② 스펙큘러 림: 좌상단이 가장 밝고 우하단에서 다시 살짝 밝아지는 그라데이션 테두리 ── */
+html[data-design="liquid"] button::after,
+html[data-design="liquid"] .card::after,
+html[data-design="liquid"] .q-item::after,
+html[data-design="liquid"] .choice::after,
+html[data-design="liquid"] .tabs::after,
+html[data-design="liquid"] .submit-bar::after,
+html[data-design="liquiddark"] button::after,
+html[data-design="liquiddark"] .card::after,
+html[data-design="liquiddark"] .q-item::after,
+html[data-design="liquiddark"] .choice::after,
+html[data-design="liquiddark"] .tabs::after,
+html[data-design="liquiddark"] .submit-bar::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  padding: 1px; pointer-events: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+html[data-design="liquid"] button, html[data-design="liquid"] .card,
+html[data-design="liquid"] .q-item, html[data-design="liquid"] .choice,
+html[data-design="liquid"] .tabs, html[data-design="liquid"] .submit-bar,
+html[data-design="liquiddark"] button, html[data-design="liquiddark"] .card,
+html[data-design="liquiddark"] .q-item, html[data-design="liquiddark"] .choice,
+html[data-design="liquiddark"] .tabs, html[data-design="liquiddark"] .submit-bar { position: relative; }
+
+html[data-design="liquid"] button::after, html[data-design="liquid"] .card::after,
+html[data-design="liquid"] .q-item::after, html[data-design="liquid"] .choice::after,
+html[data-design="liquid"] .tabs::after, html[data-design="liquid"] .submit-bar::after {
+  background: linear-gradient(145deg,
+    rgba(255,255,255,.95) 0%, rgba(255,255,255,.45) 22%,
+    rgba(255,255,255,.10) 48%, rgba(255,255,255,.22) 72%, rgba(255,255,255,.75) 100%);
+}
+html[data-design="liquiddark"] button::after, html[data-design="liquiddark"] .card::after,
+html[data-design="liquiddark"] .q-item::after, html[data-design="liquiddark"] .choice::after,
+html[data-design="liquiddark"] .tabs::after, html[data-design="liquiddark"] .submit-bar::after {
+  background: linear-gradient(145deg,
+    rgba(255,255,255,.55) 0%, rgba(255,255,255,.22) 24%,
+    rgba(255,255,255,.05) 50%, rgba(255,255,255,.12) 74%, rgba(255,255,255,.40) 100%);
+}
+/* 림을 쓰는 요소는 기존 하드 보더 제거 (선이 두 겹으로 보이지 않게) */
+html[data-design="liquid"] button, html[data-design="liquid"] .card, html[data-design="liquid"] .q-item,
+html[data-design="liquid"] .choice, html[data-design="liquid"] .tabs, html[data-design="liquid"] .submit-bar,
+html[data-design="liquiddark"] button, html[data-design="liquiddark"] .card, html[data-design="liquiddark"] .q-item,
+html[data-design="liquiddark"] .choice, html[data-design="liquiddark"] .tabs, html[data-design="liquiddark"] .submit-bar {
+  border: none;
+}
+
+/* ── ① 루미넌스: 블러에 밝기 상승을 더해야 iOS 유리가 된다 ── */
+html[data-design="liquid"] .card, html[data-design="liquid"] .q-item {
+  background: rgba(255,255,255,.26);
+  backdrop-filter: blur(36px) saturate(190%) brightness(1.1);
+  -webkit-backdrop-filter: blur(36px) saturate(190%) brightness(1.1);
+  border-radius: 28px;
+  box-shadow: 0 14px 44px rgba(40,55,110,.14);
+}
+html[data-design="liquiddark"] .card, html[data-design="liquiddark"] .q-item {
+  background: rgba(255,255,255,.055);
+  backdrop-filter: blur(36px) saturate(190%) brightness(1.25);
+  -webkit-backdrop-filter: blur(36px) saturate(190%) brightness(1.25);
+  border-radius: 28px;
+  box-shadow: 0 18px 50px rgba(0,0,8,.45);
+}
+
+/* ── ③ 버튼: 맑은 유리 + 액센트 글자 (흰 스티커 아님) ── */
+html[data-design="liquid"] button {
+  background: rgba(255,255,255,.34);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.12);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.12);
+  box-shadow: 0 2px 8px rgba(40,55,110,.08);
+  color: #007aff;                 /* 유리 버튼의 글자는 액센트 색 */
+  font-weight: 500;
+}
+html[data-design="liquid"] button:hover { background: rgba(255,255,255,.6); }
+html[data-design="liquiddark"] button {
+  background: rgba(255,255,255,.09);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.3);
+  box-shadow: 0 2px 10px rgba(0,0,8,.28);
+  color: #66b2ff;
+  font-weight: 500;
+}
+html[data-design="liquiddark"] button:hover { background: rgba(255,255,255,.16); }
+/* 중립 성격의 버튼(취소·닫기·더보기 등)은 액센트 대신 잉크 색 */
+html[data-design="liquid"] .more-btn, html[data-design="liquid"] .modal-x,
+html[data-design="liquid"] .tabs button { color: #3c4352; }
+html[data-design="liquiddark"] .more-btn, html[data-design="liquiddark"] .modal-x,
+html[data-design="liquiddark"] .tabs button { color: #aab1c4; }
+
+/* 주 동작 단 하나만 채움 — 액센트 위의 림은 흰빛을 낮춰 담백하게 */
+html[data-design="liquid"] button.primary {
+  background: #007aff; color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: 0 3px 10px rgba(0,86,190,.24);
+}
+html[data-design="liquiddark"] button.primary {
+  background: #0a84ff; color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: 0 4px 14px rgba(0,60,150,.4);
+}
+html[data-design="liquid"] button.primary::after {
+  background: linear-gradient(145deg, rgba(255,255,255,.6), rgba(255,255,255,.12) 45%, rgba(255,255,255,.28));
+}
+html[data-design="liquiddark"] button.primary::after {
+  background: linear-gradient(145deg, rgba(255,255,255,.5), rgba(255,255,255,.1) 45%, rgba(255,255,255,.24));
+}
+html[data-design="liquid"] button.danger, html[data-design="liquiddark"] button.danger {
+  color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+/* ghost·아이콘·툴바 버튼은 유리도 림도 없는 순수 글자 */
+html[data-design="liquid"] button.ghost::after, html[data-design="liquiddark"] button.ghost::after,
+html[data-design="liquid"] .icon-btn::after, html[data-design="liquiddark"] .icon-btn::after,
+html[data-design="liquid"] .tbtn::after, html[data-design="liquiddark"] .tbtn::after,
+html[data-design="liquid"] .star::after, html[data-design="liquiddark"] .star::after,
+html[data-design="liquid"] .ci-count::after, html[data-design="liquiddark"] .ci-count::after,
+html[data-design="liquid"] .dropdown-menu button::after, html[data-design="liquiddark"] .dropdown-menu button::after {
+  display: none;
+}
+html[data-design="liquid"] button.ghost, html[data-design="liquid"] .icon-btn, html[data-design="liquid"] .tbtn,
+html[data-design="liquid"] .ci-count { backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; color: #5d6675; }
+html[data-design="liquiddark"] button.ghost, html[data-design="liquiddark"] .icon-btn, html[data-design="liquiddark"] .tbtn,
+html[data-design="liquiddark"] .ci-count { backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; color: #9aa1b5; }
+html[data-design="liquid"] .dropdown-menu button, html[data-design="liquiddark"] .dropdown-menu button {
+  backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; background: transparent;
+}
+html[data-design="liquid"] .dropdown-menu button { color: #1d1d1f; }
+html[data-design="liquiddark"] .dropdown-menu button { color: #e8eaf2; }
+html[data-design="liquid"] .dropdown-menu button.danger-item, html[data-design="liquiddark"] .dropdown-menu button.danger-item { color: #ff3b30; }
+
+/* ── 선택지: 맑은 유리 → 선택 시 액센트 유리 ── */
+html[data-design="liquid"] .choice {
+  background: rgba(255,255,255,.22);
+  backdrop-filter: blur(16px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.1);
+  box-shadow: none;
+}
+html[data-design="liquid"] .choice:hover { background: rgba(255,255,255,.5); }
+html[data-design="liquid"] .choice:has(input:checked) { background: rgba(0,122,255,.16); color: #05316b; }
+html[data-design="liquiddark"] .choice {
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(16px) saturate(180%) brightness(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.25);
+  box-shadow: none;
+}
+html[data-design="liquiddark"] .choice:hover { background: rgba(255,255,255,.11); }
+html[data-design="liquiddark"] .choice:has(input:checked) { background: rgba(10,132,255,.28); color: #eaf3ff; }
+
+/* ── 세그먼트 탭: 떠 있는 유리 조각 ── */
+html[data-design="liquid"] .tabs { background: rgba(255,255,255,.2); backdrop-filter: blur(24px) saturate(180%) brightness(1.1); -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.1); box-shadow: 0 6px 20px rgba(40,55,110,.1); }
+html[data-design="liquid"] .tabs button.active { background: rgba(255,255,255,.92); color: #1d1d1f; box-shadow: 0 2px 6px rgba(40,55,110,.14); }
+html[data-design="liquiddark"] .tabs { background: rgba(255,255,255,.06); backdrop-filter: blur(24px) saturate(180%) brightness(1.25); -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.25); box-shadow: 0 8px 24px rgba(0,0,8,.4); }
+html[data-design="liquiddark"] .tabs button.active { background: rgba(255,255,255,.2); color: #fff; box-shadow: none; }
+
+/* ── 떠 있는 제출 바 ── */
+html[data-design="liquid"] .submit-bar {
+  background: rgba(255,255,255,.3);
+  backdrop-filter: blur(32px) saturate(190%) brightness(1.12); -webkit-backdrop-filter: blur(32px) saturate(190%) brightness(1.12);
+  box-shadow: 0 14px 40px rgba(40,55,110,.18);
+}
+html[data-design="liquiddark"] .submit-bar {
+  background: rgba(255,255,255,.07);
+  backdrop-filter: blur(32px) saturate(190%) brightness(1.25); -webkit-backdrop-filter: blur(32px) saturate(190%) brightness(1.25);
+  box-shadow: 0 16px 44px rgba(0,0,8,.5);
+}
+
+/* ── 상단 바도 유리 ── */
+html[data-design="liquid"] .topbar {
+  background: rgba(255,255,255,.24);
+  backdrop-filter: blur(30px) saturate(190%) brightness(1.1); -webkit-backdrop-filter: blur(30px) saturate(190%) brightness(1.1);
+  border-bottom: 1px solid rgba(255,255,255,.45); box-shadow: none;
+}
+html[data-design="liquiddark"] .topbar {
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(30px) saturate(190%) brightness(1.2); -webkit-backdrop-filter: blur(30px) saturate(190%) brightness(1.2);
+  border-bottom: 1px solid rgba(255,255,255,.12); box-shadow: none;
+}
+
+/* ── 입력칸: 유리 안쪽으로 살짝 파인 느낌 ── */
+html[data-design="liquid"] input, html[data-design="liquid"] textarea, html[data-design="liquid"] select {
+  background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.6); border-radius: 14px;
+  box-shadow: inset 0 1px 2px rgba(40,55,110,.06);
+}
+html[data-design="liquiddark"] input, html[data-design="liquiddark"] textarea, html[data-design="liquiddark"] select {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+  box-shadow: inset 0 1px 2px rgba(0,0,8,.3);
+}
