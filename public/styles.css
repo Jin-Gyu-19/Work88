@@ -2210,3 +2210,54 @@ html[data-design="liquiddark"] input, html[data-design="liquiddark"] textarea, h
   background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
   box-shadow: inset 0 1px 2px rgba(0,0,8,.3);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   버튼 셰이프 통일 — 모든 테마가 같은 모양을 쓴다 (색은 테마가 결정)
+   기준: 모서리 10px 둥근 사각형 · 높이 36px · 볼드 텍스트
+   테마별 캡슐(999px)·직각(0px) 지정을 여기서 되돌린다.
+   ═══════════════════════════════════════════════════════════════ */
+/* 높이는 padding 이 아니라 height 로 고정한다.
+   테마마다 테두리 유무·글꼴 크기가 달라 padding 기준이면 1~2px씩 어긋난다.
+   (box-sizing: border-box 라 테두리가 있든 없든 같은 높이가 된다) */
+html body button:not(.star):not(.ci-count) {
+  border-radius: 10px;
+  padding: 0 18px;
+  height: 38px;
+  line-height: 1.2;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+html body button.small:not(.star):not(.ci-count) {
+  border-radius: 9px;
+  padding: 0 14px;
+  height: 31px;
+  font-size: 12.5px;
+}
+/* 아이콘 전용 버튼은 정사각 (모서리 규격은 동일) */
+html body .icon-btn { border-radius: 9px; padding: 0; height: 30px; width: 30px; }
+html body .icon-btn.sm { border-radius: 8px; height: 26px; width: 26px; }
+html body .modal-x { border-radius: 10px; padding: 0; height: 38px; width: 38px; }
+/* 더보기(⋯)는 좁게 */
+html body .more-btn { padding: 6px 12px; }
+/* 칩·토글·탭도 같은 모서리로 (한 화면에서 알약과 사각이 섞이지 않게) */
+html body .chip, html body .toggle { border-radius: 9px; }
+html body .tabs { border-radius: 13px; }
+html body .tabs button { border-radius: 9px; padding: 0 16px; }
+html body .dropdown-menu { border-radius: 12px; }
+html body .dropdown-menu button { border-radius: 0; height: auto; padding: 10px 15px; font-weight: 600; justify-content: flex-start; }
+/* 별점은 글리프라 버튼 규격에서 제외 */
+html body .star { height: auto; padding: 2px 3px; border-radius: 0; }
+/* 빌더의 전체 폭 '질문 추가'는 넓은 점선 버튼 유지 */
+html body .b-add-main { border-radius: 12px; height: 46px; }
+
+/* 설문 옵션 드롭다운 (마감일 + 스위치) */
+.b-opt-menu { left: auto; right: 0; width: 320px; }
+.b-opt-menu .dd-date { padding: 12px 15px 13px; border-bottom: 1px solid var(--line); }
+.b-opt-menu .dd-date .t { font-size: 13px; font-weight: 700; color: var(--text); }
+.b-opt-menu .dd-date .d { font-size: 11px; color: var(--muted); margin: 1px 0 8px; line-height: 1.45; }
+.b-opt-menu .dd-date input { margin: 0; }

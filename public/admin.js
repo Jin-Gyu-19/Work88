@@ -54,11 +54,23 @@ async function init() {
   });
 
   $('btn-new').onclick = () => openBuilder(null);
+  // 설문 옵션: 드롭다운으로 열고, 각 항목은 스위치로 켜고 끈다
   $('b-opts-toggle').onclick = () => {
-    const hidden = $('b-opts').classList.toggle('hidden');
-    $('b-opts-toggle').setAttribute('aria-pressed', String(!hidden));
+    const menu = $('b-opts');
+    const wasHidden = menu.classList.contains('hidden');
+    closeAllMenus();
+    if (wasHidden) menu.classList.remove('hidden');
   };
-  ['b-close', 'b-one', 'b-noedit'].forEach((id) => { $(id).onchange = updateOptsSum; });
+  const optRow = (rowId, cbId) => {
+    $(rowId).onclick = () => {
+      const cb = $(cbId);
+      cb.checked = !cb.checked;
+      updateOptsSum();
+    };
+  };
+  optRow('b-row-one', 'b-one');
+  optRow('b-row-noedit', 'b-noedit');
+  $('b-close').onchange = updateOptsSum;
   $('camp-search').oninput = renderCampaignList;
   $('camp-status').onchange = renderCampaignList;
   $('all-search').oninput = renderAllCampaignList;
@@ -547,7 +559,6 @@ function openBuilder(ca) {
     bBg = null;
   }
   $('b-opts').classList.add('hidden');
-  $('b-opts-toggle').setAttribute('aria-pressed', 'false');
   updateOptsSum();
   branchOpen.clear();
   helpOpen.clear();
@@ -564,12 +575,23 @@ function openBuilder(ca) {
 
 // 옵션 버튼 옆에 현재 설정 요약을 표시 (꺼진 옵션도 상태가 보이게)
 function updateOptsSum() {
+  const hasClose = !!$('b-close').value;
+  const one = $('b-one').checked;
+  const noEdit = $('b-noedit').checked;
   const parts = [
-    $('b-close').value ? `마감 ${$('b-close').value}` : '기한 없음',
-    $('b-one').checked ? '1인 1회 제출' : '1인 다회 제출 가능',
-    $('b-noedit').checked ? '제출 후 수정 금지' : '제출 후 수정 가능',
+    hasClose ? `마감 ${$('b-close').value}` : '기한 없음',
+    one ? '1인 1회 제출' : '1인 다회 제출 가능',
+    noEdit ? '제출 후 수정 금지' : '제출 후 수정 가능',
   ];
   $('b-opts-sum').textContent = parts.join(' · ');
+  // 드롭다운 스위치 상태
+  $('b-row-one').classList.toggle('on', one);
+  $('b-row-noedit').classList.toggle('on', noEdit);
+  // 켜져 있는 옵션 개수를 버튼에 숫자로 표시
+  const n = (hasClose ? 1 : 0) + (one ? 1 : 0) + (noEdit ? 1 : 0);
+  const badge = $('b-opts-count');
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n === 0);
 }
 
 // ---------- 템플릿 ----------
