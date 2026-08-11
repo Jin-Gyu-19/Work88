@@ -71,6 +71,8 @@ const DESIGNS = [
   ['porcelain', '포슬린'],
   ['marble', '샴페인 마블'],
   ['obsidian', '옵시디언 플래티넘'],
+  ['liquid', '리퀴드 글래스'],
+  ['liquiddark', '리퀴드 글래스 다크'],
 ];
 
 function applyDesign(v) {
