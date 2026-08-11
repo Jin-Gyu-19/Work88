@@ -84,7 +84,7 @@ async function init() {
   $('b-tpl-del').onclick = deleteTemplate;
   $('btn-stats').onclick = () => {
     statsVisible = !statsVisible;
-    $('btn-stats').textContent = statsVisible ? '📈 통계 닫기' : '📈 통계 보기';
+    $('btn-stats').textContent = statsVisible ? '통계 닫기' : '통계 보기';
     $('stats-box').classList.toggle('hidden', !statsVisible);
     if (statsVisible) renderStats();
   };
@@ -188,25 +188,30 @@ function renderCampaignList() {
             <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
           </div>
         </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <div class="ci-actions">
           <div class="dropdown">
-            <button class="small primary" data-act="send" data-id="${ca.id}">📤 설문 보내기 ▾</button>
-            <div class="dropdown-menu hidden" data-menu="${ca.id}">
-              <button class="small" data-act="mail" data-id="${ca.id}">📧 메일로 보내기</button>
-              <button class="small" data-act="copy" data-id="${ca.id}">🔗 링크 복사하기</button>
+            <button class="small primary" data-act="send" data-id="${ca.id}">설문 보내기 ▾</button>
+            <div class="dropdown-menu hidden">
+              <button class="small" data-act="mail" data-id="${ca.id}">메일로 보내기</button>
+              <button class="small" data-act="copy" data-id="${ca.id}">링크 복사하기</button>
             </div>
           </div>
-          <button class="small" data-act="edit" data-id="${ca.id}">✏️ 설문 편집</button>
-          <button class="small" data-act="dup" data-id="${ca.id}" title="질문 구성을 그대로 복사한 새 설문을 만듭니다">⧉ 복제</button>
-          <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
-          <button class="small ghost" data-act="delete" data-id="${ca.id}">삭제</button>
+          <button class="small" data-act="edit" data-id="${ca.id}">설문 편집</button>
+          <div class="dropdown">
+            <button class="small more-btn" data-act="more" data-id="${ca.id}" title="더보기" aria-label="더보기">⋯</button>
+            <div class="dropdown-menu hidden">
+              <button class="small" data-act="dup" data-id="${ca.id}" title="질문 구성을 그대로 복사한 새 설문을 만듭니다">복제</button>
+              <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
+              <button class="small danger-item" data-act="delete" data-id="${ca.id}">삭제</button>
+            </div>
+          </div>
         </div>
       </div>`;
     }).join('');
   }
   box.querySelectorAll('button[data-act]').forEach((b) => {
     const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
-    b.onclick = () => onCampaignAction(b.dataset.act, ca);
+    b.onclick = () => onCampaignAction(b.dataset.act, ca, b);
   });
 }
 
@@ -240,17 +245,22 @@ function renderAllCampaignList() {
             <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
           </div>
         </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="small" data-act="edit" data-id="${ca.id}">✏️ 설문 편집</button>
-          <button class="small" data-act="dup" data-id="${ca.id}">⧉ 복제</button>
-          <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
-          <button class="small ghost" data-act="delete" data-id="${ca.id}">삭제</button>
+        <div class="ci-actions">
+          <button class="small" data-act="edit" data-id="${ca.id}">설문 편집</button>
+          <div class="dropdown">
+            <button class="small more-btn" data-act="more" data-id="${ca.id}" title="더보기" aria-label="더보기">⋯</button>
+            <div class="dropdown-menu hidden">
+              <button class="small" data-act="dup" data-id="${ca.id}">복제</button>
+              <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
+              <button class="small danger-item" data-act="delete" data-id="${ca.id}">삭제</button>
+            </div>
+          </div>
         </div>
       </div>`;
   }).join('');
   box.querySelectorAll('button[data-act]').forEach((b) => {
     const ca = campaigns.find((x) => String(x.id) === b.dataset.id);
-    b.onclick = () => onCampaignAction(b.dataset.act, ca);
+    b.onclick = () => onCampaignAction(b.dataset.act, ca, b);
   });
 }
 
@@ -258,7 +268,7 @@ function closeAllMenus() {
   document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.add('hidden'));
 }
 
-async function onCampaignAction(act, ca) {
+async function onCampaignAction(act, ca, btn) {
   if (!ca) return;
   if (act === 'subs') {
     // 제출 건수 클릭 → 해당 설문이 선택된 제출 현황으로 이동
@@ -266,8 +276,9 @@ async function onCampaignAction(act, ca) {
     document.querySelector('.tabs button[data-tab="submissions"]').click();
     return;
   }
-  if (act === 'send') {
-    const menu = document.querySelector(`[data-menu="${ca.id}"]`);
+  if (act === 'send' || act === 'more') {
+    const menu = btn?.parentElement?.querySelector('.dropdown-menu');
+    if (!menu) return;
     const wasHidden = menu.classList.contains('hidden');
     closeAllMenus();
     if (wasHidden) menu.classList.remove('hidden');
@@ -325,6 +336,7 @@ async function onCampaignAction(act, ca) {
     return;
   }
   if (act === 'dup') {
+    closeAllMenus();
     if (!confirm(`"${ca.title}" 설문을 복제할까요?\n질문 구성과 설정만 복사되고 제출 내역은 복사되지 않습니다.`)) return;
     try {
       const res = await api(`/api/admin/campaigns/${ca.id}/duplicate`, { method: 'POST' });
@@ -336,6 +348,7 @@ async function onCampaignAction(act, ca) {
     return;
   }
   if (act === 'toggle') {
+    closeAllMenus();
     try {
       await api(`/api/admin/campaigns/${ca.id}`, { method: 'PATCH', body: JSON.stringify({ is_open: ca.is_open ? 0 : 1 }) });
       toast(ca.is_open ? '설문을 마감했습니다' : '설문을 다시 열었습니다');
@@ -346,6 +359,7 @@ async function onCampaignAction(act, ca) {
     return;
   }
   if (act === 'delete') {
+    closeAllMenus();
     pendingDelete = ca;
     $('del-msg').innerHTML = `<strong>"${esc(ca.title)}"</strong> 설문을 삭제할까요? (제출 ${ca.submission_count}건)`;
     $('del-modal').classList.remove('hidden');
@@ -641,7 +655,7 @@ function renderBuilder() {
           <button type="button" class="tbtn q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
           <span class="tsep"></span>
           <div class="dropdown">
-            <button type="button" class="tbtn q-opt-btn" title="이 질문의 부가 기능을 켜고 끕니다">⚙️ 옵션<span class="tcnt hidden"></span> <span class="tarrow">▾</span></button>
+            <button type="button" class="tbtn q-opt-btn" title="이 질문의 부가 기능을 켜고 끕니다">옵션<span class="tcnt hidden"></span> <span class="tarrow">▾</span></button>
             <div class="dropdown-menu q-opt-menu hidden">
               <div class="dd-row dd-help"><div><div class="t">📝 설명문</div><div class="d">질문 아래에 도움말 한 줄을 보여줘요</div></div><span class="dd-sw"></span></div>
               <div class="dd-row dd-att"><div><div class="t">📎 파일 받기</div><div class="d">참여자가 답변에 파일·캡쳐·동영상을 첨부할 수 있어요</div></div><span class="dd-sw"></span></div>
@@ -1291,7 +1305,7 @@ async function loadSubs() {
       <td>${esc(s.user_department)}</td>
       <td>${esc(s.title)}</td>
       <td>${s.attachments.length ? `📎 ${s.attachments.length}` : '-'}</td>
-      <td><button class="small ghost" data-del="${s.id}">삭제</button></td>
+      <td><button class="small ghost danger-item" data-del="${s.id}">삭제</button></td>
     </tr>`).join('');
   tbody.querySelectorAll('tr[data-id]').forEach((tr) => {
     tr.onclick = (e) => {
@@ -1370,7 +1384,7 @@ function renderStats() {
           <option value="">전체 부서</option>
           ${allDepts.map((d) => `<option value="${esc(d)}" ${statsDept === d ? 'selected' : ''}>${esc(d)}</option>`).join('')}
         </select>
-        <button class="small" id="stats-view">${statsTable ? '📊 그래프로 보기' : '📋 표로 보기'}</button>
+        <button class="small" id="stats-view">${statsTable ? '그래프로 보기' : '표로 보기'}</button>
       </div>
     </div>
     <div class="kpi-row">
@@ -1502,7 +1516,7 @@ async function loadAdmins() {
         <td style="white-space:nowrap;">${kst(u.last_login)}</td>
         <td>
           ${u.isFixedAdmin ? '<span class="hint">환경설정 지정</span>' : ''}
-          ${removable ? `<button class="small ghost" data-remove="${u.id}">해제</button>` : ''}
+          ${removable ? `<button class="small ghost danger-item" data-remove="${u.id}">해제</button>` : ''}
         </td>
       </tr>`;
   }).join('');
