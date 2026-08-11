@@ -5,6 +5,50 @@ import { buildWorkbook, groupAtts } from './excel.js';
 
 const app = new Hono();
 
+// ---------- 운영 안전장치 ----------
+// 설정 실수 하나로 계정이 뚫리지 않도록, 사람이 기억하는 대신 코드가 막는다.
+
+// 로컬 개발 환경인지 (localhost 로 접속했는지)
+function isLocalHost(c) {
+  const h = new URL(c.req.url).hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.localhost');
+}
+
+// 세션 서명 키 점검: 키가 없거나 짧거나 예시값 그대로면 세션을 위조할 수 있다.
+const WEAK_SECRETS = new Set([
+  'dev-secret', 'dev-secret-for-local-test', 'secret', 'changeme',
+  'password', 'test', 'session-secret', 'your-secret-here',
+]);
+function sessionSecretProblem(c) {
+  if (isLocalHost(c)) return null; // 로컬 개발은 예외
+  const s = c.env.SESSION_SECRET;
+  if (!s) return 'SESSION_SECRET 이 등록되어 있지 않습니다';
+  if (s.length < 32) return `SESSION_SECRET 이 너무 짧습니다 (현재 ${s.length}자, 32자 이상 필요)`;
+  if (WEAK_SECRETS.has(s.toLowerCase())) return 'SESSION_SECRET 이 예시값 그대로입니다';
+  return null;
+}
+
+// 키가 부실하면 아무것도 서비스하지 않는다 (조용히 취약한 상태로 도는 것보다 멈추는 편이 안전)
+app.use('*', async (c, next) => {
+  const problem = sessionSecretProblem(c);
+  if (problem) {
+    // API 호출은 JSON으로 돌려줘야 화면의 오류 안내에 원인이 그대로 보인다
+    if (c.req.path.startsWith('/api/')) {
+      return c.json({ error: `서버 설정 오류: ${problem}. 관리자에게 문의해 주세요.` }, 500);
+    }
+    return c.text(
+      `서버 설정 오류: ${problem}\n\n` +
+      `관리자 조치 방법\n` +
+      `  1) openssl rand -hex 32        (충분히 긴 무작위 값 생성)\n` +
+      `  2) npx wrangler secret put SESSION_SECRET   (생성된 값 붙여넣기)\n` +
+      `  3) npm run deploy\n\n` +
+      `이 키가 부실하면 다른 사람의 로그인 세션을 위조할 수 있어 서비스를 중단했습니다.`,
+      500,
+    );
+  }
+  return next();
+});
+
 // 파일 종류별 업로드 용량 제한 (바이트)
 // 주의: Cloudflare 요청 본문 한도가 100MB라 그 이상은 불가
 const LIMITS = {
@@ -396,7 +440,7 @@ function safeRedirect(raw) {
 
 app.get('/auth/login', async (c) => {
   const redirect = safeRedirect(c.req.query('redirect'));
-  if (c.env.DEV_MODE === '1' && !c.env.MS_CLIENT_ID) {
+  if (c.env.DEV_MODE === '1' && isLocalHost(c) && !c.env.MS_CLIENT_ID) {
     return c.redirect(`/auth/dev?redirect=${encodeURIComponent(redirect)}`);
   }
   const nonce = crypto.randomUUID();
@@ -473,7 +517,9 @@ async function loginUser(c, { email, name, department }) {
 // 로컬 개발용 로그인 (DEV_MODE=1 일 때만 동작)
 // email 파라미터 없이 접속하면 테스트 계정 선택 화면을 보여준다
 app.get('/auth/dev', async (c) => {
-  if (c.env.DEV_MODE !== '1') return c.notFound();
+  // 이중 안전장치: DEV_MODE=1 이면서 localhost 접속일 때만 열린다.
+  // 실수로 DEV_MODE=1 인 채 배포해도 실제 도메인에서는 이 문이 열리지 않는다.
+  if (c.env.DEV_MODE !== '1' || !isLocalHost(c)) return c.notFound();
   const email = (c.req.query('email') || '').trim().toLowerCase();
   if (!email) {
     const redirect = c.req.query('redirect') || '/';
