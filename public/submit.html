@@ -7,7 +7,7 @@
   <script>try{var d=localStorage.getItem("bdoDesign");if(!localStorage.getItem("bdoDesignM1")){d="clean";localStorage.setItem("bdoDesign",d);localStorage.setItem("bdoDesignM1","1")}if(d===null)d="clean";if(d)document.documentElement.dataset.design=d}catch(e){}</script>
   <link rel="icon" href="/logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=88">
+  <link rel="stylesheet" href="/styles.css?v=89">
 </head>
 <body>
   <header class="topbar">
@@ -38,18 +38,13 @@
 
       <!-- 설문 소개 + 작성자 (컴팩트) -->
       <div class="card intro-card">
-        <h1 id="c-title"></h1>
+        <div class="intro-head">
+          <h1 id="c-title"></h1>
+          <button type="button" id="btn-draft" class="small" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
+        </div>
         <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
         <p id="c-meta" class="hint"></p>
         <p id="c-deadline" class="hint" style="margin-top:2px;"></p>
-        <div class="who-row">
-          <span class="who-avatar" id="f-initial"></span>
-          <div>
-            <div class="who-name" id="f-name-text"></div>
-            <div class="who-dept muted" id="f-dept-text"></div>
-          </div>
-          <span class="who-auto muted">로그인 정보로 자동 입력</span>
-        </div>
       </div>
 
       <div id="already-box" class="card hidden">
@@ -73,14 +68,13 @@
           <button type="submit" class="primary" id="btn-submit">제출하기</button>
         </div>
         <div class="step-extra">
-          <button type="button" id="btn-draft" class="ghost small" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
           <button type="button" id="btn-cancel-edit" class="ghost small hidden">수정 취소</button>
         </div>
       </form>
 
-      <section class="card">
+      <section class="card hidden" id="mine-card">
         <h2>내 제출 내역</h2>
-        <div id="mine" class="muted">아직 제출한 사례가 없습니다.</div>
+        <div id="mine" class="muted"></div>
       </section>
     </section>
   </main>
@@ -155,6 +149,6 @@
   </div>
 
   <script src="/common.js?v=71"></script>
-  <script src="/submit.js?v=62"></script>
+  <script src="/submit.js?v=63"></script>
 </body>
 </html>

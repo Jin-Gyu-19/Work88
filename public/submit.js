@@ -49,9 +49,6 @@ async function init() {
   if (campaign.closes_at) $('c-deadline').textContent = `⏰ 마감일: ${campaign.closes_at} (당일까지 제출 가능)`;
   $('f-name').value = me.name;
   $('f-dept').value = me.department || '';
-  $('f-name-text').textContent = me.name;
-  $('f-dept-text').textContent = me.department || '부서 미지정';
-  $('f-initial').textContent = (me.name || '?').trim().slice(0, 1);
   renderQuestions();
   $('form-box').classList.remove('hidden');
 
@@ -1063,11 +1060,9 @@ async function loadMine() {
     return;
   }
   const box = $('mine');
-  if (!myList.length) {
-    box.classList.add('muted');
-    box.innerHTML = '<div class="empty"><span class="icon">✍️</span>아직 제출한 내역이 없습니다.</div>';
-    return;
-  }
+  // 응답자 화면에서는 제출한 내역이 있을 때만 카드째 보여준다
+  $('mine-card').classList.toggle('hidden', !myList.length);
+  if (!myList.length) { box.innerHTML = ''; return; }
   box.classList.remove('muted');
   box.innerHTML = myList.map((s) => `
     <div class="campaign-item">

@@ -2617,16 +2617,12 @@ html body .step-card {
 html body .step-card .step-header { margin-bottom: 38px; }
 html body .step-card .step-text { font-size: 14px; margin-bottom: 10px; }
 
-/* 소개 카드: 작성자 정보를 카드 안에 컴팩트하게 */
-html body .intro-card .who-row {
-  margin: 14px 0 0; padding: 12px 0 0;
-  background: transparent; border: none; border-top: 1px solid var(--line);
-  border-radius: 0; box-shadow: none;
-  backdrop-filter: none; -webkit-backdrop-filter: none;
+/* 소개 카드: 제목 줄 오른쪽에 임시저장 */
+html body .intro-card .intro-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
 }
-html body .intro-card .who-avatar { width: 32px; height: 32px; font-size: 13.5px; }
-html body .intro-card .who-name { font-size: 13.5px; }
-html body .intro-card .who-dept { font-size: 12px; }
+html body .intro-card .intro-head h1 { margin-bottom: 4px; }
+html body .intro-card .intro-head #btn-draft { flex: none; margin-top: 2px; }
 
 /* 문항은 카드 속 콘텐츠 — 안쪽 카드 테두리를 모두 걷어낸다 */
 html body .step-card .q-item {
