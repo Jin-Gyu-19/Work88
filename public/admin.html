@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>관리자 | BDO Survey System</title>
+  <script>try{var d=localStorage.getItem("bdoDesign");if(!localStorage.getItem("bdoDesignM1")){d="clean";localStorage.setItem("bdoDesign",d);localStorage.setItem("bdoDesignM1","1")}if(d===null)d="clean";if(d)document.documentElement.dataset.design=d}catch(e){}</script>
+  <link rel="icon" href="/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=89">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><img src="/logo.png" alt="BDO" class="brand-logo" onerror="this.remove()" onload="this.parentNode.classList.add('has-logo')"><b>BDO</b> Survey System</a>
+    <div class="who" id="who"></div>
+  </header>
+  <main class="container" style="max-width: 1020px;">
+    <div id="loading" class="muted">불러오는 중…</div>
+
+    <section id="login-box" class="card hero hidden">
+      <h1>로그인이 필요합니다</h1>
+      <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
+    </section>
+
+    <section id="denied-box" class="card hero hidden">
+      <h1>접근 권한이 없습니다</h1>
+      <p>관리자 권한이 있는 계정으로 로그인해 주세요.</p>
+    </section>
+
+    <section id="admin-box" class="hidden">
+      <div class="tabs">
+        <button data-tab="campaigns" class="active">설문 관리</button>
+        <button data-tab="submissions">제출 현황</button>
+        <button data-tab="all" id="tab-btn-all" class="hidden">전체 설문</button>
+        <button data-tab="users" id="tab-btn-users" class="hidden">관리자 관리</button>
+      </div>
+
+      <!-- 설문 관리 -->
+      <div id="tab-campaigns">
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">설문 목록</h2>
+            <input id="camp-search" type="search" placeholder="🔍 설문 검색" style="max-width:210px; margin:0 0 0 auto; padding:8px 13px;">
+            <select id="camp-status" style="width:auto; margin:0; padding:8px 10px;">
+              <option value="">전체</option>
+              <option value="open">진행 중</option>
+              <option value="closed">마감</option>
+            </select>
+            <button class="primary" id="btn-new">새 설문 만들기</button>
+          </div>
+        </div>
+        <div class="card">
+          <div id="campaigns"></div>
+        </div>
+      </div>
+
+      <!-- 제출 현황 -->
+      <div id="tab-submissions" class="hidden">
+        <div class="card">
+          <div class="subs-controls">
+            <select id="sel-campaign"></select>
+            <div class="subs-actions">
+              <button id="btn-stats">통계 보기</button>
+              <button id="btn-zip">전체 ZIP</button>
+              <button class="primary" id="btn-excel">엑셀 다운로드</button>
+            </div>
+          </div>
+          <p class="hint">엑셀에는 첨부 링크가, ZIP에는 첨부 원본이 함께 담깁니다.</p>
+        </div>
+        <div class="card hidden" id="stats-box"></div>
+        <div class="card">
+          <div id="sub-count" class="muted" style="margin-bottom:8px;"></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>제출일시</th><th>이름</th><th>부서</th><th>요약</th><th>첨부</th><th></th></tr></thead>
+              <tbody id="sub-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 전체 설문 (마스터 관리자 전용) -->
+      <div id="tab-all" class="hidden">
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">전체 설문</h2>
+            <span class="badge admin">마스터</span>
+            <input id="all-search" type="search" placeholder="🔍 설문·관리자 검색" style="max-width:230px; margin:0 0 0 auto; padding:8px 13px;">
+          </div>
+          <p class="hint">모든 관리자의 설문을 보고 수정할 수 있습니다. 내가 만든 설문은 <b>설문 관리</b> 탭에 있습니다.</p>
+        </div>
+        <div class="card">
+          <div id="all-campaigns"></div>
+        </div>
+      </div>
+
+      <!-- 관리자 관리 (마스터 관리자 전용) -->
+      <div id="tab-users" class="hidden">
+        <div class="card">
+          <h2>관리자 관리</h2>
+          <p class="hint">구성원은 로그인 시 자동으로 일반 권한입니다. 마스터 관리자가 테넌트 구성원의 이메일로 관리자를 지정합니다.</p>
+          <div class="inline-form">
+            <input id="new-admin-email" type="email" placeholder="이메일 주소">
+            <button class="primary" id="btn-add-admin">관리자 지정</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>이름</th><th>부서</th><th>이메일</th><th>마지막 로그인</th><th></th></tr></thead>
+              <tbody id="admin-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 설문/설문지 편집 모달 -->
+  <div id="builder-modal" class="modal hidden">
+    <div class="modal-body" style="max-width:1000px;">
+      <div class="b-topbar">
+        <h3 id="b-heading">새 설문</h3>
+        <div class="b-top-actions">
+          <button id="b-preview">미리보기</button>
+          <div class="dropdown">
+            <button type="button" id="b-opts-toggle" title="마감일·1인 1회·수정 금지 설정">설문 옵션<span class="tcnt hidden" id="b-opts-count"></span><span class="btn-chev">▾</span></button>
+            <div class="dropdown-menu b-opt-menu hidden" id="b-opts">
+              <div class="dd-date">
+                <div class="t">마감일</div>
+                <div class="d">비워두면 기한 없이 계속 열려 있어요</div>
+                <input type="date" id="b-close">
+              </div>
+              <div class="dd-row" id="b-row-one"><div><div class="t">1인 1회만 제출</div><div class="d">한 사람이 한 번만 제출할 수 있어요</div></div><span class="dd-sw"></span></div>
+              <div class="dd-row" id="b-row-noedit"><div><div class="t">제출 후 수정·삭제 금지</div><div class="d">제출한 내용은 보기만 가능해요</div></div><span class="dd-sw"></span></div>
+            </div>
+          </div>
+          <button class="primary" id="b-save">저장</button>
+          <button type="button" class="modal-x" id="b-close-x" title="닫기" aria-label="닫기">✕</button>
+        </div>
+      </div>
+      <div class="b-layout">
+      <nav id="b-toc" aria-label="문항 목차"></nav>
+      <div class="b-main">
+      <div class="tpl-bar hidden">
+        <span class="muted" style="font-size:12.5px;">📋 템플릿</span>
+        <select id="b-tpl" style="width:auto; margin:0; max-width:240px;"></select>
+        <button type="button" class="small" id="b-tpl-load" title="선택한 템플릿의 문항 구성을 불러옵니다">불러오기</button>
+        <button type="button" class="small" id="b-tpl-save" title="지금 만든 문항 구성을 템플릿으로 저장합니다">저장</button>
+        <button type="button" class="small ghost" id="b-tpl-del">삭제</button>
+      </div>
+      <label>설문 제목 <span style="color:var(--danger)">*</span>
+        <input id="b-name" maxlength="200" placeholder="예: 2026 상반기 AI 활용 사례 수집">
+      </label>
+      <label>안내 문구 (선택)
+        <textarea id="b-desc" rows="2" placeholder="참여자에게 보여줄 안내"></textarea>
+      </label>
+      <div style="margin:2px 0 16px;">
+        <p class="hint" id="b-opts-sum" style="margin:0 0 6px 2px;"></p>
+        <!-- 실제 값은 위 '설문 옵션' 드롭다운의 스위치가 조작한다 (저장·불러오기 코드가 그대로 참조) -->
+        <input type="checkbox" id="b-one" class="hidden">
+        <input type="checkbox" id="b-noedit" class="hidden">
+      </div>
+      <div style="margin-bottom:14px;" class="hidden">
+        <span style="font-weight:600; font-size:13.5px;">배경 이미지 (선택)</span>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+          <button type="button" class="small" id="b-bg-add">🖼️ 배경 이미지</button>
+          <button type="button" class="small ghost hidden" id="b-bg-del">✕ 제거</button>
+        </div>
+        <div id="b-bg-preview"></div>
+      </div>
+
+      <h3 style="margin-top:18px;">설문 문항 구성</h3>
+      <p class="hint" style="margin-top:-6px;">이름·부서는 자동 입력됩니다. 설명문·파일 받기·분기는 문항의 <b>옵션</b>에서 켜세요.</p>
+      <div id="b-questions"></div>
+      <div class="b-add-row">
+        <button type="button" class="b-add-main" id="b-add">＋ 문항 추가</button>
+        <button type="button" id="b-add-sec" title="여기부터 새 페이지가 시작됩니다 (긴 설문을 나눌 때)">페이지 나누기</button>
+      </div>
+      </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 설문 미리보기 모달 -->
+  <div id="preview-modal" class="modal hidden">
+    <div class="modal-body" style="max-width:720px;">
+      <button type="button" class="modal-x" id="pv-close" title="닫기">✕</button>
+      <p style="margin:0 0 12px;"><span class="badge admin">미리보기</span>
+        <span class="muted">참여자에게 보이는 화면 (제출되지 않음)</span></p>
+      <div id="pv-body"></div>
+    </div>
+  </div>
+
+  <!-- 제출 상세 모달 -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-body">
+      <button type="button" class="modal-x" id="d-close-x" title="닫기" aria-label="닫기">✕</button>
+      <h3 id="d-title"></h3>
+      <p class="muted" id="d-meta"></p>
+      <div class="detail-content" id="d-content"></div>
+      <p id="d-appurl"></p>
+      <p class="hint" id="d-atts-hint" style="display:none;">클릭하면 크게 보기</p>
+      <div class="att-preview" id="d-atts"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="d-close">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 이미지/영상 확대 보기 -->
+  <div id="lightbox" class="modal hidden" style="z-index:80;">
+    <button type="button" class="modal-x lb-x" id="lb-close" title="닫기">✕</button>
+    <div id="lb-body" class="lb-body"></div>
+  </div>
+
+  <!-- 설문 삭제 확인 -->
+  <div id="del-modal" class="modal hidden">
+    <div class="modal-body" style="max-width:500px;">
+      <h3>⚠️ 설문 삭제</h3>
+      <p id="del-msg"></p>
+      <p class="hint">제출 내역과 첨부파일이 <strong>모두 삭제되며 되돌릴 수 없습니다.</strong> 먼저 ZIP으로 받아 두세요.</p>
+      <div class="modal-actions">
+        <button class="primary" id="del-download">📥 먼저 다운로드</button>
+        <button class="danger" id="del-confirm">삭제</button>
+        <button class="ghost" id="del-cancel">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설문지 자료 첨부용 파일 선택 -->
+  <input type="file" id="bq-file" multiple hidden>
+  <input type="file" id="b-bg-file" accept="image/*" hidden>
+
+  <script src="/common.js?v=71"></script>
+  <script src="/admin.js?v=81"></script>
+</body>
+</html>

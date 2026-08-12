@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>설문 참여 | BDO Survey System</title>
+  <script>try{var d=localStorage.getItem("bdoDesign");if(!localStorage.getItem("bdoDesignM1")){d="clean";localStorage.setItem("bdoDesign",d);localStorage.setItem("bdoDesignM1","1")}if(d===null)d="clean";if(d)document.documentElement.dataset.design=d}catch(e){}</script>
+  <link rel="icon" href="/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=89">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><img src="/logo.png" alt="BDO" class="brand-logo" onerror="this.remove()" onload="this.parentNode.classList.add('has-logo')"><b>BDO</b> Survey System</a>
+    <div class="who" id="who"></div>
+  </header>
+  <main class="container" style="max-width: 680px;">
+    <div id="loading" class="muted">불러오는 중…</div>
+
+    <section id="login-box" class="card hero hidden">
+      <h1>로그인이 필요합니다</h1>
+      <p>회사 Microsoft 계정으로 로그인해 주세요.</p>
+      <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
+    </section>
+
+    <section id="notfound-box" class="card hero hidden">
+      <h1>설문을 찾을 수 없습니다</h1>
+      <p>링크가 정확한지 다시 확인해 주세요.</p>
+    </section>
+
+    <section id="closed-box" class="card hero hidden">
+      <h1 id="closed-title"></h1>
+      <p>이 설문은 마감되었습니다. 참여해 주셔서 감사합니다.</p>
+    </section>
+
+    <section id="form-box" class="hidden">
+      <nav id="toc" class="toc hidden" aria-label="문항 목차"></nav>
+
+      <!-- 설문 소개 + 작성자 (컴팩트) -->
+      <div class="card intro-card">
+        <div class="intro-head">
+          <h1 id="c-title"></h1>
+          <button type="button" id="btn-draft" class="small" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
+        </div>
+        <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
+        <p id="c-meta" class="hint"></p>
+        <p id="c-deadline" class="hint" style="margin-top:2px;"></p>
+      </div>
+
+      <div id="already-box" class="card hidden">
+        <h2>이미 제출하셨습니다 ✅</h2>
+        <p class="muted" id="already-desc">1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.</p>
+      </div>
+
+      <!-- 진행 상황 + 문항 + 버튼이 모두 담기는 단일 카드 (샘플 규격) -->
+      <form id="form" class="card step-card" autocomplete="off">
+        <input id="f-name" type="hidden"><input id="f-dept" type="hidden">
+        <div class="step-header hidden" id="step-header">
+          <div class="step-text"><span>진행 상황</span><span id="step-count"></span></div>
+          <div class="step-track"><div id="step-fill"></div></div>
+        </div>
+
+        <div id="questions"></div>
+
+        <div class="step-foot">
+          <button type="button" id="btn-prev" class="hidden">이전</button>
+          <button type="button" id="btn-next" class="primary hidden">다음으로</button>
+          <button type="submit" class="primary" id="btn-submit">제출하기</button>
+        </div>
+        <div class="step-extra">
+          <button type="button" id="btn-cancel-edit" class="ghost small hidden">수정 취소</button>
+        </div>
+      </form>
+
+      <section class="card hidden" id="mine-card">
+        <h2>내 제출 내역</h2>
+        <div id="mine" class="muted"></div>
+      </section>
+    </section>
+  </main>
+
+  <!-- 파일 선택 (문항별 첨부에서 공용 사용) -->
+  <input type="file" id="file-input" multiple hidden>
+
+  <!-- 제출 완료 감사 모달 -->
+  <div id="thanks-modal" class="modal hidden">
+    <div class="modal-body thanks-body">
+      <div class="thanks-icon">✓</div>
+      <h3>제출이 완료되었습니다</h3>
+      <p class="muted">소중한 시간을 내어 설문에 응해주셔서 진심으로 감사합니다.</p>
+      <p class="muted" style="margin-top:2px;">제출한 내용은 설문 페이지의 <b>내 제출 내역</b>에서 언제든 확인할 수 있습니다.</p>
+      <div class="modal-actions" style="justify-content:center;">
+        <button class="primary" id="thanks-close" style="min-width:160px;">목록으로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내 제출 보기 모달 (읽기 전용) -->
+  <div id="view-modal" class="modal hidden">
+    <div class="modal-body">
+      <button type="button" class="modal-x" id="v-close-x" title="닫기" aria-label="닫기">✕</button>
+      <h3>내 제출 내용</h3>
+      <p class="muted" id="v-meta"></p>
+      <div id="v-body"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="v-close">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 캡쳐 영역 선택 모달 -->
+  <div id="crop-modal" class="modal hidden">
+    <div class="modal-body" style="max-width:960px;">
+      <h3>캡쳐 영역 선택 <span class="muted" id="crop-info" style="font-size:13px; font-weight:400;"></span></h3>
+      <div id="crop-stage" class="crop-stage">
+        <img id="crop-img" alt="">
+        <div id="crop-sel" class="crop-sel hidden"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary" id="crop-ok" disabled>선택 영역 첨부</button>
+        <button id="crop-all">전체 첨부</button>
+        <button class="ghost" id="crop-cancel">취소</button>
+      </div>
+      <p class="hint">이미지 위에서 드래그해 원하는 영역을 지정하세요</p>
+    </div>
+  </div>
+
+  <!-- 동영상 촬영 모달 -->
+  <div id="rec-modal" class="modal hidden">
+    <div class="modal-body">
+      <h3>동영상 촬영 <span id="rec-timer" class="muted"></span></h3>
+      <video id="rec-preview" playsinline autoplay muted></video>
+      <video id="rec-playback" class="hidden" controls playsinline></video>
+      <div class="modal-actions" id="rec-actions-start">
+        <button id="rec-cam" class="primary">📷 카메라로 촬영</button>
+        <button id="rec-screen">🖥️ 화면 녹화</button>
+        <button class="ghost" id="rec-close1">닫기</button>
+      </div>
+      <div class="modal-actions hidden" id="rec-actions-recording">
+        <button id="rec-stop" class="danger">■ 녹화 중지</button>
+      </div>
+      <div class="modal-actions hidden" id="rec-actions-done">
+        <button id="rec-attach" class="primary">이 영상 첨부하기</button>
+        <button id="rec-retry">다시 촬영</button>
+        <button class="ghost" id="rec-close2">닫기</button>
+      </div>
+      <p class="hint">최대 1분, 이후 자동 중지</p>
+    </div>
+  </div>
+
+  <script src="/common.js?v=71"></script>
+  <script src="/submit.js?v=64"></script>
+</body>
+</html>

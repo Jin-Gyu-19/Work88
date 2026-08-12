@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BDO Survey System</title>
+  <script>try{var d=localStorage.getItem("bdoDesign");if(!localStorage.getItem("bdoDesignM1")){d="clean";localStorage.setItem("bdoDesign",d);localStorage.setItem("bdoDesignM1","1")}if(d===null)d="clean";if(d)document.documentElement.dataset.design=d}catch(e){}</script>
+  <link rel="icon" href="/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=89">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><img src="/logo.png" alt="BDO" class="brand-logo" onerror="this.remove()" onload="this.parentNode.classList.add('has-logo')"><b>BDO</b> Survey System</a>
+    <div class="who" id="who"></div>
+  </header>
+  <main class="container">
+    <div id="loading" class="muted">불러오는 중…</div>
+
+    <section id="login-box" class="card hero hidden">
+      <h1>BDO 성현회계법인 설문 시스템</h1>
+      <p>사내 설문(서베이)에 참여하고 관리하는 공간입니다.<br>회사 Microsoft 계정으로 로그인하면 시작할 수 있습니다.</p>
+      <button class="primary" id="btn-login">Microsoft 계정으로 로그인</button>
+    </section>
+
+    <section id="home-box" class="hidden">
+      <div class="card">
+        <h2>진행 중인 설문</h2>
+        <div id="campaign-list" class="muted">불러오는 중…</div>
+      </div>
+    </section>
+  </main>
+  <script src="/common.js?v=71"></script>
+  <script>
+    (async () => {
+      const me = await fetchMe();
+      document.getElementById('loading').classList.add('hidden');
+      if (!me) {
+        document.getElementById('login-box').classList.remove('hidden');
+        document.getElementById('btn-login').onclick = () => location.href = loginUrl();
+        return;
+      }
+      if (me.isAdmin) { location.replace('/admin'); return; }
+      renderWho(me);
+      document.getElementById('home-box').classList.remove('hidden');
+      try {
+        const list = await api('/api/campaigns');
+        const box = document.getElementById('campaign-list');
+        if (!list.length) {
+          box.textContent = '현재 진행 중인 설문이 없습니다. 공지된 링크로 접속해 주세요.';
+          return;
+        }
+        box.innerHTML = list.map((ca) => `
+          <div class="campaign-item">
+            <div>
+              <strong>${esc(ca.title)}</strong>
+              <div class="muted">${esc(ca.description || '')}</div>
+              <div class="muted">${ca.closes_at ? `⏰ 마감 ${esc(ca.closes_at)}` : '기한 없음'}</div>
+            </div>
+            <a href="/c/${esc(ca.slug)}"><button class="primary small">참여하기</button></a>
+          </div>`).join('');
+      } catch (e) {
+        toast(e.message, true);
+      }
+    })();
+  </script>
+</body>
+</html>
