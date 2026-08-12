@@ -2509,8 +2509,9 @@ html[data-design="clean"] .choice {
   box-shadow: none;
 }
 html[data-design="clean"] .choice:hover { background: var(--primary-soft); border-color: var(--primary); }
+/* 선택됨: 샘플과 동일 — 카드는 그대로, 라디오 점만 인디고 */
 html[data-design="clean"] .choice:has(input:checked) {
-  background: var(--primary-soft); border-color: var(--primary); color: var(--text); font-weight: 600; box-shadow: none;
+  background: #fff; border-color: var(--line); color: var(--text); font-weight: 500; box-shadow: none;
 }
 html[data-design="clean"] .choice input { width: 20px; height: 20px; accent-color: var(--primary); }
 html[data-design="clean"] .choice-other .other-input { border-radius: 8px; }
@@ -2665,7 +2666,7 @@ html body .step-card .choice {
   padding: 18px 24px; border-radius: 12px;
   font-size: 16px; font-weight: 500; gap: 16px; margin: 0 0 12px;
 }
-html body .step-card .choice input { width: 21px; height: 21px; }
+html body .step-card .choice input { width: 22px; height: 22px; }
 html body .step-card .choice-other .other-input { font-size: 14.5px; margin-top: 0; padding: 8px 12px; }
 
 /* 배율·별점도 카드 크기에 맞게 */
