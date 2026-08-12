@@ -278,8 +278,8 @@ tr.clickable:hover { background: rgba(43, 61, 145, .04); }
 .att-preview a { display: block; font-size: 12.5px; color: var(--primary); text-decoration: none; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .att-preview img, .att-preview video { max-width: 160px; max-height: 110px; border-radius: 12px; border: 1px solid var(--line); display: block; }
 
-/* ── 설문 참여: 질문 = 유리 카드 ──────────────────────────
-   폼 카드는 투명 컨테이너가 되고, 각 질문이 떠 있는 유리 카드가 된다 */
+/* ── 설문 참여: 문항 = 유리 카드 ──────────────────────────
+   폼 카드는 투명 컨테이너가 되고, 각 문항이 떠 있는 유리 카드가 된다 */
 form#form.card {
   background: transparent; border: none; box-shadow: none;
   backdrop-filter: none; -webkit-backdrop-filter: none;
@@ -406,7 +406,7 @@ form#form.card {
 .q-cond select { width: auto; margin: 0; padding: 5px 9px; font-size: 12.5px; max-width: 220px; border-radius: 10px; }
 .q-cond select:disabled { background: rgba(244, 245, 248, .8); }
 
-/* 분기점 만들기 (객관식 질문에 표시) */
+/* 분기점 만들기 (객관식 문항에 표시) */
 .q-branch-src { margin-top: 12px; padding-top: 11px; border-top: 1px solid #e3e7f5; }
 .q-branch-title { font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 4px; }
 .br-line { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin: 7px 0; font-size: 12.5px; }
@@ -428,7 +428,7 @@ form#form.card {
   border-left: 3px solid var(--brand); border-radius: 8px; padding: 5px 10px;
 }
 
-/* 질문에 첨부된 자료 (설문 화면/미리보기) */
+/* 문항에 첨부된 자료 (설문 화면/미리보기) */
 .q-media { margin: 8px 0 6px; }
 .q-media img { display: block; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; margin: 6px 0; }
 .q-media-file { display: inline-block; margin: 4px 8px 4px 0; color: var(--primary); text-decoration: none; font-size: 13.5px; font-weight: 600; }
@@ -437,7 +437,7 @@ form#form.card {
 /* 첨부 영역 드래그앤드롭 */
 .attach-block.drag-over { background: var(--primary-soft); border-color: var(--primary); border-style: solid; }
 
-/* 빌더의 질문 자료 편집 */
+/* 빌더의 문항 자료 편집 */
 .q-media-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .q-media-box.drag-over { background: var(--primary-soft); border-radius: 12px; outline: 2px dashed var(--primary); }
 .q-media-box .q-media-list { width: 100%; }
@@ -477,7 +477,7 @@ form#form.card {
 }
 .choice input { width: auto; margin: 0; accent-color: var(--primary); flex: none; }
 
-/* 질문 카드 안에서는 fieldset 테두리를 없애고 라벨을 질문 제목처럼 */
+/* 문항 카드 안에서는 fieldset 테두리를 없애고 라벨을 문항 제목처럼 */
 fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px; }
 .q-choice legend { font-size: 14.5px; font-weight: 700; letter-spacing: -0.015em; padding: 0; margin-bottom: 10px; }
 .q-item > label { font-size: 14.5px; font-weight: 700; letter-spacing: -0.015em; }
@@ -486,7 +486,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
   margin: 2px 0 4px 34px; line-height: 1.5;
 }
 
-/* ── 설문 빌더: 질문 카드 ───────────────────────────── */
+/* ── 설문 빌더: 문항 카드 ───────────────────────────── */
 .q-row {
   border: 1px solid rgba(196, 201, 214, .5); border-radius: 16px;
   padding: 14px 16px 12px; margin-bottom: 12px; background: rgba(255, 255, 255, .85);
@@ -525,7 +525,7 @@ fieldset.q-choice { border: none; border-radius: 0; padding: 0; margin: 0 0 8px;
 .opt-multi { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 400; font-size: 12.5px; color: var(--muted); }
 .opt-multi input { width: auto; margin: 0; accent-color: var(--primary); }
 
-/* 질문 카드 상단 툴바 — 잉크 미니멀: 배경 없는 텍스트 버튼, 켜지면 ✓ + 빨간 밑줄 */
+/* 문항 카드 상단 툴바 — 잉크 미니멀: 배경 없는 텍스트 버튼, 켜지면 ✓ + 빨간 밑줄 */
 .q-toolbar {
   display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
   margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
@@ -956,7 +956,7 @@ html[data-design="aurora"] h1 {
   color: var(--text);
 }
 html[data-design="aurora"] h2, html[data-design="aurora"] h3 { color: var(--text); }
-/* 진행 중 질문 카드: 보랏빛 글로우로 시선 고정 */
+/* 진행 중 문항 카드: 보랏빛 글로우로 시선 고정 */
 html[data-design="aurora"] .q-item.q-current {
   border-color: rgba(122, 106, 224, .55);
   box-shadow: 0 0 0 3px rgba(122, 106, 224, .16), 0 16px 44px rgba(110, 100, 190, .28);
@@ -1458,7 +1458,7 @@ button.danger-item { color: var(--danger); }
 .inline-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0 16px; }
 .inline-form input { max-width: 340px; margin: 0; }
 
-/* 빌더: 전체 폭 점선 '질문 추가' */
+/* 빌더: 전체 폭 점선 '문항 추가' */
 .b-add-row { display: flex; gap: 8px; margin-top: 8px; align-items: stretch; }
 .b-add-main {
   flex: 1; padding: 13px 16px; font-size: 14px; font-weight: 700;
@@ -1467,7 +1467,7 @@ button.danger-item { color: var(--danger); }
 }
 .b-add-main:hover { background: var(--primary-soft); border: 1.5px dashed var(--primary); opacity: 1; }
 
-/* 질문 카드 툴바: 삭제 버튼을 복제와 분리 (오클릭 방지) */
+/* 문항 카드 툴바: 삭제 버튼을 복제와 분리 (오클릭 방지) */
 .q-icons .q-del { margin-left: 8px; }
 
 /* 분기 라벨 폭 고정으로 칩 시작점 정렬 */
@@ -2252,7 +2252,7 @@ html body .dropdown-menu { border-radius: 12px; }
 html body .dropdown-menu button { border-radius: 0; height: auto; padding: 10px 15px; font-weight: 600; justify-content: flex-start; }
 /* 별점은 글리프라 버튼 규격에서 제외 */
 html body .star { height: auto; padding: 2px 3px; border-radius: 0; }
-/* 빌더의 전체 폭 '질문 추가'는 넓은 점선 버튼 유지 */
+/* 빌더의 전체 폭 '문항 추가'는 넓은 점선 버튼 유지 */
 html body .b-add-main { border-radius: 12px; height: 46px; }
 
 /* 설문 옵션 드롭다운 (마감일 + 스위치) */

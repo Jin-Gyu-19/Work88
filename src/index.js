@@ -84,7 +84,7 @@ function sanitizeForm(input) {
     questions: [],
   };
   const qs = Array.isArray(input.questions) ? input.questions.slice(0, 20) : [];
-  const priorChoice = {}; // 분기 조건에 쓸 수 있는 앞선 객관식 질문들
+  const priorChoice = {}; // 분기 조건에 쓸 수 있는 앞선 객관식 문항들
   for (const q of qs) {
     if (!q || typeof q.label !== 'string' || !q.label.trim()) continue;
     const type = QUESTION_TYPES.includes(q.type) ? q.type : 'text';
@@ -115,13 +115,13 @@ function sanitizeForm(input) {
       question.required = false;
       question.allowAttach = false;
     }
-    // 분기(표시 조건): 앞선 객관식/드롭다운 질문의 특정 답변일 때만 표시 (구역은 항상 표시)
+    // 분기(표시 조건): 앞선 객관식/드롭다운 문항의 특정 답변일 때만 표시 (구역은 항상 표시)
     const si = q.showIf;
     if (type !== 'section' && si && typeof si === 'object' && typeof si.qid === 'string' && priorChoice[si.qid]
       && priorChoice[si.qid].options.includes(String(si.value))) {
       question.showIf = { qid: si.qid, value: String(si.value) };
     }
-    // 질문에 첨부된 자료(이미지는 표시 너비 w% 포함)
+    // 문항에 첨부된 자료(이미지는 표시 너비 w% 포함)
     question.media = (Array.isArray(q.media) ? q.media.slice(0, 5) : [])
       .filter((m) => m && typeof m.id === 'string' && /^[0-9a-f-]{36}$/.test(m.id))
       .map((m) => ({
@@ -136,7 +136,7 @@ function sanitizeForm(input) {
     if (CHOICE_TYPES.includes(type)) priorChoice[question.id] = question;
   }
   if (!out.questions.length) out.questions = def.questions;
-  // 구버전 호환: 전체 첨부 섹션을 쓰던 양식이면 마지막 질문에 첨부를 붙인다
+  // 구버전 호환: 전체 첨부 섹션을 쓰던 양식이면 마지막 문항에 첨부를 붙인다
   if (input.showAttach === true && !out.questions.some((q) => q.allowAttach)) {
     out.questions[out.questions.length - 1].allowAttach = true;
   }
@@ -279,7 +279,7 @@ function isOpenNow(campaign) {
   return true;
 }
 
-// 폼 답변으로 각 질문의 표시 여부(분기) 계산
+// 폼 답변으로 각 문항의 표시 여부(분기) 계산
 function computeVisibility(questions, raw) {
   const visible = {};
   for (const q of questions) {
@@ -321,7 +321,7 @@ function buildSubmissionData(form, body) {
     }
   }
 
-  // 2차: 분기 반영 — 보이는 질문만 필수 검증·저장
+  // 2차: 분기 반영 — 보이는 문항만 필수 검증·저장
   const visible = computeVisibility(form.questions, raw);
   const answers = {};
   for (const q of form.questions) {
@@ -820,7 +820,7 @@ app.post('/api/admin/campaigns', needAdmin(async (c) => {
   return c.json({ ok: true, slug });
 }));
 
-// 설문 복제: 질문 구성 그대로 새 설문 생성 (자료 파일은 딥카피해 원본 삭제와 무관하게 유지)
+// 설문 복제: 문항 구성 그대로 새 설문 생성 (자료 파일은 딥카피해 원본 삭제와 무관하게 유지)
 app.post('/api/admin/campaigns/:id/duplicate', needAdmin(async (c) => {
   const { campaign, errorRes } = await getManagedCampaign(c, c.req.param('id'));
   if (errorRes) return errorRes;

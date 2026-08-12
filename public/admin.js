@@ -196,7 +196,7 @@ function renderCampaignList() {
             ${ca.form.noEdit ? '<span class="stag">수정 금지</span>' : ''}</div>
           <div class="ci-meta">
             <button type="button" class="ci-count" data-act="subs" data-id="${ca.id}" title="클릭하면 이 설문의 제출 현황으로 이동합니다">제출 <b>${ca.submission_count}</b>건</button>
-            <span class="sep">·</span><span>질문 <b>${qCount}</b>개</span>
+            <span class="sep">·</span><span>문항 <b>${qCount}</b>개</span>
             <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
           </div>
         </div>
@@ -213,7 +213,7 @@ function renderCampaignList() {
             <button class="small more-btn" data-act="more" data-id="${ca.id}" title="더보기" aria-label="더보기">⋯</button>
             <div class="dropdown-menu hidden">
               <button class="small" data-act="preview" data-id="${ca.id}">미리보기</button>
-              <button class="small" data-act="dup" data-id="${ca.id}" title="질문 구성을 그대로 복사한 새 설문을 만듭니다">복제</button>
+              <button class="small" data-act="dup" data-id="${ca.id}" title="문항 구성을 그대로 복사한 새 설문을 만듭니다">복제</button>
               <button class="small" data-act="toggle" data-id="${ca.id}">${ca.is_open ? '마감하기' : '다시 열기'}</button>
               <button class="small danger-item" data-act="delete" data-id="${ca.id}">삭제</button>
             </div>
@@ -259,7 +259,7 @@ function renderAllCampaignList() {
             <span class="stag ${isMine ? '' : 'who'}">👤 ${esc(who)}</span></div>
           <div class="ci-meta">
             <button type="button" class="ci-count" data-act="subs" data-id="${ca.id}" title="클릭하면 이 설문의 제출 현황으로 이동합니다">제출 <b>${ca.submission_count}</b>건</button>
-            <span class="sep">·</span><span>질문 <b>${qCount}</b>개</span>
+            <span class="sep">·</span><span>문항 <b>${qCount}</b>개</span>
             <span class="sep">·</span><span>${ca.closes_at ? `마감 <b>${esc(ca.closes_at)}</b>` : '기한 없음'}</span>
           </div>
         </div>
@@ -367,7 +367,7 @@ async function onCampaignAction(act, ca, btn) {
   }
   if (act === 'dup') {
     closeAllMenus();
-    if (!confirm(`"${ca.title}" 설문을 복제할까요?\n질문 구성과 설정만 복사되고 제출 내역은 복사되지 않습니다.`)) return;
+    if (!confirm(`"${ca.title}" 설문을 복제할까요?\n문항 구성과 설정만 복사되고 제출 내역은 복사되지 않습니다.`)) return;
     try {
       const res = await api(`/api/admin/campaigns/${ca.id}/duplicate`, { method: 'POST' });
       toast(`"${res.title}" 사본이 만들어졌습니다`);
@@ -439,12 +439,12 @@ function bindDeleteModal() {
 
 // ---------- 설문지 빌더 ----------
 
-// 질문 자료 첨부 (빌더에서 사용)
+// 문항 자료 첨부 (빌더에서 사용)
 let activeMediaQ = null;
 let activeMediaRender = null;
 let bBg = null; // 설문 배경 이미지 { id }
-const branchOpen = new Set(); // 분기 설정을 펼쳐 둔 질문 id
-const helpOpen = new Set(); // 설명문 입력칸을 켜 둔 질문 id
+const branchOpen = new Set(); // 분기 설정을 펼쳐 둔 문항 id
+const helpOpen = new Set(); // 설명문 입력칸을 켜 둔 문항 id
 
 function renderBgPreview() {
   $('b-bg-preview').innerHTML = bBg ? `<img src="/files/${bBg.id}" alt="배경 이미지">` : '';
@@ -475,7 +475,7 @@ async function onBgFilePicked(e) {
 async function addMediaFiles(q, files, render) {
   if (!q || !files.length) return;
   if ((q.media || []).length + files.length > 5) {
-    toast('질문당 자료는 최대 5개까지 첨부할 수 있습니다', true);
+    toast('문항당 자료는 최대 5개까지 첨부할 수 있습니다', true);
     return;
   }
   for (const f of files) {
@@ -537,7 +537,7 @@ function toServerQuestions(qs) {
   });
 }
 
-// 빌더에서 분기 조건의 기준이 될 수 있는 유형 (선택지가 있는 질문)
+// 빌더에서 분기 조건의 기준이 될 수 있는 유형 (선택지가 있는 문항)
 function isBranchSource(q) {
   return q.type === 'choice' || q.type === 'dropdown';
 }
@@ -580,7 +580,7 @@ function openBuilder(ca) {
   updateOptsSum();
   branchOpen.clear();
   helpOpen.clear();
-  // 이미 분기 설정이 있는 질문은 펼친 상태로 시작
+  // 이미 분기 설정이 있는 문항은 펼친 상태로 시작
   bQuestions.forEach((q, i) => {
     if (q.showIf || bQuestions.some((p, k) => k > i && p.showIf?.qid === q.id)) branchOpen.add(q.id);
   });
@@ -645,7 +645,7 @@ async function saveTemplate() {
       .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
       .filter((q) => q.label.trim()),
   );
-  if (!cleaned.length) { toast('저장할 질문이 없습니다', true); return; }
+  if (!cleaned.length) { toast('저장할 문항이 없습니다', true); return; }
   try {
     await api('/api/admin/templates', {
       method: 'POST',
@@ -674,7 +674,7 @@ async function deleteTemplate() {
   }
 }
 
-// 질문 카드 아이콘 (굵은 선 SVG)
+// 문항 카드 아이콘 (굵은 선 SVG)
 const SVG_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4M5 11l7-7 7 7"/></svg>';
 const SVG_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 13l7 7 7-7"/></svg>';
 const SVG_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg>';
@@ -695,12 +695,12 @@ function renderBuilder() {
           <button type="button" class="tbtn q-req" aria-pressed="${q.required ? 'true' : 'false'}" title="답변을 반드시 하도록 합니다">필수</button>
           <span class="tsep"></span>
           <div class="dropdown">
-            <button type="button" class="tbtn q-opt-btn" title="이 질문의 부가 기능을 켜고 끕니다">옵션<span class="tcnt hidden"></span> <span class="tarrow">▾</span></button>
+            <button type="button" class="tbtn q-opt-btn" title="이 문항의 부가 기능을 켜고 끕니다">옵션<span class="tcnt hidden"></span> <span class="tarrow">▾</span></button>
             <div class="dropdown-menu q-opt-menu hidden">
-              <div class="dd-row dd-help"><div><div class="t">📝 설명문</div><div class="d">질문 아래에 도움말 한 줄을 보여줘요</div></div><span class="dd-sw"></span></div>
+              <div class="dd-row dd-help"><div><div class="t">📝 설명문</div><div class="d">문항 아래에 도움말 한 줄을 보여줘요</div></div><span class="dd-sw"></span></div>
               <div class="dd-row dd-att"><div><div class="t">📎 파일 받기</div><div class="d">참여자가 답변에 파일·캡쳐·동영상을 첨부할 수 있어요</div></div><span class="dd-sw"></span></div>
-              <div class="dd-row dd-branch"><div><div class="t">🔀 분기</div><div class="d">답변에 따라 다음 질문을 다르게 보여줘요</div></div><span class="dd-sw"></span></div>
-              <div class="dd-row action dd-media"><div><div class="t">🖼 이미지 넣기</div><div class="d">질문에 함께 보여줄 이미지·파일을 넣어요</div></div><span class="dd-more">›</span></div>
+              <div class="dd-row dd-branch"><div><div class="t">🔀 분기</div><div class="d">답변에 따라 다음 문항을 다르게 보여줘요</div></div><span class="dd-sw"></span></div>
+              <div class="dd-row action dd-media"><div><div class="t">🖼 이미지 넣기</div><div class="d">문항에 함께 보여줄 이미지·파일을 넣어요</div></div><span class="dd-more">›</span></div>
             </div>
           </div>
           <span class="q-branch-sum muted"></span>
@@ -708,14 +708,14 @@ function renderBuilder() {
         <div class="q-icons">
           <button type="button" class="icon-btn q-up" ${i === 0 ? 'disabled' : ''} title="위로 이동" aria-label="위로 이동">${SVG_UP}</button>
           <button type="button" class="icon-btn q-down" ${i === bQuestions.length - 1 ? 'disabled' : ''} title="아래로 이동" aria-label="아래로 이동">${SVG_DOWN}</button>
-          <button type="button" class="icon-btn q-dup" title="이 질문을 복사해 바로 아래에 추가" aria-label="질문 복사">${SVG_COPY}</button>
-          <button type="button" class="icon-btn del q-del" title="질문 삭제" aria-label="질문 삭제">✕</button>
+          <button type="button" class="icon-btn q-dup" title="이 문항을 복사해 바로 아래에 추가" aria-label="문항 복사">${SVG_COPY}</button>
+          <button type="button" class="icon-btn del q-del" title="문항 삭제" aria-label="문항 삭제">✕</button>
         </div>
       </div>
       <div class="q-head">
         <span class="q-index">${isSection ? '§' : qNo(i)}</span>
-        <input class="q-label" placeholder="${isSection ? '새 페이지 제목 (예: 2부. 활용 현황)' : '질문을 입력하세요'}" value="${esc(q.label)}">
-        <select class="q-type" aria-label="질문 유형">
+        <input class="q-label" placeholder="${isSection ? '새 페이지 제목 (예: 2부. 활용 현황)' : '문항을 입력하세요'}" value="${esc(q.label)}">
+        <select class="q-type" aria-label="문항 유형">
           ${Object.entries(TYPE_LABELS).map(([v, l]) => `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
           ${q.type === 'dropdown' ? '<option value="dropdown" selected>드롭다운 (구버전)</option>' : ''}
         </select>
@@ -741,13 +741,13 @@ function renderBuilder() {
       <div class="q-branch-wrap hidden">
       <div class="q-cond">
         <span class="q-cond-label">표시 조건</span>
-        <select class="q-cond-q" aria-label="이 질문을 언제 보여줄지"><option value="">항상 표시</option></select>
+        <select class="q-cond-q" aria-label="이 문항을 언제 보여줄지"><option value="">항상 표시</option></select>
         <select class="q-cond-v hidden" aria-label="조건이 되는 답변"></select>
         <span class="q-cond-tail muted hidden">일 때만 표시</span>
         <span class="q-cond-note muted"></span>
       </div>
       <div class="q-branch-src hidden">
-        <div class="q-branch-title">이 질문의 답변으로 다음 질문 나누기</div>
+        <div class="q-branch-title">이 문항의 답변으로 다음 문항 나누기</div>
         <div class="q-branch-body"></div>
       </div>
       </div>`;
@@ -774,7 +774,7 @@ function renderBuilder() {
     };
     if (hasOpts) renderOpts();
 
-    // 질문 자료(이미지/파일) 목록 — 이미지는 모서리 핸들로 크기 조절 + 정렬 선택
+    // 문항 자료(이미지/파일) 목록 — 이미지는 모서리 핸들로 크기 조절 + 정렬 선택
     const renderMedia = () => {
       const listBox = row.querySelector('.q-media-list');
       listBox.innerHTML = '';
@@ -952,7 +952,7 @@ function renderBuilder() {
       };
       bQuestions.splice(i + 1, 0, copy);
       renderBuilder();
-      toast('질문을 복제했습니다');
+      toast('문항을 복제했습니다');
     };
     row.querySelector('.q-del').onclick = () => {
       bQuestions.splice(i, 1);
@@ -961,7 +961,7 @@ function renderBuilder() {
     box.appendChild(row);
   });
   if (!bQuestions.length) {
-    box.innerHTML = '<p class="muted">질문이 없습니다. "질문 추가"를 눌러 주세요.</p>';
+    box.innerHTML = '<p class="muted">문항이 없습니다. "문항 추가"를 눌러 주세요.</p>';
   }
   refreshBranches();
 }
@@ -971,7 +971,7 @@ function qNo(i) {
   return bQuestions.slice(0, i + 1).filter((q) => q.type !== 'section').length;
 }
 
-// 왼쪽 질문 목차 (클릭하면 해당 질문으로 이동)
+// 왼쪽 문항 목차 (클릭하면 해당 문항으로 이동)
 function renderBuilderToc() {
   const toc = $('b-toc');
   if (!toc) return;
@@ -979,16 +979,16 @@ function renderBuilderToc() {
     if (q.type === 'section') {
       return `<a class="sec" data-i="${i}" title="${esc(q.label)}">📄 <span>${esc(q.label.trim() || '(페이지 제목)')}</span></a>`;
     }
-    // 분기(표시 조건)가 걸린 질문은 ↳ 로 들여쓰고 조건을 툴팁으로
+    // 분기(표시 조건)가 걸린 문항은 ↳ 로 들여쓰고 조건을 툴팁으로
     let brTitle = '';
     if (q.showIf) {
       const src = bQuestions.find((p) => p.id === q.showIf.qid);
       if (src) brTitle = ` — ${qNo(bQuestions.indexOf(src))}번 "${q.showIf.value}"일 때만 표시`;
     }
     return `<a class="${q.showIf ? 'br' : ''}" data-i="${i}" title="${esc(q.label)}${q.required ? ' (필수)' : ''}${esc(brTitle)}">
-      <b>${qNo(i)}</b><span>${esc(q.label.trim() || '(질문 없음)')}</span>${q.required ? '<em>*</em>' : ''}</a>`;
+      <b>${qNo(i)}</b><span>${esc(q.label.trim() || '(제목 없음)')}</span>${q.required ? '<em>*</em>' : ''}</a>`;
   });
-  toc.innerHTML = '<p class="bt-h">질문 목차</p>' + (items.join('') || '<p class="hint" style="margin-left:8px;">질문이 없습니다</p>');
+  toc.innerHTML = '<p class="bt-h">문항 목차</p>' + (items.join('') || '<p class="hint" style="margin-left:8px;">문항이 없습니다</p>');
   toc.querySelectorAll('a').forEach((a) => {
     a.onclick = () => {
       const row = document.querySelectorAll('#b-questions .q-row')[Number(a.dataset.i)];
@@ -999,7 +999,7 @@ function renderBuilderToc() {
   });
 }
 
-// 분기(표시 조건) 드롭다운을 현재 질문 구성에 맞춰 실시간 갱신
+// 분기(표시 조건) 드롭다운을 현재 문항 구성에 맞춰 실시간 갱신
 function refreshBranches() {
   // 1) 더 이상 유효하지 않은 분기 조건은 자동 해제
   bQuestions.forEach((q, i) => {
@@ -1008,7 +1008,7 @@ function refreshBranches() {
     const src = bQuestions.find((p) => p.id === q.showIf.qid);
     const srcIdx = src ? bQuestions.indexOf(src) : -1;
     const opts = (src?.options || []).map((o) => o.trim()).filter(Boolean);
-    // 조건 질문 자체가 무효해진 경우만 해제하고, 답변만 비어 있으면 첫 선택지로 채운다
+    // 조건 문항 자체가 무효해진 경우만 해제하고, 답변만 비어 있으면 첫 선택지로 채운다
     if (!src || !isBranchSource(src) || srcIdx >= i || !opts.length) {
       q.showIf = null;
     } else if (!opts.includes(q.showIf.value)) {
@@ -1030,7 +1030,7 @@ function refreshBranches() {
     const condNote = row.querySelector('.q-cond-note');
     if (!panel || !body || !condQ) return;
 
-    // ── 이 질문의 표시 조건 (질문마다 직접 설정) ──
+    // ── 이 문항의 표시 조건 (문항마다 직접 설정) ──
     const prior = bQuestions.slice(0, i).filter(
       (p) => isBranchSource(p) && p.label.trim() && (p.options || []).some((o) => o.trim()),
     );
@@ -1042,7 +1042,7 @@ function refreshBranches() {
       }).join('');
     condQ.disabled = !prior.length;
     condNote.textContent = prior.length ? ''
-      : (i === 0 ? '앞에 조건이 될 질문이 없습니다' : '앞쪽에 선택지가 있는 객관식 질문이 필요합니다');
+      : (i === 0 ? '앞에 조건이 될 문항이 없습니다' : '앞쪽에 선택지가 있는 객관식 문항이 필요합니다');
     if (curQid) {
       const src = bQuestions.find((p) => p.id === curQid);
       const opts = (src.options || []).map((o) => o.trim()).filter(Boolean);
@@ -1068,13 +1068,13 @@ function refreshBranches() {
         parts.push(`${qNo(bQuestions.indexOf(src))}번 "${q.showIf.value}"일 때만 표시`);
       }
       const n = bQuestions.filter((p, k) => k > i && p.showIf?.qid === q.id).length;
-      if (n) parts.push(`${n}개 질문 분기`);
+      if (n) parts.push(`${n}개 문항 분기`);
       brSum.textContent = parts.join(' · ');
     } else {
       brSum.textContent = '';
     }
 
-    // 분기점 패널은 선택지가 있는 질문(객관식/드롭다운)에만 표시
+    // 분기점 패널은 선택지가 있는 문항(객관식/드롭다운)에만 표시
     const srcOk = isBranchSource(q);
     panel.classList.toggle('hidden', !srcOk);
     if (!srcOk) return;
@@ -1086,9 +1086,9 @@ function refreshBranches() {
       return;
     }
 
-    // 답변별 줄: 기존 질문은 칩 클릭으로 지정, '＋ 새 질문'으로 그 자리에서 분기 질문 생성
+    // 답변별 줄: 기존 문항은 칩 클릭으로 지정, '＋ 새 문항'으로 그 자리에서 분기 문항 생성
     const used = following.filter((fq) => fq.showIf?.qid === q.id).length;
-    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 이어질 질문을 지정하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
+    body.innerHTML = `<p class="hint" style="margin:0 0 8px;">답변별로 이어질 문항을 지정하세요${used ? ` · <b>${used}개 지정됨</b>` : ''}</p>`
       + opts.map((o) => `
         <div class="br-line">
           <span class="br-opt">"${esc(o)}" →</span>
@@ -1098,8 +1098,8 @@ function refreshBranches() {
             const byOther = fq.showIf && fq.showIf.qid !== q.id;
             const label = fq.label.trim() || '(제목 없음)';
             return `<button type="button" class="chip ${on ? 'on' : ''}" data-t="${fq.id}" data-o="${esc(o)}"
-              ${byOther ? 'disabled title="다른 질문의 분기로 제어 중입니다"' : ''}>${no}. ${esc(label.slice(0, 18))}</button>`;
-          }).join('')}<button type="button" class="chip add" data-new="${esc(o)}" title="이 답변을 고른 사람에게만 보일 질문을 새로 만듭니다">＋ 새 질문</button></span>
+              ${byOther ? 'disabled title="다른 문항의 분기로 제어 중입니다"' : ''}>${no}. ${esc(label.slice(0, 18))}</button>`;
+          }).join('')}<button type="button" class="chip add" data-new="${esc(o)}" title="이 답변을 고른 사람에게만 보일 문항을 새로 만듭니다">＋ 새 문항</button></span>
         </div>`).join('');
 
     body.querySelectorAll('.chip[data-t]').forEach((chip) => {
@@ -1112,11 +1112,11 @@ function refreshBranches() {
       };
     });
 
-    // 이 답변 전용 질문을 바로 추가 (같은 분기의 마지막 질문 뒤에 삽입)
+    // 이 답변 전용 문항을 바로 추가 (같은 분기의 마지막 문항 뒤에 삽입)
     body.querySelectorAll('.chip.add').forEach((btn) => {
       btn.onclick = () => {
         const val = btn.dataset.new;
-        // 같은 답변의 질문이 있으면 그 블록 끝에, 없으면 이 질문의 모든 분기 뒤에 붙인다
+        // 같은 답변의 문항이 있으면 그 블록 끝에, 없으면 이 문항의 모든 분기 뒤에 붙인다
         let sameAt = -1;
         let anyAt = i + 1;
         bQuestions.forEach((p, k) => {
@@ -1134,7 +1134,7 @@ function refreshBranches() {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           el.querySelector('.q-label')?.focus();
         }
-        toast(`"${val}" 분기에 새 질문을 추가했습니다`);
+        toast(`"${val}" 분기에 새 문항을 추가했습니다`);
       };
     });
   });
@@ -1215,7 +1215,7 @@ function showPreview(ca) {
         <p class="hint">파일 첨부 가능</p>
       </div>` : '';
     return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
-  }).join('') : '<p class="muted">질문이 없습니다.</p>';
+  }).join('') : '<p class="muted">문항이 없습니다.</p>';
 
   $('pv-body').innerHTML = `
     <div class="card" style="margin-bottom:12px;">
@@ -1276,10 +1276,10 @@ async function saveBuilder() {
       .map((q) => ({ ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }))
       .filter((q) => q.label.trim()),
   );
-  if (!cleaned.filter((q) => q.type !== 'section').length) { toast('질문을 1개 이상 만들어 주세요', true); return; }
+  if (!cleaned.filter((q) => q.type !== 'section').length) { toast('문항을 1개 이상 만들어 주세요', true); return; }
   for (const q of cleaned) {
     if (['select', 'checkbox', 'dropdown'].includes(q.type) && !q.options.length) {
-      toast(`"${q.label}" 질문의 선택지를 입력해 주세요`, true);
+      toast(`"${q.label}" 문항의 선택지를 입력해 주세요`, true);
       return;
     }
   }

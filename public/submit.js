@@ -3,7 +3,7 @@ const slug = location.pathname.split('/').pop();
 const attachments = []; // { id, filename, kind, size, previewUrl, qid }
 const MAX_ATTACHMENTS = 10;
 let FORM = null; // 캠페인 설문 양식 { questions, oneSubmission }
-let activeQid = null; // 지금 첨부 대상인 질문 id ('app'이면 앱 파일)
+let activeQid = null; // 지금 첨부 대상인 문항 id ('app'이면 앱 파일)
 let editingId = null; // 수정 중인 제출 id
 let myList = []; // 내 제출 내역
 let uploading = 0; // 진행 중인 업로드 수
@@ -91,10 +91,10 @@ function applyOneSubmissionState() {
   }
 }
 
-// ---------- 설문 질문 렌더링 ----------
+// ---------- 설문 문항 렌더링 ----------
 
-// 구역(section) 기준으로 질문을 페이지로 나눈다
-let pages = [[]]; // 각 페이지에 속한 질문 id 목록
+// 구역(section) 기준으로 문항을 페이지로 나눈다
+let pages = [[]]; // 각 페이지에 속한 문항 id 목록
 let curPage = 0;
 
 function buildPages() {
@@ -118,7 +118,7 @@ function renderQuestions() {
     const num = '<span class="q-num"></span>';
     const help = q.help ? `<span class="q-help-text">${esc(q.help)}</span>` : '';
     const helpP = q.help ? `<p class="hint" style="margin-top:0;">${esc(q.help)}</p>` : '';
-    // 관리자가 질문에 첨부한 자료 (이미지는 지정 너비로 표시)
+    // 관리자가 문항에 첨부한 자료 (이미지는 지정 너비로 표시)
     const media = (q.media || []).length ? `<div class="q-media">${
       q.media.map((m) => {
         if (m.kind !== 'image') return `<a class="q-media-file" href="/files/${m.id}?download=1">📎 ${esc(m.filename)} 내려받기</a>`;
@@ -184,7 +184,7 @@ function renderQuestions() {
     return `<div class="q-item" data-qid="${q.id}">${inner}${attach}</div>`;
   }).join('');
 
-  // 질문별 첨부 버튼 연결 + 드래그앤드롭
+  // 문항별 첨부 버튼 연결 + 드래그앤드롭
   box.querySelectorAll('.attach-block').forEach((blk) => {
     const qid = blk.dataset.attq;
     blk.querySelector('.att-capture').onclick = () => captureScreen(qid);
@@ -244,7 +244,7 @@ function setScale(container, value) {
   onFormChanged();
 }
 
-// 현재 페이지의 질문/구역만 표시하고 하단 버튼을 갱신
+// 현재 페이지의 문항/구역만 표시하고 하단 버튼을 갱신
 function applyPage() {
   const multi = pages.length > 1;
   const ids = new Set(pages[curPage]);
@@ -291,7 +291,7 @@ function setStars(container, value) {
   onFormChanged();
 }
 
-// 모든 질문의 현재 입력값 읽기 (분기 판단용, 표시 여부 무관)
+// 모든 문항의 현재 입력값 읽기 (분기 판단용, 표시 여부 무관)
 function gatherAnswersRaw() {
   const answers = {};
   // "__other__" 선택을 "기타: 입력값" 형태로 변환
@@ -337,7 +337,7 @@ function computeVis(raw) {
   return vis;
 }
 
-// 화면에 보이는 질문의 답변만 수집
+// 화면에 보이는 문항의 답변만 수집
 function gatherAnswers() {
   const raw = gatherAnswersRaw();
   const vis = computeVis(raw);
@@ -457,7 +457,7 @@ function canAddMore(n = 1) {
 
 function listFor(qid) {
   return document.querySelector(`[data-attlist="${qid}"]`)
-    || document.querySelector('[data-attlist]'); // 대상 질문이 없으면 첫 첨부 목록에 표시
+    || document.querySelector('[data-attlist]'); // 대상 문항이 없으면 첫 첨부 목록에 표시
 }
 
 function renderAttachments() {
@@ -722,7 +722,7 @@ function bindGlobalAttachHandlers() {
     await handleFiles(files, qid);
   };
 
-  // 클립보드 스크린샷 붙여넣기 → 첫 번째 첨부 허용 질문에 추가
+  // 클립보드 스크린샷 붙여넣기 → 첫 번째 첨부 허용 문항에 추가
   document.addEventListener('paste', async (e) => {
     if (!FORM) return;
     const firstQ = FORM.questions.find((q) => q.allowAttach);
@@ -733,7 +733,7 @@ function bindGlobalAttachHandlers() {
     const file = img.getAsFile();
     if (file) {
       await uploadBlob(file, `붙여넣기_${ts()}.png`, 'image', firstQ.id);
-      toast(`"${firstQ.label}" 질문에 클립보드 이미지가 첨부되었습니다`);
+      toast(`"${firstQ.label}" 문항에 클립보드 이미지가 첨부되었습니다`);
     }
   });
 }

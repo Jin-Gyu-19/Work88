@@ -7,7 +7,7 @@
   <script>try{var d=localStorage.getItem("bdoDesign");if(d)document.documentElement.dataset.design=d}catch(e){}</script>
   <link rel="icon" href="/logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=79">
+  <link rel="stylesheet" href="/styles.css?v=80">
 </head>
 <body>
   <header class="topbar">
@@ -138,13 +138,13 @@
         </div>
       </div>
       <div class="b-layout">
-      <nav id="b-toc" aria-label="질문 목차"></nav>
+      <nav id="b-toc" aria-label="문항 목차"></nav>
       <div class="b-main">
       <div class="tpl-bar hidden">
         <span class="muted" style="font-size:12.5px;">📋 템플릿</span>
         <select id="b-tpl" style="width:auto; margin:0; max-width:240px;"></select>
-        <button type="button" class="small" id="b-tpl-load" title="선택한 템플릿의 질문 구성을 불러옵니다">불러오기</button>
-        <button type="button" class="small" id="b-tpl-save" title="지금 만든 질문 구성을 템플릿으로 저장합니다">저장</button>
+        <button type="button" class="small" id="b-tpl-load" title="선택한 템플릿의 문항 구성을 불러옵니다">불러오기</button>
+        <button type="button" class="small" id="b-tpl-save" title="지금 만든 문항 구성을 템플릿으로 저장합니다">저장</button>
         <button type="button" class="small ghost" id="b-tpl-del">삭제</button>
       </div>
       <label>설문 제목 <span style="color:var(--danger)">*</span>
@@ -168,11 +168,11 @@
         <div id="b-bg-preview"></div>
       </div>
 
-      <h3 style="margin-top:18px;">설문 질문 구성</h3>
-      <p class="hint" style="margin-top:-6px;">이름·부서는 자동 입력됩니다. 설명문·파일 받기·분기는 질문의 <b>옵션</b>에서 켜세요.</p>
+      <h3 style="margin-top:18px;">설문 문항 구성</h3>
+      <p class="hint" style="margin-top:-6px;">이름·부서는 자동 입력됩니다. 설명문·파일 받기·분기는 문항의 <b>옵션</b>에서 켜세요.</p>
       <div id="b-questions"></div>
       <div class="b-add-row">
-        <button type="button" class="b-add-main" id="b-add">＋ 질문 추가</button>
+        <button type="button" class="b-add-main" id="b-add">＋ 문항 추가</button>
         <button type="button" id="b-add-sec" title="여기부터 새 페이지가 시작됩니다 (긴 설문을 나눌 때)">페이지 나누기</button>
       </div>
       </div>
@@ -232,6 +232,6 @@
   <input type="file" id="b-bg-file" accept="image/*" hidden>
 
   <script src="/common.js?v=70"></script>
-  <script src="/admin.js?v=79"></script>
+  <script src="/admin.js?v=80"></script>
 </body>
 </html>

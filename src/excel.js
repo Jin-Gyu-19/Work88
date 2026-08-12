@@ -9,7 +9,7 @@ export function kstString(utc) {
   return `${k.getUTCFullYear()}-${p(k.getUTCMonth() + 1)}-${p(k.getUTCDate())} ${p(k.getUTCHours())}:${p(k.getUTCMinutes())}`;
 }
 
-// 제출의 첨부파일을 질문별로 그룹화: { <질문id>: [...], app: [...], etc: [...] }
+// 제출의 첨부파일을 문항별로 그룹화: { <문항id>: [...], app: [...], etc: [...] }
 export function groupAtts(form, sub) {
   const g = { app: [], etc: [] };
   for (const q of form.questions) if (q.allowAttach) g[q.id] = [];
@@ -26,9 +26,9 @@ export function groupAtts(form, sub) {
 }
 
 // 제출 내역을 엑셀 워크북(ArrayBuffer)으로 생성.
-// 질문 구성대로 열을 만들고, 첨부 허용 질문 뒤에는 해당 질문의 첨부 열이 붙는다.
+// 문항 구성대로 열을 만들고, 첨부 허용 문항 뒤에는 해당 문항의 첨부 열이 붙는다.
 // linkFor(attachment) 가 반환하는 URL/상대경로가 첨부 셀의 하이퍼링크로 들어간다.
-// 각 submission에는 _answers (질문 id → 답변) 가 채워져 있어야 한다.
+// 각 submission에는 _answers (문항 id → 답변) 가 채워져 있어야 한다.
 export function buildWorkbook(campaign, form, submissions, { linkFor }) {
   const questions = form.questions.filter((q) => q.type !== 'section'); // 구역은 답변 열이 없다
   const groups = submissions.map((s) => groupAtts(form, s));
