@@ -61,9 +61,12 @@ function toast(msg, isError, atTop) {
 
 // ===== 디자인 테마 전환 =====
 // 상단바의 선택이 <html data-design>을 바꾸고 localStorage 'bdoDesign'에 저장된다.
-// '' = 기본(글래스 세레니티) · swiss = 1번 화이트 미니멀 · aurora = 5번 오로라 글래스
+// clean = 기본값(클린 인디고, 샘플 페이지 규격) · '' = 이전 글래스 세레니티 · swiss = 화이트 미니멀 …
+// 저장된 값이 아예 없을 때만 기본값을 쓴다 (사용자가 '글래스 세레니티'로 저장한 '' 와 구분).
+const DESIGN_DEFAULT = 'clean';
 const DESIGNS = [
-  ['', '기본 디자인'],
+  ['clean', '클린 인디고'],
+  ['', '글래스 세레니티'],
   ['swiss', '화이트 미니멀'],
   ['aurora', '오로라 베일'],
   ['legalpad', '리갈패드'],
@@ -81,8 +84,11 @@ function applyDesign(v) {
 }
 
 (function initDesign() {
-  let saved = '';
-  try { saved = localStorage.getItem('bdoDesign') || ''; } catch (e) {}
+  let saved = DESIGN_DEFAULT;
+  try {
+    const v = localStorage.getItem('bdoDesign');
+    if (v !== null) saved = v;
+  } catch (e) {}
   applyDesign(saved);
   const mount = () => {
     const bar = document.querySelector('.topbar');

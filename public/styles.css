@@ -21,6 +21,8 @@
   --accent-grad: linear-gradient(140deg, #2b3d91, #4457b3);
   --soft-grad: linear-gradient(140deg, #eef0f8, #e2e6f3);
   --progress-grad: linear-gradient(90deg, #2b3d91, #5b6ecf);
+  /* 별점 등 순서형 차트용 단일 색상 램프 (연함 → 진함) */
+  --ramp-1: #a8b1da; --ramp-2: #8b97cd; --ramp-3: #6c7ac0; --ramp-4: #4a5aac; --ramp-5: #2b3d91;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -850,7 +852,8 @@ button:focus-visible { outline-offset: 2px; }
 /* ===================================================================
    디자인 테마 전환
    상단바의 디자인 선택(localStorage 'bdoDesign')이 <html data-design>을 바꾼다.
-   속성 없음 = 기본(글래스 세레니티) · swiss = 1번 화이트 미니멀 · aurora = 5번 오로라 글래스
+   clean = 기본값(클린 인디고, 샘플 페이지 규격) · 속성 없음 = 글래스 세레니티
+   swiss = 화이트 미니멀 · aurora = 오로라 베일 · …
    =================================================================== */
 
 .topbar select.design-select {
@@ -2213,14 +2216,14 @@ html[data-design="liquiddark"] input, html[data-design="liquiddark"] textarea, h
 
 /* ═══════════════════════════════════════════════════════════════
    버튼 셰이프 통일 — 모든 테마가 같은 모양을 쓴다 (색은 테마가 결정)
-   기준: 모서리 10px 둥근 사각형 · 높이 36px · 볼드 텍스트
+   기준: 모서리 12px 둥근 사각형 · 높이 38px · 볼드 텍스트 (샘플 페이지 규격)
    테마별 캡슐(999px)·직각(0px) 지정을 여기서 되돌린다.
    ═══════════════════════════════════════════════════════════════ */
 /* 높이는 padding 이 아니라 height 로 고정한다.
    테마마다 테두리 유무·글꼴 크기가 달라 padding 기준이면 1~2px씩 어긋난다.
    (box-sizing: border-box 라 테두리가 있든 없든 같은 높이가 된다) */
 html body button:not(.star):not(.ci-count) {
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0 18px;
   height: 38px;
   line-height: 1.2;
@@ -2233,27 +2236,30 @@ html body button:not(.star):not(.ci-count) {
   gap: 2px;
 }
 html body button.small:not(.star):not(.ci-count) {
-  border-radius: 9px;
+  border-radius: 10px;
   padding: 0 14px;
   height: 31px;
   font-size: 12.5px;
 }
+/* 예외 규격은 위 공통 규칙(특이도 0,2,3)보다 높게 잡아야 한다.
+   .icon-btn 처럼 클래스 하나로만 쓰면 공통 규칙의 padding·height 가 이겨서
+   정사각 버튼이 가로로 늘어나고 안의 아이콘이 0px 로 찌그러진다. */
 /* 아이콘 전용 버튼은 정사각 (모서리 규격은 동일) */
-html body .icon-btn { border-radius: 9px; padding: 0; height: 30px; width: 30px; }
-html body .icon-btn.sm { border-radius: 8px; height: 26px; width: 26px; }
-html body .modal-x { border-radius: 10px; padding: 0; height: 38px; width: 38px; }
+html body button.icon-btn:not(.star) { border-radius: 10px; padding: 0; height: 30px; width: 30px; }
+html body button.icon-btn.sm:not(.star) { border-radius: 9px; height: 26px; width: 26px; }
+html body button.modal-x:not(.star) { border-radius: 12px; padding: 0; height: 38px; width: 38px; }
 /* 더보기(⋯)는 좁게 */
-html body .more-btn { padding: 6px 12px; }
+html body button.more-btn:not(.star) { padding: 0 12px; }
 /* 칩·토글·탭도 같은 모서리로 (한 화면에서 알약과 사각이 섞이지 않게) */
-html body .chip, html body .toggle { border-radius: 9px; }
-html body .tabs { border-radius: 13px; }
-html body .tabs button { border-radius: 9px; padding: 0 16px; }
-html body .dropdown-menu { border-radius: 12px; }
-html body .dropdown-menu button { border-radius: 0; height: auto; padding: 10px 15px; font-weight: 600; justify-content: flex-start; }
+html body button.chip:not(.star), html body button.toggle:not(.star) { border-radius: 10px; height: 30px; padding: 0 12px; }
+html body .tabs { border-radius: 14px; }
+html body .tabs button:not(.star) { border-radius: 10px; padding: 0 16px; }
+html body .dropdown-menu { border-radius: 14px; }
+html body .dropdown-menu button:not(.star) { border-radius: 0; height: auto; padding: 10px 15px; font-weight: 600; justify-content: flex-start; }
 /* 별점은 글리프라 버튼 규격에서 제외 */
 html body .star { height: auto; padding: 2px 3px; border-radius: 0; }
 /* 빌더의 전체 폭 '문항 추가'는 넓은 점선 버튼 유지 */
-html body .b-add-main { border-radius: 12px; height: 46px; }
+html body button.b-add-main:not(.star) { border-radius: 12px; height: 46px; }
 
 /* 설문 옵션 드롭다운 (마감일 + 스위치) */
 .b-opt-menu { left: auto; right: 0; width: 320px; }
@@ -2319,3 +2325,259 @@ tr.clickable { transition: background .15s; }
 }
 /* 탭 버튼의 선택 표시도 같이 미끄러지듯 */
 .tabs button { transition: background .2s, color .2s, box-shadow .2s; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   클린 인디고 (clean) — 제공된 샘플 페이지의 디자인 규격
+   인디고 #4F46E5 · 배경 #F9FAFB · 흰 카드 24px · 얇은 그림자
+   유리(backdrop-filter)와 그라데이션을 걷어내고 평평한 면 + 또렷한 테두리로 통일한다.
+   모든 화면(홈·설문 참여·관리자·빌더·통계)에 같은 규격을 적용.
+   ═══════════════════════════════════════════════════════════════════ */
+html[data-design="clean"] {
+  --bg: #F9FAFB;
+  --card: #FFFFFF;
+  --card-border: #E5E7EB;
+  --text: #111827;
+  --muted: #6B7280;
+  --line: #E5E7EB;
+  --primary: #4F46E5;
+  --primary-dark: #4338CA;
+  --primary-grad: #4F46E5;
+  --primary-soft: #EEF2FF;
+  --brand: #4F46E5;
+  --danger: #DC2626;
+  --radius: 24px;
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, .04);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, .09);
+  --accent-grad: #4F46E5;
+  --soft-grad: #EEF2FF;
+  --progress-grad: #4F46E5;
+  --hover-shadow: 0 4px 14px rgba(79, 70, 229, .18);
+  --row-hover: #F9FAFB;
+  --surface-2: #F3F4F6;
+  --ramp-1: #C7D2FE; --ramp-2: #A5B4FC; --ramp-3: #818CF8; --ramp-4: #6366F1; --ramp-5: #4F46E5;
+}
+
+/* 배경 · 상단바 — 유리 제거 */
+html[data-design="clean"] body { background: var(--bg); }
+html[data-design="clean"] body.has-bg::before { background: rgba(249, 250, 251, .78); }
+html[data-design="clean"] .topbar {
+  background: #fff; border-bottom: 1px solid var(--line);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] .topbar select.design-select { border-radius: 8px; background: var(--surface-2); border-color: transparent; }
+
+/* 카드 — 흰 면 + 24px + 부드러운 그림자 */
+html[data-design="clean"] .card {
+  background: #fff; border: 1px solid var(--line); border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] body.has-bg .card { box-shadow: var(--shadow-sm); }
+
+/* 타이포 — 그라데이션 글자 대신 단색 잉크 */
+html[data-design="clean"] h1 {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  color: var(--text); font-weight: 700; letter-spacing: -0.02em;
+}
+html[data-design="clean"] h2, html[data-design="clean"] h3 { color: var(--text); font-weight: 700; }
+html[data-design="clean"] .hero p { font-size: 15px; }
+
+/* 입력 — 12px 라운드, 회색 테두리, 인디고 포커스 링 */
+html[data-design="clean"] input,
+html[data-design="clean"] textarea,
+html[data-design="clean"] select {
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; color: var(--text);
+}
+html[data-design="clean"] input:focus,
+html[data-design="clean"] textarea:focus,
+html[data-design="clean"] select:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+}
+html[data-design="clean"] input:disabled,
+html[data-design="clean"] select:disabled { background: var(--surface-2); color: var(--muted); }
+html[data-design="clean"] fieldset { border-color: var(--line); border-radius: 12px; }
+
+/* 버튼 — 보조는 회색 면, 주 버튼은 인디고 (샘플의 이전/다음 규격) */
+html[data-design="clean"] body button:not(.star):not(.ci-count) {
+  background: var(--surface-2); border: 1px solid transparent; color: var(--muted);
+  box-shadow: none;
+}
+html[data-design="clean"] body button:not(.star):not(.ci-count):not(:disabled):hover {
+  background: #E5E7EB; color: var(--text); border-color: transparent; box-shadow: none; transform: none;
+}
+html[data-design="clean"] body button.primary:not(.star) {
+  background: var(--primary); border-color: transparent; color: #fff; box-shadow: none;
+}
+html[data-design="clean"] body button.primary:not(.star):not(:disabled):hover {
+  background: var(--primary-dark); color: #fff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, .3); transform: none;
+}
+html[data-design="clean"] body button.danger:not(.star) { background: var(--danger); border-color: transparent; color: #fff; box-shadow: none; }
+html[data-design="clean"] body button.danger:not(.star):not(:disabled):hover { background: #B91C1C; color: #fff; box-shadow: 0 4px 14px rgba(220, 38, 38, .3); }
+html[data-design="clean"] body button.ghost:not(.star) { background: transparent; border-color: transparent; color: var(--muted); }
+html[data-design="clean"] body button.ghost:not(.star):not(:disabled):hover { background: var(--surface-2); color: var(--text); }
+/* 아이콘·텍스트형 버튼은 면을 깔지 않는다 (공통 규칙보다 뒤·같은 특이도로 덮는다) */
+html[data-design="clean"] body button.icon-btn:not(.star) { background: transparent; border-color: transparent; }
+html[data-design="clean"] body button.icon-btn:not(.star):not(.ci-count):not(:disabled):hover { background: var(--surface-2); color: var(--text); }
+html[data-design="clean"] body button.icon-btn.del:not(.star):not(.ci-count):not(:disabled):hover { background: #FEE2E2; color: var(--danger); }
+html[data-design="clean"] body button.tbtn:not(.star) { background: transparent; border-color: transparent; color: var(--muted); }
+html[data-design="clean"] body button.tbtn:not(.star):not(.ci-count):not(:disabled):hover { background: var(--surface-2); color: var(--text); }
+html[data-design="clean"] body button.tbtn:not(.star)[aria-pressed="true"] { color: var(--primary); background: transparent; }
+html[data-design="clean"] body button.tbtn.q-req:not(.star)[aria-pressed="true"] { background: var(--primary-soft); }
+html[data-design="clean"] body button.tbtn.q-req[aria-pressed="true"]::before { color: var(--primary); }
+html[data-design="clean"] body button.modal-x:not(.star) { background: #fff; border: 1px solid var(--line); box-shadow: none; color: var(--muted); }
+html[data-design="clean"] body button.modal-x:not(.star):not(.ci-count):not(:disabled):hover { background: var(--surface-2); color: var(--text); }
+html[data-design="clean"] body button.b-add-main:not(.star) {
+  background: transparent; border: 1.5px dashed var(--primary); color: var(--primary); opacity: 1;
+}
+html[data-design="clean"] body button.b-add-main:not(.star):not(.ci-count):not(:disabled):hover { background: var(--primary-soft); border: 1.5px dashed var(--primary); color: var(--primary); }
+html[data-design="clean"] body button.ci-count { background: none; }
+html[data-design="clean"] .hero .primary { padding: 15px 30px; font-size: 15px; height: auto; }
+
+/* 탭 — 흰 면 위 회색 트랙 */
+html[data-design="clean"] .tabs {
+  background: var(--surface-2); border: 1px solid var(--line); box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] body .tabs button:not(.star) { background: transparent; border-color: transparent; color: var(--muted); }
+html[data-design="clean"] body .tabs button:not(.star):not(.ci-count):not(:disabled):hover { background: rgba(255, 255, 255, .7); color: var(--text); }
+html[data-design="clean"] body .tabs button.active:not(.star) { background: #fff; color: var(--primary); box-shadow: 0 1px 3px rgba(17, 24, 39, .1); }
+
+/* 모달 */
+html[data-design="clean"] .modal { background: rgba(17, 24, 39, .45); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html[data-design="clean"] .modal-body { background: #fff; border-radius: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .16); }
+html[data-design="clean"] .b-topbar {
+  background: #fff; border-bottom: 1px solid var(--line); border-radius: 24px 24px 0 0;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] .dropdown-menu {
+  background: #fff; border: 1px solid var(--line); box-shadow: 0 12px 32px rgba(17, 24, 39, .12);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] body .dropdown-menu button:not(.star) { background: transparent; border-color: transparent; color: var(--text); font-weight: 600; }
+html[data-design="clean"] body .dropdown-menu button:not(.star):not(.ci-count):not(:disabled):hover { background: var(--primary-soft); color: var(--primary); }
+html[data-design="clean"] body .dropdown-menu button.danger-item:not(.star) { color: var(--danger); }
+html[data-design="clean"] body .dropdown-menu button.danger-item:not(.star):not(.ci-count):not(:disabled):hover { background: #FEE2E2; color: var(--danger); }
+html[data-design="clean"] .dd-row:hover { background: var(--surface-2); }
+html[data-design="clean"] .dd-row + .dd-row { border-top-color: var(--line); }
+html[data-design="clean"] .dd-sw { background: #D1D5DB; }
+html[data-design="clean"] .dd-row .d { color: var(--muted); }
+
+/* 설문 참여: 문항 카드 = 흰 카드 */
+html[data-design="clean"] .q-item {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] .q-item.q-current { border-color: var(--primary); box-shadow: 0 6px 20px rgba(79, 70, 229, .12); }
+html[data-design="clean"] .q-item.q-current .q-num { background: var(--primary); color: #fff; box-shadow: none; }
+html[data-design="clean"] .q-num { background: var(--primary-soft); color: var(--primary); }
+/* 문항 제목은 샘플의 question-title 결로 한 단 키운다 */
+html[data-design="clean"] .q-item > label,
+html[data-design="clean"] .q-choice legend { font-size: 16.5px; font-weight: 700; line-height: 1.45; word-break: keep-all; }
+html[data-design="clean"] .q-help-text { font-size: 13.5px; color: var(--muted); }
+html[data-design="clean"] .q-section {
+  background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--primary);
+  border-radius: 0 16px 16px 0; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+
+/* 선택지 = 샘플의 option-card (2px 테두리 · 호버 시 인디고) */
+html[data-design="clean"] .choice {
+  background: #fff; border: 2px solid var(--line); border-radius: 12px;
+  padding: 16px 20px; font-size: 15px; font-weight: 500; color: var(--text); gap: 14px;
+  box-shadow: none;
+}
+html[data-design="clean"] .choice:hover { background: var(--primary-soft); border-color: var(--primary); }
+html[data-design="clean"] .choice:has(input:checked) {
+  background: var(--primary-soft); border-color: var(--primary); color: var(--text); font-weight: 600; box-shadow: none;
+}
+html[data-design="clean"] .choice input { width: 20px; height: 20px; accent-color: var(--primary); }
+html[data-design="clean"] .choice-other .other-input { border-radius: 8px; }
+
+/* 배율 버튼 */
+html[data-design="clean"] body button.scale-btn:not(.star) { background: var(--surface-2); color: var(--muted); border-color: transparent; }
+html[data-design="clean"] body button.scale-btn:not(.star):not(.ci-count):not(:disabled):hover { background: var(--primary-soft); color: var(--primary); }
+html[data-design="clean"] body button.scale-btn.on:not(.star) { background: var(--primary); color: #fff; box-shadow: none; }
+html[data-design="clean"] .star.on { color: #F59E0B; }
+
+/* 작성자 카드 · 제출 바 · 진행률 */
+html[data-design="clean"] .who-row {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-sm);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] .who-avatar { background: var(--primary); box-shadow: none; }
+html[data-design="clean"] .submit-bar {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 -2px 20px rgba(17, 24, 39, .06);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] .progress-track,
+html[data-design="clean"] .progress { background: var(--line); border-radius: 10px; height: 6px; }
+html[data-design="clean"] .progress-track > div { background: var(--primary); border-radius: 10px; }
+html[data-design="clean"] .progress-track > div.done { background: #16A34A; }
+html[data-design="clean"] #prog-text { font-size: 13px; font-weight: 600; }
+html[data-design="clean"] .req-chip { background: #FEE2E2; color: var(--danger); }
+
+/* 빌더 */
+html[data-design="clean"] .q-row {
+  background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: none;
+}
+html[data-design="clean"] .q-row:focus-within { border-color: var(--primary); box-shadow: 0 4px 14px rgba(79, 70, 229, .12); }
+html[data-design="clean"] .q-row-sec { background: var(--primary-soft); border-left: 4px solid var(--primary); }
+html[data-design="clean"] .q-row-sec .q-index { background: var(--primary); color: #fff; }
+html[data-design="clean"] .q-index { background: var(--primary-soft); color: var(--primary); }
+html[data-design="clean"] .q-help { background: var(--surface-2); border-color: var(--line); }
+html[data-design="clean"] .q-toolbar { border-bottom-color: var(--line); }
+html[data-design="clean"] .tsep { background: var(--line); }
+html[data-design="clean"] .tcnt { background: var(--primary); }
+html[data-design="clean"] .opt-dot { border-color: #D1D5DB; }
+html[data-design="clean"] .q-branch-wrap { background: var(--surface-2); border-color: var(--line); }
+html[data-design="clean"] .q-branch-src { border-top-color: var(--line); }
+html[data-design="clean"] .q-cond-badge { background: var(--primary-soft); color: var(--primary); border-left-color: var(--primary); }
+html[data-design="clean"] body button.chip:not(.star) { background: #fff; border: 1px solid var(--line); color: var(--muted); }
+html[data-design="clean"] body button.chip:not(.star):not(.ci-count):not(:disabled):hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+html[data-design="clean"] body button.chip.on:not(.star) { background: var(--primary); border-color: transparent; color: #fff; }
+html[data-design="clean"] body button.chip.add:not(.star) { background: transparent; border: 1px dashed var(--primary); color: var(--primary); }
+html[data-design="clean"] body button.chip.add:not(.star):not(.ci-count):not(:disabled):hover { background: var(--primary); border-style: solid; color: #fff; }
+html[data-design="clean"] body button.toggle:not(.star) { background: #fff; border: 1px solid var(--line); color: var(--muted); }
+html[data-design="clean"] body button.toggle:not(.star):not(.ci-count):not(:disabled):hover { border-color: var(--primary); color: var(--primary); }
+html[data-design="clean"] body button.toggle:not(.star)[aria-pressed="true"] { background: var(--primary); border-color: transparent; color: #fff; }
+html[data-design="clean"] .bq-media,
+html[data-design="clean"] .attach-list li { background: #fff; border-color: var(--line); border-radius: 12px; }
+html[data-design="clean"] .q-media img,
+html[data-design="clean"] .img-wrap img,
+html[data-design="clean"] .att-preview img,
+html[data-design="clean"] .att-preview video { border-color: var(--line); }
+
+/* 목록 · 표 · 배지 */
+html[data-design="clean"] .campaign-item { border-bottom-color: var(--line); }
+html[data-design="clean"] .campaign-item:hover { background: var(--surface-2); box-shadow: none; transform: none; }
+html[data-design="clean"] tr.clickable:hover { background: var(--surface-2); }
+html[data-design="clean"] th, html[data-design="clean"] td { border-bottom-color: var(--line); }
+html[data-design="clean"] .badge.admin { background: var(--primary-soft); border-color: transparent; color: var(--primary); }
+html[data-design="clean"] .badge.open { background: #DCFCE7; color: #15803D; }
+html[data-design="clean"] .badge.closed { background: #FEE2E2; color: #B91C1C; }
+html[data-design="clean"] .stag { background: #fff; border-color: var(--line); color: var(--muted); }
+html[data-design="clean"] .stag.on { background: #DCFCE7; border-color: #BBF7D0; color: #15803D; }
+html[data-design="clean"] .stag.off { background: #FEE2E2; border-color: #FECACA; color: #B91C1C; }
+html[data-design="clean"] .stag.warn { background: #FEF3C7; border-color: #FDE68A; color: #92400E; }
+html[data-design="clean"] .stag.who { background: var(--primary-soft); border-color: transparent; color: var(--primary); }
+html[data-design="clean"] .ci-count:hover { background: var(--primary-soft); color: var(--primary); }
+html[data-design="clean"] .detail-content { background: var(--surface-2); border-radius: 12px; }
+
+/* 목차 · 통계 · 기타 */
+html[data-design="clean"] .toc {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-sm);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-design="clean"] .toc a.cur { background: var(--primary-soft); color: var(--primary); }
+html[data-design="clean"] .toc a:hover, html[data-design="clean"] #b-toc a:hover { background: var(--surface-2); color: var(--text); }
+html[data-design="clean"] .toc a em, html[data-design="clean"] #b-toc a em { color: var(--danger); }
+html[data-design="clean"] .kpi-hero,
+html[data-design="clean"] .stat-tile { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: none; }
+html[data-design="clean"] .bar-row:hover { background: var(--surface-2); }
+html[data-design="clean"] .thanks-icon { background: var(--primary); box-shadow: 0 8px 22px rgba(79, 70, 229, .3); }
+html[data-design="clean"] .toast { background: #111827; backdrop-filter: none; }
+html[data-design="clean"] .toast.error { background: var(--danger); }
+html[data-design="clean"] :focus-visible { outline-color: rgba(79, 70, 229, .5); }
+html[data-design="clean"] .crop-sel { border-color: var(--primary); background: rgba(79, 70, 229, .12); }

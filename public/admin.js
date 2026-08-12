@@ -1374,7 +1374,8 @@ async function loadSubs() {
 // ---------- 통계 대시보드 ----------
 // 폼: 요약=스탯타일(히어로 1개) / 분포=수평 막대(단일 시리즈=단색) / 별점=순서형 램프
 // 램프는 dataviz 검증기 통과: 단일 색상(5°), 명도 단조, 밝은 끝 대비 2.05:1
-const RATING_RAMP = ['#a8b1da', '#8b97cd', '#6c7ac0', '#4a5aac', '#2b3d91'];
+// 색은 테마가 정한다 (styles.css 의 --ramp-1~5)
+const RATING_RAMP = ['var(--ramp-1)', 'var(--ramp-2)', 'var(--ramp-3)', 'var(--ramp-4)', 'var(--ramp-5)'];
 let statsTable = false;
 
 function barChart(rows, total, { ramp = null, unit = '건' } = {}) {
