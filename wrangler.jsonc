@@ -1,6 +1,6 @@
 {
   // Cloudflare Workers 설정
-  "name": "ai-usecase-hub",
+  "name": "bdosurvey",
   "main": "src/index.js",
   "compatibility_date": "2025-08-01",
   "assets": {
