@@ -7,14 +7,14 @@
   <script>try{var d=localStorage.getItem("bdoDesign");if(d===null)d="clean";if(d)document.documentElement.dataset.design=d}catch(e){}</script>
   <link rel="icon" href="/logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=85">
+  <link rel="stylesheet" href="/styles.css?v=87">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="/"><img src="/logo.png" alt="BDO" class="brand-logo" onerror="this.remove()" onload="this.parentNode.classList.add('has-logo')"><b>BDO</b> Survey System</a>
     <div class="who" id="who"></div>
   </header>
-  <main class="container">
+  <main class="container" style="max-width: 680px;">
     <div id="loading" class="muted">불러오는 중…</div>
 
     <section id="login-box" class="card hero hidden">
@@ -35,23 +35,13 @@
 
     <section id="form-box" class="hidden">
       <nav id="toc" class="toc hidden" aria-label="문항 목차"></nav>
-      <div class="card">
-        <div class="step-header hidden" id="step-header">
-          <div class="step-text"><span>진행 상황</span><span id="step-count"></span></div>
-          <div class="step-track"><div id="step-fill"></div></div>
-        </div>
+
+      <!-- 설문 소개 + 작성자 (컴팩트) -->
+      <div class="card intro-card">
         <h1 id="c-title"></h1>
         <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
         <p id="c-meta" class="hint"></p>
         <p id="c-deadline" class="hint" style="margin-top:2px;"></p>
-      </div>
-
-      <div id="already-box" class="card hidden">
-        <h2>이미 제출하셨습니다 ✅</h2>
-        <p class="muted" id="already-desc">1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.</p>
-      </div>
-
-      <form id="form" class="card" autocomplete="off">
         <div class="who-row">
           <span class="who-avatar" id="f-initial"></span>
           <div>
@@ -60,18 +50,31 @@
           </div>
           <span class="who-auto muted">로그인 정보로 자동 입력</span>
         </div>
+      </div>
+
+      <div id="already-box" class="card hidden">
+        <h2>이미 제출하셨습니다 ✅</h2>
+        <p class="muted" id="already-desc">1인 1회만 제출할 수 있습니다. 아래에서 수정·삭제하세요.</p>
+      </div>
+
+      <!-- 진행 상황 + 문항 + 버튼이 모두 담기는 단일 카드 (샘플 규격) -->
+      <form id="form" class="card step-card" autocomplete="off">
         <input id="f-name" type="hidden"><input id="f-dept" type="hidden">
+        <div class="step-header hidden" id="step-header">
+          <div class="step-text"><span>진행 상황</span><span id="step-count"></span></div>
+          <div class="step-track"><div id="step-fill"></div></div>
+        </div>
 
         <div id="questions"></div>
 
-        <div class="submit-bar">
-          <div style="display:flex; gap:8px;">
-            <button type="button" id="btn-prev" class="hidden" style="flex:.5;">이전</button>
-            <button type="button" id="btn-draft" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
-            <button type="button" id="btn-next" class="primary hidden" style="flex:1;">다음으로</button>
-            <button type="submit" class="primary" id="btn-submit" style="flex:1;">제출하기</button>
-          </div>
-          <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:6px;">수정 취소</button>
+        <div class="step-foot">
+          <button type="button" id="btn-prev" class="hidden">이전</button>
+          <button type="button" id="btn-next" class="primary hidden">다음으로</button>
+          <button type="submit" class="primary" id="btn-submit">제출하기</button>
+        </div>
+        <div class="step-extra">
+          <button type="button" id="btn-draft" class="ghost small" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
+          <button type="button" id="btn-cancel-edit" class="ghost small hidden">수정 취소</button>
         </div>
       </form>
 

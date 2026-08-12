@@ -1,3 +1,12 @@
+/* 샘플과 동일한 서체: Pretendard (가변 웨이트 자체 호스팅) */
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/PretendardVariable.woff2') format('woff2-variations');
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* BDO 브랜드 컬러 */
   --bdo-blue: #2b3d91;
@@ -280,13 +289,7 @@ tr.clickable:hover { background: rgba(43, 61, 145, .04); }
 .att-preview a { display: block; font-size: 12.5px; color: var(--primary); text-decoration: none; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .att-preview img, .att-preview video { max-width: 160px; max-height: 110px; border-radius: 12px; border: 1px solid var(--line); display: block; }
 
-/* ── 설문 참여: 문항 = 유리 카드 ──────────────────────────
-   폼 카드는 투명 컨테이너가 되고, 각 문항이 떠 있는 유리 카드가 된다 */
-form#form.card {
-  background: transparent; border: none; box-shadow: none;
-  backdrop-filter: none; -webkit-backdrop-filter: none;
-  padding: 0; margin-bottom: 16px;
-}
+/* ── 설문 참여 ────────────────────────────────────────── */
 .page-hidden { display: none !important; }
 .q-item {
   padding: 19px 20px 13px;
@@ -2599,3 +2602,109 @@ html[data-design="clean"] .toast { background: #111827; backdrop-filter: none; }
 html[data-design="clean"] .toast.error { background: var(--danger); }
 html[data-design="clean"] :focus-visible { outline-color: rgba(79, 70, 229, .5); }
 html[data-design="clean"] .crop-sel { border-color: var(--primary); background: rgba(79, 70, 229, .12); }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   설문 참여 스텝 카드 — 샘플 페이지와 동일한 단일 카드 구성
+   진행 상황 · 문항 · 이전/다음 버튼이 카드 하나에 담긴다.
+   색은 테마가 정하고, 여기서는 배치와 글자 크기만 잡는다 (샘플 규격).
+   ═══════════════════════════════════════════════════════════════════ */
+html body .step-card {
+  padding: 44px 40px 36px;
+  border-radius: 24px;
+}
+html body .step-card .step-header { margin-bottom: 38px; }
+html body .step-card .step-text { font-size: 14px; margin-bottom: 10px; }
+
+/* 소개 카드: 작성자 정보를 카드 안에 컴팩트하게 */
+html body .intro-card .who-row {
+  margin: 14px 0 0; padding: 12px 0 0;
+  background: transparent; border: none; border-top: 1px solid var(--line);
+  border-radius: 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html body .intro-card .who-avatar { width: 32px; height: 32px; font-size: 13.5px; }
+html body .intro-card .who-name { font-size: 13.5px; }
+html body .intro-card .who-dept { font-size: 12px; }
+
+/* 문항은 카드 속 콘텐츠 — 안쪽 카드 테두리를 모두 걷어낸다 */
+html body .step-card .q-item {
+  background: transparent; border: none; box-shadow: none;
+  padding: 0; margin: 0; border-radius: 0;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html body .step-card .q-item.q-current { background: transparent; border: none; box-shadow: none; }
+html body .step-card .q-num { display: none; }
+
+/* 문항 제목 = 샘플 question-title: 24px 볼드, 줄높이 1.4 */
+html body .step-card .q-item > label,
+html body .step-card .q-choice legend {
+  font-size: 24px; font-weight: 700; line-height: 1.4;
+  letter-spacing: -0.02em; word-break: keep-all;
+  margin-bottom: 12px; padding: 0;
+}
+html body .step-card .q-choice legend .muted { font-size: 15px; font-weight: 400; }
+html body .step-card .req-chip { vertical-align: 7px; margin-left: 8px; }
+
+/* 설명문 = 샘플 question-desc: 15px 회색 */
+html body .step-card .q-help-text {
+  font-size: 15px; font-weight: 400; color: var(--muted);
+  margin: 4px 0 6px; line-height: 1.55;
+}
+html body .step-card .q-choice .hint { font-size: 15px; margin: -4px 0 14px; }
+
+/* 입력칸은 제목 글자 크기를 물려받지 않는다 */
+html body .step-card .q-item input:not([type="radio"]):not([type="checkbox"]),
+html body .step-card .q-item textarea,
+html body .step-card .q-item select {
+  font-size: 15.5px; font-weight: 400; margin-top: 12px; padding: 13px 16px;
+}
+
+/* 선택지 = 샘플 option-card: 18px 24px 패딩 · 16px 미디엄 */
+html body .step-card .choice {
+  padding: 18px 24px; border-radius: 12px;
+  font-size: 16px; font-weight: 500; gap: 16px; margin: 0 0 12px;
+}
+html body .step-card .choice input { width: 21px; height: 21px; }
+html body .step-card .choice-other .other-input { font-size: 14.5px; margin-top: 0; padding: 8px 12px; }
+
+/* 배율·별점도 카드 크기에 맞게 */
+html body .step-card .scale-btn { width: 46px; height: 46px; font-size: 16px; border-radius: 12px; }
+html body .step-card .star { font-size: 36px; }
+
+/* 구역 헤더: 문항 위의 작은 표제 */
+html body .step-card .q-section {
+  background: transparent; border: none; box-shadow: none;
+  padding: 0; margin: 0 0 14px; border-radius: 0;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html body .step-card .q-section h2 {
+  font-size: 13px; font-weight: 800; letter-spacing: .05em; color: var(--primary);
+}
+
+/* 하단 버튼 = 샘플 footer-buttons: 이전은 절반 폭, 다음이 주인공 */
+html body .step-card .step-foot { display: flex; gap: 16px; margin-top: 44px; }
+html body .step-card .step-foot button:not(.star) {
+  height: 54px; font-size: 16px; font-weight: 600; border-radius: 12px;
+  flex: 1; padding: 0 24px;
+}
+html body .step-card .step-foot #btn-prev { flex: .5; }
+html body .step-card .step-extra {
+  display: flex; justify-content: center; gap: 10px; margin-top: 14px;
+}
+html body .step-card .step-extra button:not(.star) { color: var(--muted); }
+
+/* 좁아진 컨테이너(680px)에 맞춘 목차 위치 */
+.toc { left: calc(50% - 340px - 250px); }
+@media (max-width: 1370px) { .toc { display: block; } }
+@media (max-width: 1250px) { .toc { display: none; } }
+
+/* 모바일 */
+@media (max-width: 640px) {
+  html body .step-card { padding: 30px 22px 26px; border-radius: 20px; }
+  html body .step-card .q-item > label,
+  html body .step-card .q-choice legend { font-size: 20px; }
+  html body .step-card .choice { padding: 15px 18px; font-size: 15px; }
+  html body .step-card .step-foot { gap: 10px; margin-top: 32px; }
+  html body .step-card .step-foot button:not(.star) { height: 50px; font-size: 15px; }
+}
