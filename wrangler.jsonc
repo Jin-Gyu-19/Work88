@@ -10,7 +10,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "ai-usecase-hub",
+      "database_name": "survey",
       "database_id": "ff290cf6-e599-4e65-a072-92c287d6537b"
     }
   ],
