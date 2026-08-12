@@ -6,6 +6,7 @@ let FORM = null; // 캠페인 설문 양식 { questions, oneSubmission }
 let activeQid = null; // 지금 첨부 대상인 문항 id ('app'이면 앱 파일)
 let editingId = null; // 수정 중인 제출 id
 let myList = []; // 내 제출 내역
+let finishedNow = false; // 이번 접속에서 제출을 마쳤는지 (마치기 전에는 내역을 숨긴다)
 let uploading = 0; // 진행 중인 업로드 수
 
 const $ = (id) => document.getElementById(id);
@@ -81,6 +82,8 @@ function applyOneSubmissionState() {
   const already = FORM.oneSubmission && myList.length > 0 && !editingId;
   $('form').classList.toggle('hidden', already);
   $('already-box').classList.toggle('hidden', !already);
+  // 내 제출 내역: 작성 중에는 숨기고, 제출을 마쳤거나(이번 접속) 1인1회 안내 화면일 때만
+  $('mine-card').classList.toggle('hidden', !(myList.length > 0 && !editingId && (already || finishedNow)));
   if (already) {
     $('already-desc').textContent = FORM.noEdit
       ? '1인 1회만 제출할 수 있으며, 이 설문은 제출 후 수정할 수 없습니다. 아래에서 제출 내용을 확인하세요.'
@@ -916,6 +919,7 @@ async function onSubmit(e) {
       $('thanks-modal').classList.remove('hidden');
     }
     editingId = null;
+    finishedNow = true;
     attachments.length = 0;
     renderQuestions();
     setEditUi(false);
@@ -1060,8 +1064,6 @@ async function loadMine() {
     return;
   }
   const box = $('mine');
-  // 응답자 화면에서는 제출한 내역이 있을 때만 카드째 보여준다
-  $('mine-card').classList.toggle('hidden', !myList.length);
   if (!myList.length) { box.innerHTML = ''; return; }
   box.classList.remove('muted');
   box.innerHTML = myList.map((s) => `
