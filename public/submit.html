@@ -7,7 +7,7 @@
   <script>try{var d=localStorage.getItem("bdoDesign");if(d===null)d="clean";if(d)document.documentElement.dataset.design=d}catch(e){}</script>
   <link rel="icon" href="/logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=84">
+  <link rel="stylesheet" href="/styles.css?v=85">
 </head>
 <body>
   <header class="topbar">
@@ -36,6 +36,10 @@
     <section id="form-box" class="hidden">
       <nav id="toc" class="toc hidden" aria-label="문항 목차"></nav>
       <div class="card">
+        <div class="step-header hidden" id="step-header">
+          <div class="step-text"><span>진행 상황</span><span id="step-count"></span></div>
+          <div class="step-track"><div id="step-fill"></div></div>
+        </div>
         <h1 id="c-title"></h1>
         <p id="c-desc" class="muted" style="white-space: pre-wrap;"></p>
         <p id="c-meta" class="hint"></p>
@@ -61,14 +65,10 @@
         <div id="questions"></div>
 
         <div class="submit-bar">
-          <div class="progress-head">
-            <div class="progress-track"><div id="prog-fill"></div></div>
-            <span id="prog-text" class="muted"></span>
-          </div>
           <div style="display:flex; gap:8px;">
-            <button type="button" id="btn-prev" class="hidden">← 이전</button>
+            <button type="button" id="btn-prev" class="hidden" style="flex:.5;">이전</button>
             <button type="button" id="btn-draft" title="작성 중인 내용과 첨부를 저장합니다">💾 임시저장</button>
-            <button type="button" id="btn-next" class="primary hidden" style="flex:1;">다음 →</button>
+            <button type="button" id="btn-next" class="primary hidden" style="flex:1;">다음으로</button>
             <button type="submit" class="primary" id="btn-submit" style="flex:1;">제출하기</button>
           </div>
           <button type="button" id="btn-cancel-edit" class="ghost hidden" style="width:100%; margin-top:6px;">수정 취소</button>
@@ -152,6 +152,6 @@
   </div>
 
   <script src="/common.js?v=71"></script>
-  <script src="/submit.js?v=61"></script>
+  <script src="/submit.js?v=62"></script>
 </body>
 </html>

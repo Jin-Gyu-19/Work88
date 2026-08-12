@@ -61,8 +61,8 @@ async function init() {
   $('form').addEventListener('submit', onSubmit);
   $('btn-cancel-edit').onclick = cancelEdit;
   $('btn-draft').onclick = saveDraft;
-  $('btn-prev').onclick = () => goToPage(curPage - 1);
-  $('btn-next').onclick = () => goToPage(curPage + 1, { validate: true });
+  $('btn-prev').onclick = () => stepMove(-1);
+  $('btn-next').onclick = () => stepMove(1);
   const closeView = () => $('view-modal').classList.add('hidden');
   $('v-close').onclick = closeView;
   $('v-close-x').onclick = closeView;
@@ -93,21 +93,45 @@ function applyOneSubmissionState() {
 
 // ---------- 설문 문항 렌더링 ----------
 
-// 구역(section) 기준으로 문항을 페이지로 나눈다
-let pages = [[]]; // 각 페이지에 속한 문항 id 목록
+// 한 문항 = 한 단계. 구역(section) 헤더는 바로 다음 문항의 단계 위에 함께 표시된다.
+let pages = [[]]; // 각 단계에 속한 id 목록 (구역 id + 문항 id 1개)
 let curPage = 0;
 
 function buildPages() {
-  pages = [[]];
+  pages = [];
+  let pendingSecs = []; // 다음 문항에 붙일 구역 헤더들
   for (const q of FORM.questions) {
-    if (q.type === 'section' && pages[pages.length - 1].length) pages.push([]);
-    pages[pages.length - 1].push(q.id);
+    if (q.type === 'section') { pendingSecs.push(q.id); continue; }
+    pages.push([...pendingSecs, q.id]);
+    pendingSecs = [];
   }
+  // 맨 끝에 문항 없는 구역만 남으면 마지막 단계에 붙인다
+  if (pendingSecs.length) {
+    if (pages.length) pages[pages.length - 1].push(...pendingSecs);
+    else pages.push(pendingSecs);
+  }
+  if (!pages.length) pages = [[]];
   if (curPage >= pages.length) curPage = 0;
 }
 
 function pageOf(qid) {
   return Math.max(0, pages.findIndex((p) => p.includes(qid)));
+}
+
+// 단계 i 의 답변 문항 id (구역 제외)
+function pageQid(i) {
+  const secIds = new Set(FORM.questions.filter((q) => q.type === 'section').map((q) => q.id));
+  return (pages[i] || []).find((id) => !secIds.has(id)) || null;
+}
+
+// 분기로 숨은 문항의 단계는 건너뛴다 → 지금 보이는 단계 인덱스 목록
+function visibleSteps(vis) {
+  const out = [];
+  for (let i = 0; i < pages.length; i++) {
+    const qid = pageQid(i);
+    if (!qid || vis[qid] !== false) out.push(i);
+  }
+  return out;
 }
 
 function renderQuestions() {
@@ -244,9 +268,14 @@ function setScale(container, value) {
   onFormChanged();
 }
 
-// 현재 페이지의 문항/구역만 표시하고 하단 버튼을 갱신
+// 현재 단계의 문항/구역만 표시하고, 상단 진행 상황과 하단 버튼을 갱신
 function applyPage() {
-  const multi = pages.length > 1;
+  const vis = computeVis(gatherAnswersRaw());
+  const steps = visibleSteps(vis);
+  if (!steps.includes(curPage)) curPage = steps[0] ?? 0;
+  const pos = Math.max(0, steps.indexOf(curPage));
+  const multi = steps.length > 1;
+
   const ids = new Set(pages[curPage]);
   document.querySelectorAll('#questions .q-item').forEach((el) => {
     el.classList.toggle('page-hidden', !ids.has(el.dataset.qid));
@@ -254,13 +283,30 @@ function applyPage() {
   document.querySelectorAll('#questions .q-section').forEach((el) => {
     el.classList.toggle('page-hidden', !ids.has(el.dataset.secid));
   });
-  const last = curPage === pages.length - 1;
-  $('btn-prev').classList.toggle('hidden', !multi || curPage === 0);
+
+  const last = pos === steps.length - 1;
+  $('btn-prev').classList.toggle('hidden', !multi || pos === 0);
   $('btn-next').classList.toggle('hidden', !multi || last);
   $('btn-submit').classList.toggle('hidden', multi && !last);
+
+  // 상단 진행 상황 (샘플 규격: "진행 상황  n / m" + 채움 바)
+  const head = $('step-header');
+  if (head) {
+    head.classList.toggle('hidden', !multi);
+    $('step-count').textContent = `${pos + 1} / ${steps.length}`;
+    $('step-fill').style.width = `${((pos + 1) / steps.length) * 100}%`;
+  }
 }
 
-// 현재 페이지의 필수 문항 검증 후 페이지 이동
+// 이전/다음: 보이는 단계 목록 안에서 한 칸씩 이동
+function stepMove(delta) {
+  const steps = visibleSteps(computeVis(gatherAnswersRaw()));
+  const pos = Math.max(0, steps.indexOf(curPage));
+  const target = steps[Math.max(0, Math.min(steps.length - 1, pos + delta))];
+  goToPage(target, { validate: delta > 0 });
+}
+
+// 현재 단계의 필수 문항 검증 후 이동
 function goToPage(n, { validate = false } = {}) {
   if (validate) {
     const raw = gatherAnswersRaw();
@@ -377,36 +423,18 @@ function onFormChanged() {
       num += 1;
       el?.querySelector('.q-num') && (el.querySelector('.q-num').textContent = num);
     }
-    // 현재 문항 강조는 지금 보고 있는 페이지 안에서
-    if (!currentId && vis[q.id] && pages[curPage].includes(q.id)) {
-      const v = raw[q.id];
-      if (v === undefined || (Array.isArray(v) && !v.length)) currentId = q.id;
-    }
   }
+  // 지금 단계의 문항이 곧 현재 문항
+  const curQid = pageQid(curPage);
+  currentId = curQid && vis[curQid] !== false ? curQid : null;
   document.querySelectorAll('.q-item').forEach((el) => {
     el.classList.toggle('q-current', el.dataset.qid === currentId);
   });
 
   updateToc(raw, vis, currentId);
 
-  // 진행률 (전체 페이지 기준)
-  const answerable = FORM.questions.filter((q) => q.type !== 'section');
-  const shown = answerable.filter((q) => vis[q.id]);
-  const done = shown.filter((q) => {
-    const v = raw[q.id];
-    return v !== undefined && !(Array.isArray(v) && !v.length);
-  }).length;
-  const pct = shown.length ? Math.round((done / shown.length) * 100) : 0;
-  const fill = $('prog-fill');
-  const text = $('prog-text');
-  if (fill) {
-    fill.style.width = pct + '%';
-    fill.classList.toggle('done', done === shown.length && shown.length > 0);
-    const pageInfo = pages.length > 1 ? ` · ${curPage + 1}/${pages.length}쪽` : '';
-    text.textContent = (done === shown.length && shown.length
-      ? `모든 문항 작성 완료 (${shown.length}/${shown.length})`
-      : `${done} / ${shown.length} 문항 작성`) + pageInfo;
-  }
+  // 답변이 바뀌면 분기 때문에 단계 수가 달라질 수 있다 → 진행 상황·버튼 갱신
+  applyPage();
 }
 
 // 왼쪽 문항 목차: 번호·제목·작성 여부 표시, 클릭하면 해당 문항으로 이동
@@ -1010,6 +1038,12 @@ async function loadDraft() {
     if (!d.exists) return;
     restoreAnswers(d.answers || {});
     restoreAttachmentList(d.attachments);
+    // 이어서 작성: 첫 미작성 문항 단계로 이동
+    const raw = gatherAnswersRaw();
+    const vis = computeVis(raw);
+    const next = FORM.questions.find((q) => q.type !== 'section' && vis[q.id]
+      && (raw[q.id] === undefined || (Array.isArray(raw[q.id]) && !raw[q.id].length)));
+    if (next) goToPage(pageOf(next.id));
     toast(`임시저장본을 불러왔습니다 (${kst(d.updated_at)} 저장)`);
   } catch { /* 무시 */ }
 }

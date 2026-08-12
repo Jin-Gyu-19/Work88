@@ -375,6 +375,24 @@ form#form.card {
 .who-dept { font-size: 12.5px; }
 .who-auto { margin-left: auto; font-size: 11.5px; }
 
+/* 상단 진행 상황 (한 문항씩 작성) — 샘플 페이지의 progress-header 규격 */
+.step-header { margin-bottom: 20px; }
+.step-text {
+  display: flex; justify-content: space-between;
+  font-size: 13.5px; font-weight: 600; color: var(--muted);
+  margin-bottom: 9px;
+}
+#step-count { font-variant-numeric: tabular-nums; }
+.step-track {
+  width: 100%; height: 6px;
+  background: var(--line); border-radius: 10px; overflow: hidden;
+}
+#step-fill {
+  height: 100%; width: 0;
+  background: var(--progress-grad); border-radius: 10px;
+  transition: width .3s ease;
+}
+
 /* 하단 제출 바 + 진행률 (플로팅 유리 바) */
 .submit-bar {
   position: sticky; bottom: 12px;
