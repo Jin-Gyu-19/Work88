@@ -11,8 +11,7 @@
     {
       "binding": "DB",
       "database_name": "ai-usecase-hub",
-      // 배포 전 `wrangler d1 create ai-usecase-hub` 실행 후 발급된 ID로 교체
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+      "database_id": "ff290cf6-e599-4e65-a072-92c287d6537b"
     }
   ],
   "r2_buckets": [
