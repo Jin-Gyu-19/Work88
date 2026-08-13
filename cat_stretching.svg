@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" width="420" height="300" role="img" aria-label="앞발을 뻗고 기지개를 켜며 하품하는 크림색 고양이">
+  <defs>
+    <linearGradient id="mbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fef8ee"/>
+      <stop offset="100%" stop-color="#f0e3d0"/>
+    </linearGradient>
+    <linearGradient id="cfur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8e5c8"/>
+      <stop offset="100%" stop-color="#dfc49c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="420" height="300" fill="url(#mbg)"/>
+  <path d="M0 268 H 420" stroke="#d8c3a4" stroke-width="3"/>
+  <ellipse cx="210" cy="270" rx="170" ry="12" fill="#cdb492" opacity="0.5"/>
+
+  <!-- 꼬리 (위로 치켜든) -->
+  <path d="M344 168 C 388 146 396 96 372 70"
+        fill="none" stroke="#c9ab80" stroke-width="22" stroke-linecap="round"/>
+  <path d="M344 168 C 388 146 396 96 372 70"
+        fill="none" stroke="url(#cfur)" stroke-width="14" stroke-linecap="round"/>
+
+  <g fill="url(#cfur)" stroke="#b8975f" stroke-width="3">
+    <!-- 엉덩이 (높이 든) -->
+    <ellipse cx="300" cy="180" rx="58" ry="58"/>
+    <!-- 뒷다리 -->
+    <rect x="286" y="206" width="28" height="56" rx="14"/>
+    <!-- 몸통 -->
+    <ellipse cx="222" cy="202" rx="80" ry="46" transform="rotate(-11 222 202)"/>
+    <!-- 어깨 -->
+    <ellipse cx="152" cy="218" rx="46" ry="40"/>
+    <!-- 앞으로 쭉 뻗은 앞다리 -->
+    <rect x="60" y="234" width="102" height="24" rx="12"/>
+    <!-- 머리 -->
+    <circle cx="106" cy="222" r="37"/>
+    <!-- 귀 -->
+    <path d="M80 200 L 68 164 L 106 188 Z" stroke-linejoin="round"/>
+    <path d="M130 194 L 146 162 L 108 186 Z" stroke-linejoin="round"/>
+  </g>
+
+  <!-- 귀 안쪽 -->
+  <path d="M84 194 L 77 172 L 99 187 Z" fill="#f0a7b0"/>
+  <path d="M129 187 L 139 172 L 113 184 Z" fill="#f0a7b0"/>
+
+  <!-- 발 -->
+  <ellipse cx="66" cy="252" rx="16" ry="11" fill="#fdf3e2" stroke="#b8975f" stroke-width="2.5"/>
+  <ellipse cx="300" cy="262" rx="22" ry="10" fill="#fdf3e2" stroke="#b8975f" stroke-width="2.5"/>
+  <g stroke="#cfae82" stroke-width="2" stroke-linecap="round">
+    <path d="M58 246 v10"/><path d="M66 244 v12"/><path d="M74 246 v10"/>
+  </g>
+
+  <!-- 등 줄무늬 -->
+  <g stroke="#c19a63" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.75">
+    <path d="M196 160 q 10 12 8 24"/>
+    <path d="M228 154 q 10 12 8 24"/>
+    <path d="M260 152 q 10 12 8 24"/>
+    <path d="M294 138 q 10 12 9 24"/>
+  </g>
+  <g stroke="#c19a63" stroke-width="6" stroke-linecap="round" opacity="0.7">
+    <path d="M356 152 l6 -12"/>
+    <path d="M382 122 l11 -3"/>
+  </g>
+
+  <!-- 실눈 (하품 중) -->
+  <g fill="none" stroke="#7c5f3c" stroke-width="3.2" stroke-linecap="round">
+    <path d="M80 216 q 12 -11 24 -1"/>
+    <path d="M118 212 q 11 -10 21 -1"/>
+  </g>
+
+  <!-- 코 / 하품하는 입 -->
+  <path d="M92 232 L 106 232 L 99 240 Z" fill="#e8737f" stroke="#c9515e" stroke-width="1.6" stroke-linejoin="round"/>
+  <ellipse cx="99" cy="252" rx="13" ry="10" fill="#d4626e" stroke="#a8434f" stroke-width="2"/>
+  <ellipse cx="99" cy="256" rx="7" ry="5" fill="#f19aa2"/>
+  <path d="M90 245 l3 5" stroke="#fff6f2" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M108 245 l-3 5" stroke="#fff6f2" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- 수염 -->
+  <g stroke="#a8875c" stroke-width="1.8" stroke-linecap="round" opacity="0.8">
+    <path d="M76 234 q -28 -8 -40 -13"/>
+    <path d="M76 243 q -30 2 -42 5"/>
+    <path d="M122 234 q 24 -8 34 -13"/>
+    <path d="M122 243 q 26 2 36 5"/>
+  </g>
+</svg>

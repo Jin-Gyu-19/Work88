@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 330" width="400" height="330" role="img" aria-label="털실 뭉치를 향해 앞발을 뻗은 회색 새끼 고양이">
+  <defs>
+    <radialGradient id="ybg" cx="45%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#fdf6f8"/>
+      <stop offset="100%" stop-color="#efe2e6"/>
+    </radialGradient>
+    <linearGradient id="kfur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d5dae4"/>
+      <stop offset="100%" stop-color="#a9b2c2"/>
+    </linearGradient>
+    <radialGradient id="keye" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#a9e0f2"/>
+      <stop offset="100%" stop-color="#4b93c4"/>
+    </radialGradient>
+    <radialGradient id="yarn" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#f2909a"/>
+      <stop offset="100%" stop-color="#d4535f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="330" fill="url(#ybg)"/>
+  <ellipse cx="170" cy="296" rx="112" ry="16" fill="#cbb9c0" opacity="0.5"/>
+  <ellipse cx="312" cy="292" rx="46" ry="11" fill="#cbb9c0" opacity="0.5"/>
+
+  <!-- 바닥에 늘어진 실 -->
+  <path d="M286 268 C 240 288 196 274 168 292 C 148 304 96 296 74 280"
+        fill="none" stroke="#d4535f" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- 꼬리 -->
+  <path d="M116 268 C 62 276 46 236 66 210"
+        fill="none" stroke="#98a2b3" stroke-width="21" stroke-linecap="round"/>
+  <path d="M116 268 C 62 276 46 236 66 210"
+        fill="none" stroke="url(#kfur)" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- 몸통 -->
+  <path d="M150 168 C 108 172 96 226 100 268 Q 98 288 120 288 L 196 288 Q 216 288 214 268 C 212 224 194 172 150 168 Z"
+        fill="url(#kfur)" stroke="#8d97a8" stroke-width="3"/>
+  <path d="M152 186 C 132 202 128 250 136 282 Q 156 288 176 282 C 182 250 176 202 152 186 Z" fill="#f3f6fa"/>
+
+  <!-- 뒷발 -->
+  <ellipse cx="126" cy="282" rx="24" ry="12" fill="#f3f6fa" stroke="#8d97a8" stroke-width="2.5"/>
+  <ellipse cx="184" cy="282" rx="24" ry="12" fill="#f3f6fa" stroke="#8d97a8" stroke-width="2.5"/>
+
+  <!-- 털실을 향해 뻗은 앞발 -->
+  <path d="M196 216 C 226 208 246 196 262 186"
+        fill="none" stroke="url(#kfur)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M196 216 C 226 208 246 196 262 186"
+        fill="none" stroke="#8d97a8" stroke-width="26" stroke-linecap="round" opacity="0.25"/>
+  <ellipse cx="268" cy="182" rx="20" ry="17" fill="#f3f6fa" stroke="#8d97a8" stroke-width="2.5" transform="rotate(-24 268 182)"/>
+  <g stroke="#c9d1dd" stroke-width="2.2" stroke-linecap="round">
+    <path d="M262 168 l3 8"/><path d="M274 172 l1 8"/><path d="M282 180 l-3 7"/>
+  </g>
+
+  <!-- 귀 -->
+  <path d="M108 106 L 96 52 L 152 82 Z" fill="url(#kfur)" stroke="#8d97a8" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M196 106 L 208 52 L 152 82 Z" fill="url(#kfur)" stroke="#8d97a8" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M114 98 L 106 68 L 142 86 Z" fill="#f2a6b0"/>
+  <path d="M190 98 L 198 68 L 162 86 Z" fill="#f2a6b0"/>
+
+  <!-- 머리 (새끼라 크게) -->
+  <ellipse cx="152" cy="132" rx="66" ry="60" fill="url(#kfur)" stroke="#8d97a8" stroke-width="3"/>
+  <g stroke="#8d97a8" stroke-width="6" stroke-linecap="round" opacity="0.7">
+    <path d="M152 78 v16"/>
+    <path d="M130 82 l-5 15"/>
+    <path d="M174 82 l5 15"/>
+  </g>
+  <path d="M152 150 C 124 150 110 162 112 174 C 115 188 136 190 152 176 C 168 190 189 188 192 174 C 194 162 180 150 152 150 Z" fill="#f3f6fa"/>
+
+  <!-- 큰 눈 -->
+  <ellipse cx="128" cy="130" rx="17" ry="20" fill="url(#keye)" stroke="#33607f" stroke-width="2.4"/>
+  <ellipse cx="176" cy="130" rx="17" ry="20" fill="url(#keye)" stroke="#33607f" stroke-width="2.4"/>
+  <ellipse cx="128" cy="131" rx="10" ry="14" fill="#1b1f26"/>
+  <ellipse cx="176" cy="131" rx="10" ry="14" fill="#1b1f26"/>
+  <circle cx="123" cy="123" r="5" fill="#ffffff" opacity="0.95"/>
+  <circle cx="171" cy="123" r="5" fill="#ffffff" opacity="0.95"/>
+  <circle cx="132" cy="140" r="2.6" fill="#ffffff" opacity="0.6"/>
+  <circle cx="180" cy="140" r="2.6" fill="#ffffff" opacity="0.6"/>
+
+  <!-- 코와 입 -->
+  <path d="M145 156 L 159 156 L 152 165 Z" fill="#e8737f" stroke="#c9515e" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M152 165 v5" stroke="#8d97a8" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M152 170 q -8 8 -15 1" fill="none" stroke="#8d97a8" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M152 170 q 8 8 15 1" fill="none" stroke="#8d97a8" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- 수염 -->
+  <g stroke="#8996a8" stroke-width="1.8" stroke-linecap="round" opacity="0.75">
+    <path d="M110 160 q -28 -7 -40 -11"/>
+    <path d="M110 170 q -30 3 -42 6"/>
+    <path d="M194 160 q 28 -7 40 -11"/>
+    <path d="M194 170 q 30 3 42 6"/>
+  </g>
+
+  <!-- 털실 뭉치 -->
+  <circle cx="312" cy="250" r="42" fill="url(#yarn)" stroke="#a83e49" stroke-width="3"/>
+  <g fill="none" stroke="#a83e49" stroke-width="2.6" opacity="0.85">
+    <path d="M276 232 C 302 246 322 268 330 288"/>
+    <path d="M282 272 C 306 258 330 240 348 236"/>
+    <path d="M292 214 C 300 244 306 274 300 290"/>
+    <path d="M330 212 C 322 240 320 268 328 288"/>
+  </g>
+  <path d="M286 216 C 292 202 282 192 272 190"
+        fill="none" stroke="#d4535f" stroke-width="3" stroke-linecap="round"/>
+</svg>

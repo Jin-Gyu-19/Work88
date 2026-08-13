@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="보름달을 배경으로 앉아 있는 검은 고양이">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#141a34"/>
+      <stop offset="60%" stop-color="#25305a"/>
+      <stop offset="100%" stop-color="#3c4a7a"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#fffbe6"/>
+      <stop offset="100%" stop-color="#f2e19a"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff3bf" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#fff3bf" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cateye" cx="40%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#ffe27a"/>
+      <stop offset="100%" stop-color="#e8a521"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="400" fill="url(#night)"/>
+
+  <!-- 별 -->
+  <g fill="#fdfbe8">
+    <circle cx="52" cy="58" r="2.4" opacity="0.9"/>
+    <circle cx="110" cy="112" r="1.7" opacity="0.7"/>
+    <circle cx="74" cy="176" r="2" opacity="0.8"/>
+    <circle cx="164" cy="52" r="2.6" opacity="0.95"/>
+    <circle cx="222" cy="96" r="1.6" opacity="0.6"/>
+    <circle cx="356" cy="196" r="2.2" opacity="0.85"/>
+    <circle cx="38" cy="248" r="1.6" opacity="0.6"/>
+    <circle cx="300" cy="42" r="1.8" opacity="0.7"/>
+  </g>
+
+  <!-- 달 -->
+  <circle cx="286" cy="112" r="120" fill="url(#glow)"/>
+  <circle cx="286" cy="112" r="66" fill="url(#moon)"/>
+  <g fill="#e6d18c" opacity="0.55">
+    <circle cx="266" cy="96" r="12"/>
+    <circle cx="306" cy="132" r="9"/>
+    <circle cx="300" cy="82" r="6"/>
+  </g>
+
+  <!-- 지면 -->
+  <path d="M0 356 Q 200 336 400 356 L 400 400 L 0 400 Z" fill="#101632"/>
+
+  <!-- 고양이 실루엣 (오른쪽을 보고 앉은 자세) -->
+  <g fill="#0d1024">
+    <!-- 꼬리 -->
+    <path d="M168 330 C 96 344 70 292 96 250"
+          fill="none" stroke="#0d1024" stroke-width="24" stroke-linecap="round"/>
+    <!-- 엉덩이 -->
+    <ellipse cx="192" cy="286" rx="66" ry="62"/>
+    <!-- 몸통/가슴 -->
+    <ellipse cx="252" cy="258" rx="52" ry="72"/>
+    <!-- 앞다리 -->
+    <rect x="268" y="248" width="28" height="100" rx="14"/>
+    <!-- 바닥에 붙은 앞발 -->
+    <ellipse cx="286" cy="348" rx="30" ry="13"/>
+    <!-- 뒷발 -->
+    <ellipse cx="200" cy="342" rx="52" ry="16"/>
+    <!-- 머리 -->
+    <circle cx="284" cy="168" r="47"/>
+    <!-- 귀 -->
+    <path d="M246 140 L 238 88 L 282 122 Z" stroke-linejoin="round"/>
+    <path d="M316 136 L 332 88 L 292 118 Z" stroke-linejoin="round"/>
+  </g>
+
+  <!-- 눈 -->
+  <ellipse cx="272" cy="166" rx="13" ry="16" fill="url(#cateye)"/>
+  <ellipse cx="308" cy="164" rx="11" ry="15" fill="url(#cateye)"/>
+  <ellipse cx="272" cy="166" rx="3.4" ry="13" fill="#1a1206"/>
+  <ellipse cx="308" cy="164" rx="3" ry="12" fill="#1a1206"/>
+  <circle cx="268" cy="159" r="2.6" fill="#fffdf0" opacity="0.9"/>
+  <circle cx="304" cy="157" r="2.4" fill="#fffdf0" opacity="0.9"/>
+
+  <!-- 코 -->
+  <path d="M296 186 L 308 186 L 302 194 Z" fill="#5c4160"/>
+
+  <!-- 수염 -->
+  <g stroke="#cdd6f0" stroke-width="1.7" stroke-linecap="round" opacity="0.55">
+    <path d="M320 188 q 30 -6 44 -10"/>
+    <path d="M320 196 q 32 4 46 8"/>
+    <path d="M282 192 q -30 -4 -42 -8"/>
+    <path d="M282 199 q -30 6 -42 11"/>
+  </g>
+</svg>

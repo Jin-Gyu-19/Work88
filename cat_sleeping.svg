@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" width="400" height="320" role="img" aria-label="방석 위에서 몸을 말고 자는 회색 고양이">
+  <defs>
+    <radialGradient id="sbg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#f6f3fb"/>
+      <stop offset="100%" stop-color="#e2e0ee"/>
+    </radialGradient>
+    <linearGradient id="sfur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b9bfcc"/>
+      <stop offset="100%" stop-color="#8f97a8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="320" fill="url(#sbg)"/>
+
+  <!-- 방석 -->
+  <ellipse cx="200" cy="268" rx="158" ry="42" fill="#a8b6d6"/>
+  <ellipse cx="200" cy="260" rx="150" ry="38" fill="#c3cee8" stroke="#8d9cc0" stroke-width="3"/>
+  <g stroke="#a8b6d6" stroke-width="3" opacity="0.8">
+    <path d="M70 250 q 130 30 260 0"/>
+  </g>
+
+  <!-- 꼬리 (몸 앞으로 감싼) -->
+  <path d="M320 206 C 350 244 306 278 226 272"
+        fill="none" stroke="#7f8798" stroke-width="24" stroke-linecap="round"/>
+  <path d="M320 206 C 350 244 306 278 226 272"
+        fill="none" stroke="url(#sfur)" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- 몸통 -->
+  <ellipse cx="216" cy="205" rx="112" ry="58" fill="url(#sfur)" stroke="#7f8798" stroke-width="3"/>
+  <!-- 등 줄무늬 -->
+  <g stroke="#77808f" stroke-width="7" stroke-linecap="round" opacity="0.65" fill="none">
+    <path d="M170 156 q 8 14 4 26"/>
+    <path d="M206 150 q 8 15 4 28"/>
+    <path d="M242 152 q 8 15 3 27"/>
+    <path d="M276 162 q 8 14 2 25"/>
+  </g>
+
+  <!-- 뒷발 살짝 -->
+  <ellipse cx="252" cy="253" rx="30" ry="14" fill="#e6e9f0" stroke="#7f8798" stroke-width="2.5"/>
+
+  <!-- 귀 -->
+  <path d="M84 194 L 74 152 L 116 178 Z" fill="url(#sfur)" stroke="#7f8798" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M146 186 L 166 150 L 122 172 Z" fill="url(#sfur)" stroke="#7f8798" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M89 188 L 83 163 L 108 179 Z" fill="#eaa9b4"/>
+  <path d="M144 180 L 156 160 L 128 172 Z" fill="#eaa9b4"/>
+
+  <!-- 머리 -->
+  <circle cx="115" cy="220" r="47" fill="url(#sfur)" stroke="#7f8798" stroke-width="3"/>
+  <g stroke="#77808f" stroke-width="5" stroke-linecap="round" opacity="0.7">
+    <path d="M112 178 l2 14"/>
+    <path d="M94 184 l-2 13"/>
+  </g>
+
+  <!-- 감은 눈 -->
+  <g fill="none" stroke="#4e5666" stroke-width="3.5" stroke-linecap="round">
+    <path d="M84 216 q 13 12 26 0"/>
+    <path d="M126 214 q 11 11 22 0"/>
+  </g>
+
+  <!-- 주둥이 -->
+  <ellipse cx="117" cy="242" rx="24" ry="15" fill="#eef1f6"/>
+  <path d="M110 234 L 124 234 L 117 242 Z" fill="#e8828f"/>
+  <path d="M117 242 v5" stroke="#8a8f9c" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M117 247 q -7 7 -13 1" fill="none" stroke="#8a8f9c" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M117 247 q 7 7 13 1" fill="none" stroke="#8a8f9c" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- 수염 -->
+  <g stroke="#6f7686" stroke-width="1.8" stroke-linecap="round" opacity="0.7">
+    <path d="M92 238 q -26 -5 -38 -9"/>
+    <path d="M92 246 q -28 3 -40 6"/>
+    <path d="M142 238 q 24 -6 34 -10"/>
+    <path d="M142 246 q 26 3 36 6"/>
+  </g>
+
+  <!-- Zzz -->
+  <g fill="#8d97ad" font-family="Georgia, serif" font-weight="bold" opacity="0.9">
+    <text x="286" y="126" font-size="22">z</text>
+    <text x="308" y="98" font-size="30">Z</text>
+    <text x="336" y="62" font-size="40">Z</text>
+  </g>
+</svg>

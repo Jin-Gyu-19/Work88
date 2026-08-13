@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="택배 상자 안에서 고개를 내민 삼색 고양이">
+  <defs>
+    <radialGradient id="bbg" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#f4f8f4"/>
+      <stop offset="100%" stop-color="#dde8de"/>
+    </radialGradient>
+    <linearGradient id="boxFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e0ab63"/>
+      <stop offset="100%" stop-color="#c78f47"/>
+    </linearGradient>
+    <linearGradient id="wfur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fffdf8"/>
+      <stop offset="100%" stop-color="#ece2d4"/>
+    </linearGradient>
+    <radialGradient id="beye" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#9fd8ef"/>
+      <stop offset="100%" stop-color="#3d8fbd"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="400" fill="url(#bbg)"/>
+  <ellipse cx="200" cy="368" rx="140" ry="18" fill="#b9c9ba" opacity="0.55"/>
+
+  <!-- 열린 날개 (뒤쪽) -->
+  <path d="M100 218 L 60 174 L 84 162 L 122 210 Z" fill="#c28b45" stroke="#9c6d31" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M300 218 L 340 174 L 316 162 L 278 210 Z" fill="#c28b45" stroke="#9c6d31" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- 상자 안쪽(그림자) -->
+  <path d="M100 214 L 300 214 L 322 240 L 78 240 Z" fill="#8a5f2a"/>
+
+  <!-- 고양이 머리 -->
+  <path d="M150 138 L 140 78 L 196 112 Z" fill="#e79a4a" stroke="#a86c2c" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M250 138 L 260 78 L 204 112 Z" fill="#4a423c" stroke="#2f2a26" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M156 128 L 150 94 L 184 114 Z" fill="#f2a6b0"/>
+  <path d="M244 128 L 250 94 L 216 114 Z" fill="#d9939c"/>
+
+  <ellipse cx="200" cy="176" rx="68" ry="62" fill="url(#wfur)" stroke="#c2b6a5" stroke-width="3"/>
+  <!-- 삼색 무늬 -->
+  <path d="M152 130 C 176 116 196 124 196 148 C 196 168 160 172 145 158 Z" fill="#e79a4a" opacity="0.95"/>
+  <path d="M248 132 C 226 122 210 132 212 152 C 214 170 244 172 256 158 Z" fill="#4a423c" opacity="0.9"/>
+
+  <!-- 눈 -->
+  <ellipse cx="176" cy="176" rx="14" ry="17" fill="url(#beye)" stroke="#2f5d78" stroke-width="2.2"/>
+  <ellipse cx="224" cy="176" rx="14" ry="17" fill="url(#beye)" stroke="#2f5d78" stroke-width="2.2"/>
+  <ellipse cx="176" cy="177" rx="5" ry="13.5" fill="#1c1a18"/>
+  <ellipse cx="224" cy="177" rx="5" ry="13.5" fill="#1c1a18"/>
+  <circle cx="171" cy="169" r="4" fill="#ffffff" opacity="0.92"/>
+  <circle cx="219" cy="169" r="4" fill="#ffffff" opacity="0.92"/>
+
+  <!-- 코와 입 -->
+  <path d="M193 198 L 207 198 L 200 207 Z" fill="#e8737f" stroke="#c9515e" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M200 207 v5" stroke="#a88b6a" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M200 212 q -8 8 -15 1" fill="none" stroke="#a88b6a" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M200 212 q 8 8 15 1" fill="none" stroke="#a88b6a" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- 수염 -->
+  <g stroke="#a8977f" stroke-width="1.8" stroke-linecap="round" opacity="0.8">
+    <path d="M158 200 q -28 -6 -40 -10"/>
+    <path d="M158 209 q -30 4 -42 8"/>
+    <path d="M242 200 q 28 -6 40 -10"/>
+    <path d="M242 209 q 30 4 42 8"/>
+  </g>
+
+  <!-- 상자 앞면 -->
+  <path d="M78 240 L 322 240 L 306 364 L 94 364 Z" fill="url(#boxFront)" stroke="#9c6d31" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M84 288 L 316 288" stroke="#b07e3c" stroke-width="3" opacity="0.7"/>
+  <path d="M200 240 L 200 364" stroke="#b07e3c" stroke-width="2.5" opacity="0.5"/>
+  <!-- 상자 라벨 -->
+  <rect x="152" y="300" width="96" height="44" rx="5" fill="#f6ead2" stroke="#9c6d31" stroke-width="2.5"/>
+  <g stroke="#a4855c" stroke-width="3" stroke-linecap="round">
+    <path d="M164 314 h60"/>
+    <path d="M164 324 h72"/>
+    <path d="M164 334 h44"/>
+  </g>
+
+  <!-- 상자 위로 걸친 앞발 -->
+  <ellipse cx="134" cy="242" rx="28" ry="15" fill="url(#wfur)" stroke="#c2b6a5" stroke-width="3"/>
+  <ellipse cx="266" cy="242" rx="28" ry="15" fill="url(#wfur)" stroke="#c2b6a5" stroke-width="3"/>
+  <g stroke="#d3c6b4" stroke-width="2.4" stroke-linecap="round">
+    <path d="M124 234 v10"/><path d="M134 232 v12"/><path d="M144 234 v10"/>
+    <path d="M256 234 v10"/><path d="M266 232 v12"/><path d="M276 234 v10"/>
+  </g>
+</svg>
