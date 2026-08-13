@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="앉아 있는 주황색 줄무늬 고양이 그림">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="72%">
+      <stop offset="0%" stop-color="#fdf7ee"/>
+      <stop offset="100%" stop-color="#efdfc9"/>
+    </radialGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f9b063"/>
+      <stop offset="100%" stop-color="#e88b35"/>
+    </linearGradient>
+    <radialGradient id="eye" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#c8e86a"/>
+      <stop offset="100%" stop-color="#6fa62c"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="400" fill="url(#bg)"/>
+
+  <!-- 바닥 그림자 -->
+  <ellipse cx="200" cy="352" rx="118" ry="17" fill="#c9a87c" opacity="0.35"/>
+
+  <!-- 꼬리 -->
+  <path d="M258 332 C 330 348 358 306 336 272"
+        fill="none" stroke="#d9782a" stroke-width="26" stroke-linecap="round"/>
+  <path d="M258 332 C 330 348 358 306 336 272"
+        fill="none" stroke="url(#fur)" stroke-width="18" stroke-linecap="round"/>
+  <g stroke="#c96a1e" stroke-width="6" stroke-linecap="round" opacity="0.75">
+    <path d="M300 341 l4 -12"/>
+    <path d="M328 328 l8 -9"/>
+    <path d="M344 300 l11 -2"/>
+  </g>
+
+  <!-- 몸통 -->
+  <path d="M200 196 C 152 198 136 258 131 322 Q 128 348 152 348 L 248 348 Q 272 348 269 322 C 264 258 248 198 200 196 Z"
+        fill="url(#fur)" stroke="#c96a1e" stroke-width="3"/>
+  <!-- 가슴 털 -->
+  <path d="M200 214 C 176 232 170 288 178 340 Q 200 348 222 340 C 230 288 224 232 200 214 Z"
+        fill="#fdf0dc" opacity="0.95"/>
+
+  <!-- 앞발 -->
+  <ellipse cx="170" cy="341" rx="27" ry="14" fill="#fdf0dc" stroke="#c96a1e" stroke-width="3"/>
+  <ellipse cx="230" cy="341" rx="27" ry="14" fill="#fdf0dc" stroke="#c96a1e" stroke-width="3"/>
+  <g stroke="#e0b98d" stroke-width="2.5" stroke-linecap="round">
+    <path d="M162 332 v9"/><path d="M172 330 v11"/><path d="M182 332 v9"/>
+    <path d="M222 332 v9"/><path d="M232 330 v11"/><path d="M242 332 v9"/>
+  </g>
+
+  <!-- 귀 -->
+  <path d="M141 118 L 130 48 L 192 82 Z" fill="url(#fur)" stroke="#c96a1e" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M259 118 L 270 48 L 208 82 Z" fill="url(#fur)" stroke="#c96a1e" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M147 108 L 141 68 L 178 88 Z" fill="#f4a3ad"/>
+  <path d="M253 108 L 259 68 L 222 88 Z" fill="#f4a3ad"/>
+
+  <!-- 머리 -->
+  <ellipse cx="200" cy="150" rx="76" ry="70" fill="url(#fur)" stroke="#c96a1e" stroke-width="3"/>
+  <!-- 이마 줄무늬 -->
+  <g stroke="#c96a1e" stroke-width="7" stroke-linecap="round" opacity="0.8">
+    <path d="M200 88 v20"/>
+    <path d="M176 94 l-6 18"/>
+    <path d="M224 94 l6 18"/>
+  </g>
+  <!-- 볼 -->
+  <path d="M200 168 C 168 168 150 182 152 196 C 155 212 180 216 200 200 C 220 216 245 212 248 196 C 250 182 232 168 200 168 Z"
+        fill="#fdf0dc"/>
+
+  <!-- 눈 -->
+  <ellipse cx="172" cy="146" rx="16" ry="19" fill="url(#eye)" stroke="#8a4a12" stroke-width="2.5"/>
+  <ellipse cx="228" cy="146" rx="16" ry="19" fill="url(#eye)" stroke="#8a4a12" stroke-width="2.5"/>
+  <ellipse cx="172" cy="147" rx="5.5" ry="15" fill="#20180f"/>
+  <ellipse cx="228" cy="147" rx="5.5" ry="15" fill="#20180f"/>
+  <circle cx="167" cy="138" r="4.5" fill="#ffffff" opacity="0.92"/>
+  <circle cx="223" cy="138" r="4.5" fill="#ffffff" opacity="0.92"/>
+
+  <!-- 코와 입 -->
+  <path d="M192 174 L 208 174 L 200 184 Z" fill="#e8737f" stroke="#c9515e" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M200 184 v7" stroke="#a86a3e" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M200 191 q -10 10 -18 1" fill="none" stroke="#a86a3e" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M200 191 q 10 10 18 1" fill="none" stroke="#a86a3e" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- 수염 -->
+  <g stroke="#8a6a4a" stroke-width="2" stroke-linecap="round" opacity="0.75">
+    <path d="M148 178 q -32 -8 -46 -14"/>
+    <path d="M148 188 q -34 2 -50 4"/>
+    <path d="M150 198 q -30 12 -44 20"/>
+    <path d="M252 178 q 32 -8 46 -14"/>
+    <path d="M252 188 q 34 2 50 4"/>
+    <path d="M250 198 q 30 12 44 20"/>
+  </g>
+</svg>
